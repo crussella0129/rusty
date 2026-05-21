@@ -12,3 +12,4 @@ description = "Rusty's OS boundary: PTY shell, cargo subprocess, rust-analyzer L
 portable-pty.workspace = true
 anyhow.workspace = true
 rusty-curriculum = { path = "../rusty-curriculum" }
+rusty-grader = { path = "../rusty-grader" }

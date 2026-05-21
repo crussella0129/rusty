@@ -119,3 +119,9 @@
 - **Completed:** 2026-05-21T23:37:32Z
 - **Files modified:** `crates/rusty-grader/{Cargo.toml,src/lib.rs,src/evaluate.rs}`
 - **Commit:** `2bb94fe`
+
+## T-304 (sprint 3)
+- **Description:** `rusty-host::grade` — `run_cargo_test(sandbox) -> (json, exit_ok)` and `run_cargo_run(sandbox) -> stdout` via `std::process::Command` (current_dir=sandbox, stdout captured), and `grade(sandbox, &SuccessCriterion) -> Verdict` running only the needed cargo command + calling the grader. Added `rusty-grader` dep; re-exported `Verdict`. Process #2 of the three-process model (separate Command, not the PTY). 4 integration tests with real temp cargo projects (passing test→Pass; borrow error→CompileError w/ E0382; failing test→TestsFailed; run output match→Pass / mismatch→RunMismatch). Full workspace: 69 tests pass.
+- **Completed:** 2026-05-21T23:41:54Z
+- **Files modified:** `crates/rusty-host/{Cargo.toml,src/grade.rs,src/lib.rs,tests/grade.rs}`
+- **Commit:** `bc3e8b9`

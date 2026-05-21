@@ -2781,6 +2781,7 @@ dependencies = [
  "anyhow",
  "portable-pty",
  "rusty-curriculum",
+ "rusty-grader",
 ]
 
 [[package]]
