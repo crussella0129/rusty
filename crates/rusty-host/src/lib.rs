@@ -8,8 +8,10 @@
 //! Architectural contract (prompt §11): all `std::process`, raw filesystem, and
 //! platform-specific code lives here (or in `rusty-terminal`) — nowhere else.
 
+pub mod pty;
 pub mod sandbox;
 
+pub use pty::PtySession;
 pub use sandbox::{default_shell, resolve_cd, CdOutcome};
 
 /// Crate identity marker (kept for the original skeleton test; harmless).
