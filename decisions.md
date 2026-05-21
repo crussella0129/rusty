@@ -40,3 +40,21 @@
 - **Decision:** Per-task commits straight to `main` (no per-sprint feature branch / PR), pushed to `origin/main`. The sprint structure (research/plan/test reports, decisions log, per-task commit boundaries) provides the review surface.
 - **Alternatives considered:** PR-per-sprint with auto-merge — viable but adds ceremony with no second reviewer; revisit if a collaborator joins.
 - **Consequences:** `main` is always green (every commit passed the gate); history reads as one commit per task.
+
+## 2026-05-21 — Roll our own vte-based terminal renderer, not egui_term (sprint 1)
+- **Context:** Phase 1 needs an embedded ANSI terminal on egui 0.34. The ANSI-renderer choice was deferred from Phase 0.
+- **Decision:** Build our own renderer on `vte` 0.15 (parse) + a `Grid`/`Cell` model + an egui widget. Reject `egui_term` and `egui-terminal`.
+- **Alternatives considered:** `egui_term` 0.1.0 (published) pins egui 0.31; `egui-terminal` 0.1.0 pins egui 0.28 — both incompatible with our 0.34. `egui_term`'s 0.34 support exists only on an unpublished git branch and drags the heavy `alacritty_terminal` backend. A git dependency on a moving rev was rejected.
+- **Consequences:** Full control over the `vte`→grid→egui path; renderer is pure and unit-testable. Scrollback / 256-color / alt-screen / mouse are deferred. If maintenance cost grows, revisit a published `egui_term`.
+
+## 2026-05-21 — Windows ConPTY requires answering the DSR cursor-position query (sprint 1)
+- **Context:** On Windows, the embedded shell produced no output and never exited in early testing.
+- **Decision:** The terminal must answer ConPTY's startup `ESC[6n` (Device Status Report) with a CPR report `ESC[row;colR` computed from the grid cursor; the app forwards `Grid::take_replies()` to the PTY each frame. Exit detection uses a dedicated `child.wait()` thread, not reader-EOF (unreliable on ConPTY).
+- **Alternatives considered:** Ignoring DSR (shell hangs forever); relying on reader-EOF for exit (never fires reliably on ConPTY).
+- **Consequences:** pwsh/cmd both work in the embedded terminal. Any future DSR/DA queries the shell makes must likewise be answered. Headless PTY tests use `cmd.exe` + a fixed DSR responder to isolate plumbing from PSReadLine.
+
+## 2026-05-21 — egui 0.34 multi-panel layout via `show_inside` on `App::ui` (sprint 1)
+- **Context:** The two-pane layout (lesson | terminal) needs side + central panels. The s0 ADR chose `App::ui`.
+- **Decision:** Keep `App::ui` (the required eframe-0.34 method) and nest panels with `Panel::left(..).show_inside(ui, ..)` + `CentralPanel::default().show_inside(ui, ..)`. The `Context`-level `SidePanel::show`/`CentralPanel::show`/`default_width` are deprecated in 0.34.
+- **Alternatives considered:** Switching to `App::update(ctx, ..)` with `Context`-level panels (the s1 build-plan Note suggested this) — unnecessary and uses deprecated APIs. Rejected; the plan Note was wrong.
+- **Consequences:** s0 `App::ui` ADR stands (no supersession). All layout uses `show_inside`.
