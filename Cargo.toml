@@ -24,3 +24,5 @@ thiserror = "2"
 # Phase 1 — embedded terminal: cross-platform PTY (wezterm) + ANSI/VT parser (alacritty).
 portable-pty = "0.9"
 vte = "0.15"
+# Phase 2 — lesson prose rendering.
+pulldown-cmark = "0.13"

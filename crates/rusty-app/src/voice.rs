@@ -12,16 +12,22 @@
 /// The application title, shown in the OS window title bar and the central panel.
 pub const WINDOW_TITLE: &str = "Rusty — Learn Rust by Doing";
 
-/// Heading of the (currently empty) lesson pane on the left.
+/// Heading of the lesson pane (shown as a fallback when no lesson is loaded).
 pub const LESSON_PANE_TITLE: &str = "Lesson";
-
-/// Placeholder shown in the lesson pane until lessons land (Phase 2).
-pub const LESSON_PANE_PLACEHOLDER: &str =
-    "Lessons arrive in the next phase. For now, try the terminal on the right — \
-     run `cargo --version` to see your toolchain.";
 
 /// Label above the embedded terminal pane.
 pub const TERMINAL_PANE_LABEL: &str = "Terminal (sandboxed)";
+
+/// Prefix for a lesson's "now run this" prompt, e.g. "▶ run: cargo run".
+pub const RUN_PROMPT_PREFIX: &str = "▶ run: ";
+
+/// Callout labels (note/tip/warning).
+pub const CALLOUT_NOTE: &str = "Note";
+pub const CALLOUT_TIP: &str = "Tip";
+pub const CALLOUT_WARNING: &str = "Heads up";
+
+/// Shown in the lesson pane when a lesson fails to load.
+pub const LESSON_LOAD_ERROR: &str = "Rusty couldn't load this lesson.";
 
 /// Shown when the learner tries to `cd` out of the lesson sandbox. Third-person,
 /// patient voice (§12) — Rusty is on the learner's side.

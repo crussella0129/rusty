@@ -95,3 +95,9 @@
 - **Completed:** 2026-05-21T18:53:12Z
 - **Files modified:** `content/lessons/foundations-01-hello/{lesson.toml,starter/*,solution/*}`, `crates/rusty-host/tests/content.rs`
 - **Commit:** `3483ed7`
+
+## T-205 + T-206 (sprint 2)
+- **Description:** Lesson renderer + app integration, landed as one green commit (the egui render fns have no caller until wired, so splitting would cascade dead-code warnings through `voice` consts — combined per "coherent diff"). **T-205:** owned `markdown` module (`pulldown-cmark`→egui; pure unit-tested `to_blocks` for headings/paragraphs/bold/italic/inline-code/fenced-code/bullets + `render_markdown`) and `lesson_view::render` (prose via markdown, code monospaced in a frame, NowRun as `voice::RUN_PROMPT_PREFIX`+command, callouts boxed). Added `pulldown-cmark` to workspace deps + `rusty-app`. **T-206:** `RustyApp` gains `lesson: Option<Lesson>` + `load_error`; infallible `new()` does load_lesson→prepare_sandbox→spawn PTY in the lesson sandbox (fallback on error); left `Panel` renders lesson 1 via `lesson_view` (or an error label); removed `LESSON_PANE_PLACEHOLDER`. 49 workspace tests pass; clippy/fmt clean; 7s GUI smoke OK.
+- **Completed:** 2026-05-21T18:58:38Z
+- **Files modified:** `Cargo.toml`, `crates/rusty-app/{Cargo.toml,src/markdown.rs,src/lesson_view.rs,src/main.rs,src/voice.rs}`
+- **Commit:** `c9399b7`

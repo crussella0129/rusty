@@ -6,12 +6,15 @@
 //! keystrokes, answers the ConPTY cursor-position handshake, and refuses `cd`s that
 //! would escape the lesson sandbox.
 
+mod lesson_view;
+mod markdown;
 mod voice;
 
 use std::path::PathBuf;
 
 use eframe::egui;
-use rusty_host::{default_shell, resolve_cd, CdOutcome, PtySession};
+use rusty_curriculum::Lesson;
+use rusty_host::{default_shell, load_lesson, prepare_sandbox, resolve_cd, CdOutcome, PtySession};
 use rusty_terminal::{terminal_ui, Terminal};
 
 const INIT_ROWS: usize = 24;
@@ -47,8 +50,8 @@ fn submit_action(line: &str, cwd: &std::path::Path, root: &std::path::Path) -> S
     }
 }
 
-/// Create (if needed) and return the spike's sandbox directory under the repo.
-fn sandbox_root() -> PathBuf {
+/// Fallback sandbox dir if a lesson fails to load.
+fn fallback_sandbox() -> PathBuf {
     let root = std::env::current_dir()
         .unwrap_or_default()
         .join("workspace")
@@ -58,6 +61,9 @@ fn sandbox_root() -> PathBuf {
     root
 }
 
+/// The lesson shipped this sprint (multi-lesson selection is a later phase).
+const LESSON_REL: &str = "content/lessons/foundations-01-hello";
+
 struct RustyApp {
     term: Terminal,
     session: PtySession,
@@ -66,15 +72,31 @@ struct RustyApp {
     dims: (usize, usize),
     /// Best-effort mirror of the line currently being typed, for `cd` interception.
     line: String,
+    /// The loaded lesson, or `None` if loading failed (then `load_error` is set).
+    lesson: Option<Lesson>,
+    load_error: Option<String>,
 }
 
 impl RustyApp {
     fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let root = sandbox_root();
+        let cwd0 = std::env::current_dir().unwrap_or_default();
+        let content_dir = cwd0.join(LESSON_REL);
+        let workspace_root = cwd0.join("workspace");
+
+        // Load lesson 1, prepare its sandbox, and pick the PTY's working directory.
+        // No `?` here — `new` is infallible; failures surface in the lesson pane.
+        let (lesson, load_error, sandbox) = match load_lesson(&content_dir) {
+            Ok(lesson) => match prepare_sandbox(&content_dir, &workspace_root, &lesson.id.0) {
+                Ok(sandbox) => (Some(lesson), None, sandbox),
+                Err(err) => (Some(lesson), Some(format!("{err:#}")), fallback_sandbox()),
+            },
+            Err(err) => (None, Some(format!("{err:#}")), fallback_sandbox()),
+        };
+
         let ctx = cc.egui_ctx.clone();
         let session = PtySession::spawn(
             &default_shell(),
-            &root,
+            &sandbox,
             INIT_ROWS as u16,
             INIT_COLS as u16,
             move || ctx.request_repaint(),
@@ -84,10 +106,12 @@ impl RustyApp {
         Self {
             term: Terminal::new(INIT_ROWS, INIT_COLS),
             session,
-            cwd: root.clone(),
-            root,
+            cwd: sandbox.clone(),
+            root: sandbox,
             dims: (INIT_ROWS, INIT_COLS),
             line: String::new(),
+            lesson,
+            load_error,
         }
     }
 
@@ -150,14 +174,21 @@ impl eframe::App for RustyApp {
             let _ = self.session.write(&replies);
         }
 
-        // 3. Lesson pane (empty placeholder for now).
+        // 3. Lesson pane — render lesson 1, or an error if it failed to load.
         egui::Panel::left("lesson_pane")
             .resizable(true)
-            .default_size(320.0)
+            .default_size(360.0)
             .show_inside(ui, |ui| {
-                ui.heading(voice::LESSON_PANE_TITLE);
-                ui.separator();
-                ui.label(voice::LESSON_PANE_PLACEHOLDER);
+                if let Some(lesson) = &self.lesson {
+                    lesson_view::render(ui, lesson);
+                } else {
+                    ui.heading(voice::LESSON_PANE_TITLE);
+                    ui.separator();
+                    ui.colored_label(egui::Color32::LIGHT_RED, voice::LESSON_LOAD_ERROR);
+                    if let Some(err) = &self.load_error {
+                        ui.label(egui::RichText::new(err).small().weak());
+                    }
+                }
             });
 
         // 4. Terminal pane.
