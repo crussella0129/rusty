@@ -58,3 +58,14 @@
 - **Decision:** Keep `App::ui` (the required eframe-0.34 method) and nest panels with `Panel::left(..).show_inside(ui, ..)` + `CentralPanel::default().show_inside(ui, ..)`. The `Context`-level `SidePanel::show`/`CentralPanel::show`/`default_width` are deprecated in 0.34.
 - **Alternatives considered:** Switching to `App::update(ctx, ..)` with `Context`-level panels (the s1 build-plan Note suggested this) — unnecessary and uses deprecated APIs. Rejected; the plan Note was wrong.
 - **Consequences:** s0 `App::ui` ADR stands (no supersession). All layout uses `show_inside`.
+
+## 2026-05-21 — Own a pulldown-cmark prose renderer, not egui_commonmark (sprint 2)
+- **Context:** Lesson prose is Markdown; it must render in egui 0.34.
+- **Decision:** Render with a small in-house `pulldown-cmark`→egui renderer (`rusty-app::markdown`): a pure `to_blocks(&str) -> Vec<MdBlock>` (headings, paragraphs, inline code, bold/italic, fenced code, bullets) plus an egui draw. Reject `egui_commonmark`.
+- **Alternatives considered:** `egui_commonmark` 0.23 — same egui-version coupling risk that made `egui_term` unusable, heavier deps (egui_extras/image). A prose subset is all lessons need.
+- **Consequences:** Full control, version-risk-free, unit-testable parse step. Tables/images/nested-lists degrade to text; revisit if richer prose is needed.
+
+## 2026-05-21 — Curriculum model: internally-tagged enums + pure parse; lesson projects detach (sprint 2)
+- **Context:** Lessons are `lesson.toml` files; the parser must stay OS-portable; lesson cargo projects live under the repo workspace.
+- **Decision:** `rusty-curriculum` is pure — `parse_lesson(&str)`; the FS read + starter→sandbox copy live in `rusty-host`. `Block`/`RecallPrompt`/`Exercise` use serde **internally-tagged** enums (`kind="..."`) — confirmed working with `toml` 1.x via a Phase-2 spike (no adjacently-tagged fallback needed). Each lesson `starter`/`solution` `Cargo.toml` carries an empty `[workspace]` table so the learner's `cargo run` resolves inside the copied sandbox; the root workspace `exclude`s `content`/`workspace`. `prepare_sandbox` skips `target/` and reads-before-creating (no corrupt empty sandbox).
+- **Consequences:** The model is trivially testable and portable; new lessons are pure data + a detached cargo project. Sandbox copies are clean (no build artifacts).
