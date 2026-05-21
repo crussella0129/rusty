@@ -29,3 +29,9 @@
 - **Completed:** 2026-05-21T06:45:00Z
 - **Files modified:** `.gitignore`
 - **Commit:** `ac795a9`
+
+## T-006 (sprint 0)
+- **Description:** Scaffold the directory tree: `content/lessons/.gitkeep`, `assets/.gitkeep`, and four `docs/` stubs (ARCHITECTURE, PEDAGOGY, CONTENT_AUTHORING, INSTALL) each with YAML frontmatter (`project`/`tags`/`related`/`status: stub`), `[[wikilinks]]`, and a "filled in Phase N" pointer. `workspace/` intentionally not tracked (gitignored).
+- **Completed:** 2026-05-21T06:47:00Z
+- **Files modified:** `content/lessons/.gitkeep`, `assets/.gitkeep`, `docs/ARCHITECTURE.md`, `docs/PEDAGOGY.md`, `docs/CONTENT_AUTHORING.md`, `docs/INSTALL.md`
+- **Commit:** `5e41b1b`
