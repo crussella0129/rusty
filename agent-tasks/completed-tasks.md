@@ -89,3 +89,9 @@
 - **Completed:** 2026-05-21T18:50:53Z
 - **Files modified:** `crates/rusty-host/src/{content.rs,lib.rs}`, `crates/rusty-host/Cargo.toml`, `crates/rusty-host/tests/content.rs`
 - **Commit:** `a8cd61f`
+
+## T-204 (sprint 2)
+- **Description:** Authored lesson 1 `foundations-01-hello`: `lesson.toml` (Foundations, 3 concepts, prose+code+now_run+tip-callout body, MC recall, a further-reading ref), `starter/` + `solution/` cargo projects each with an empty `[workspace]` table (detaches from Rusty's workspace so the learner's `cargo run` resolves). Verified: `load_lesson` real-content test passes; `cargo run` in starter prints the greeting; `cargo check --workspace` cleanly excludes the nested project; starter `target/` is gitignored. Exercises empty (Phase 3 — T-EX1 backlog).
+- **Completed:** 2026-05-21T18:53:12Z
+- **Files modified:** `content/lessons/foundations-01-hello/{lesson.toml,starter/*,solution/*}`, `crates/rusty-host/tests/content.rs`
+- **Commit:** `3483ed7`

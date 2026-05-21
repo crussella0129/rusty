@@ -1,0 +1,81 @@
+id = "foundations-01-hello"
+title = "Hello, compiler."
+track = "Foundations"
+prereqs = []
+estimated_minutes = 12
+starter_project = "starter"
+solution_project = "solution"
+
+[[concepts]]
+id = "cargo-run-builds-and-runs"
+claim = "`cargo run` compiles your crate and then runs the resulting binary."
+why_it_matters = "It is the one command that turns source text into a running program, so it is the heartbeat of every edit–build–run loop."
+common_misconception = "That `cargo run` only launches an already-built binary — it rebuilds first whenever anything changed."
+
+[[concepts]]
+id = "compiler-is-a-conversation"
+claim = "`rustc`'s errors are precise, located, and usually point at the fix."
+why_it_matters = "Reading the real error text — not a paraphrase — is the fastest way to learn Rust."
+common_misconception = "That a wall of compiler output means everything is broken; it is usually one root cause wrapped in helpful context."
+
+[[concepts]]
+id = "main-is-the-entry-point"
+claim = "Execution starts at `fn main()`."
+why_it_matters = "Every runnable Rust program needs exactly one `main` — it is where your program begins."
+
+[[body]]
+kind = "prose"
+text = """
+# Hello, compiler.
+
+Welcome. Before we talk *about* Rust, let's run some. The terminal on the right is a
+real shell sitting inside this lesson's project folder — the same `cargo` you would
+use on any Rust project.
+
+Your first job is a single command. When you run it, `cargo` will **compile** the
+project and then **execute** it. The first compile is slow because Rust does a lot of
+checking up front; later runs are fast.
+"""
+
+[[body]]
+kind = "code"
+lang = "rust"
+source = """
+fn main() {
+    println!("Welcome — Rusty is compiling your first program.");
+}
+"""
+
+[[body]]
+kind = "now_run"
+command = "cargo run"
+note = "Watch the compile messages scroll, then find the printed line at the end."
+
+[[body]]
+kind = "callout"
+tone = "tip"
+text = "Only want to know if it *compiles*, without running it? Try `cargo check` — it skips code generation, so it is faster."
+
+[[body]]
+kind = "prose"
+text = """
+See that final line? You just compiled and ran a Rust program. Everything else in
+this track builds on that loop: change the source, run it, and read what the compiler
+tells you.
+"""
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "What does `cargo run` actually do?"
+choices = [
+    "Runs a previously built binary without recompiling",
+    "Compiles the crate (if needed) and then runs the resulting binary",
+    "Only checks the code for errors without producing a binary",
+]
+answer_index = 1
+explanation = "`cargo run` rebuilds whatever changed, then executes the binary. `cargo check` only checks; `cargo build` compiles without running."
+
+[[further_reading]]
+title = "The Rust Programming Language — Hello, Cargo!"
+url = "https://doc.rust-lang.org/book/ch01-03-hello-cargo.html"
+note = "The Book's take on the same edit–build–run loop."

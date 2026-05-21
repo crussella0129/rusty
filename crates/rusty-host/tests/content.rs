@@ -95,3 +95,19 @@ fn test_load_lesson_from_temp() {
     assert_eq!(lesson.id.0, "temp-lesson");
     assert_eq!(lesson.title, "Temp");
 }
+
+/// Load the real authored lesson 1 from the repo's `content/` tree.
+#[test]
+fn test_load_lesson_real_content() {
+    // CARGO_MANIFEST_DIR = .../crates/rusty-host; repo root is two levels up.
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..")
+        .join("content")
+        .join("lessons")
+        .join("foundations-01-hello");
+    let lesson = load_lesson(&dir).expect("real lesson 1 loads");
+    assert_eq!(lesson.id.0, "foundations-01-hello");
+    assert_eq!(lesson.title, "Hello, compiler.");
+    assert!(!lesson.body.is_empty());
+}
