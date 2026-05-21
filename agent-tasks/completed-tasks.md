@@ -11,3 +11,9 @@
 - **Completed:** 2026-05-21T06:36:30Z
 - **Files modified:** `rust-toolchain.toml`
 - **Commit:** `7a57160`
+
+## T-003 (sprint 0)
+- **Description:** Add the two host-boundary lib crates `rusty-host` and `rusty-terminal` as workspace members (placeholder libs; designated home for all PTY/subprocess/OS code). Workspace now has 6 members.
+- **Completed:** 2026-05-21T06:38:00Z
+- **Files modified:** `crates/rusty-host/{Cargo.toml,src/lib.rs}`, `crates/rusty-terminal/{Cargo.toml,src/lib.rs}`
+- **Commit:** `47f5a93`

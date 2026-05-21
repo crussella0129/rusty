@@ -1,0 +1,9 @@
+[package]
+name = "rusty-terminal"
+version = "0.0.0"
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+description = "ANSI/VT100 terminal rendering on egui for Rusty's embedded shell."

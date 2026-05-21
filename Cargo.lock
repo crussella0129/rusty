@@ -11,9 +11,17 @@ name = "rusty-grader"
 version = "0.0.0"
 
 [[package]]
+name = "rusty-host"
+version = "0.0.0"
+
+[[package]]
 name = "rusty-pedagogy"
 version = "0.0.0"
 
 [[package]]
 name = "rusty-scheduler"
+version = "0.0.0"
+
+[[package]]
+name = "rusty-terminal"
 version = "0.0.0"
