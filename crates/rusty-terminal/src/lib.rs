@@ -1,23 +1,18 @@
 //! `rusty-terminal` — ANSI/VT100 rendering of the embedded shell on egui.
 //!
-//! Phase 0 placeholder. The Phase-1 spike decides the implementation: try the
-//! `egui_term` widget first, and if it is not mature enough against the current
-//! egui, fall back to a thin VT100 renderer built on `vte` for escape-sequence
-//! parsing plus egui text widgets for drawing. Either way, the PTY bytes it renders
-//! are produced by `rusty-host`.
+//! Decided in the Phase-1 spike: roll our own renderer on `vte` (the published
+//! `egui_term` 0.1.0 pins egui 0.31, incompatible with our 0.34). The pipeline is
+//! PTY bytes → [`vte::Parser`] driving a [`Performer`] → a [`Grid`] of colored
+//! [`Cell`]s → the [`terminal_ui`] egui widget. The grid/performer are pure and
+//! unit-tested; only the painting needs a window.
 //!
-//! Architectural contract (prompt §11): OS/terminal-specific code is allowed here;
-//! the portable engine crates must never depend on it.
+//! OS/terminal-specific code is allowed here (portability tripwire §11); the four
+//! portable engine crates must never depend on it.
 
-/// Crate identity marker, replaced by the VT100 renderer in Phase 1.
-pub const CRATE_NAME: &str = "rusty-terminal";
+pub mod cell;
+pub mod grid;
+pub mod performer;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_crate_name() {
-        assert_eq!(CRATE_NAME, "rusty-terminal");
-    }
-}
+pub use cell::Cell;
+pub use grid::Grid;
+pub use performer::Performer;

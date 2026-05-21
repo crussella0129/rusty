@@ -1,6 +1,5 @@
 # Agent Tasks (Persistent Backlog)
 
-- [ ] T-104 (sprint 1): rusty-terminal Cell/Grid + vte Performer — touches: `crates/rusty-terminal/src/{cell.rs,grid.rs,performer.rs,lib.rs}`
 - [ ] T-105 (sprint 1): rusty-terminal::widget terminal_ui (paint + input) — touches: `crates/rusty-terminal/src/{widget.rs,lib.rs}`
 - [ ] T-106 (sprint 1): wire PTY+grid+two-pane layout into rusty-app — touches: `crates/rusty-app/src/{main.rs,voice.rs}`
 
