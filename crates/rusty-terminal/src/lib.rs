@@ -12,7 +12,9 @@
 pub mod cell;
 pub mod grid;
 pub mod performer;
+pub mod widget;
 
 pub use cell::Cell;
 pub use grid::Grid;
 pub use performer::Performer;
+pub use widget::{key_to_bytes, terminal_ui};

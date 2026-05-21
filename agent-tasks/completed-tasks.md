@@ -59,3 +59,9 @@
 - **Completed:** 2026-05-21T14:52:00Z
 - **Files modified:** `crates/rusty-terminal/src/{cell.rs,grid.rs,performer.rs,lib.rs}`
 - **Commit:** `841a32f`
+
+## T-105 (sprint 1)
+- **Description:** `rusty-terminal::widget` — `terminal_ui(ui, &grid, writer)` paints the grid (per-cell bg rects + per-row colored `LayoutJob` galleys + cursor block) and, when focused, forwards `Event::Text` and mapped keys to the writer. Pure helpers `key_to_bytes(key, mods)` (Enter→`\r`, Backspace→`0x7f`, arrows→`\x1b[A-D`, Ctrl-C→`0x03`, Ctrl-D→`0x04`, printables→None) and `grid_dims(avail, char_w, row_h)`. 6 widget unit tests pass (14 total in crate). **API note:** egui 0.34 `FontsView` metrics need `&mut` → used `ui.fonts_mut`; galley built via `painter.layout_job`.
+- **Completed:** 2026-05-21T15:00:00Z
+- **Files modified:** `crates/rusty-terminal/src/{widget.rs,lib.rs}`
+- **Commit:** `8887089`
