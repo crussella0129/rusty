@@ -69,3 +69,14 @@
 - **Context:** Lessons are `lesson.toml` files; the parser must stay OS-portable; lesson cargo projects live under the repo workspace.
 - **Decision:** `rusty-curriculum` is pure — `parse_lesson(&str)`; the FS read + starter→sandbox copy live in `rusty-host`. `Block`/`RecallPrompt`/`Exercise` use serde **internally-tagged** enums (`kind="..."`) — confirmed working with `toml` 1.x via a Phase-2 spike (no adjacently-tagged fallback needed). Each lesson `starter`/`solution` `Cargo.toml` carries an empty `[workspace]` table so the learner's `cargo run` resolves inside the copied sandbox; the root workspace `exclude`s `content`/`workspace`. `prepare_sandbox` skips `target/` and reads-before-creating (no corrupt empty sandbox).
 - **Consequences:** The model is trivially testable and portable; new lessons are pure data + a detached cargo project. Sandbox copies are clean (no build artifacts).
+
+## 2026-05-21 — Grading signal = cargo exit status + error diagnostics, not libtest JSON (sprint 3)
+- **Context:** The grader needs to distinguish compile error / test failure / pass from a `cargo test` run.
+- **Decision:** A diagnostic with `level == Error` ⇒ `CompileError`; otherwise cargo's exit status decides `Pass`/`TestsFailed`. Per-test (libtest) JSON breakdown is NOT used.
+- **Alternatives considered:** libtest `--format=json` for per-test results — unstable on stable Rust, violates the pinned-stable-toolchain ADR. Rejected.
+- **Consequences:** `TestsFailed` is coarse (some test failed, not which). Sufficient for the spike; revisit if per-test naming is needed.
+
+## 2026-05-21 — Grader owns a Diag model decoupled from cargo_metadata; sandboxes build isolated (sprint 3)
+- **Context:** `rusty-grader` parses `cargo --message-format=json` via `cargo_metadata`, but the UI shouldn't depend on that crate's types.
+- **Decision:** A local `Diag{code,level,message,rendered,primary_span}`/`Level`/`Span` is the public surface; `parse_diagnostics` maps `cargo_metadata`'s `Diagnostic` into it (keeping the verbatim `rendered` text). `rusty-grader` stays portable (parses captured bytes; `cargo_metadata` is a pure parser). `rusty-host::grade` spawns cargo (process #2) with `.env_remove("CARGO_TARGET_DIR")` so each sandbox builds in its own `target/` (isolation even when an outer `CARGO_TARGET_DIR` is set).
+- **Consequences:** Sprint-4 UI consumes `Diag`/`Verdict`/`concept_for_code` without a `cargo_metadata` dep. Grading is a separate subprocess from the PTY.
