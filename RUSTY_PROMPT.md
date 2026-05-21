@@ -3,7 +3,9 @@ project: Rusty
 owner: Charles Russella
 created: 2026-05-21
 updated: 2026-05-21
-tags: [rust, wasm, egui, pedagogy, claude-code, prompt, learning, tescellate-adjacent]
+version: 2
+supersedes: RUSTY_PROMPT.md (v1)
+tags: [rust, egui, eframe, pedagogy, claude-code, prompt, learning, native-app, pty, tescellate-adjacent]
 related:
   - "[[Tescellate]]"
   - "[[Carbide]]"
@@ -14,219 +16,266 @@ status: draft-spec
 sprint_phase: 0-spec
 ---
 
-# Rusty — Claude Code Build Prompt
+# Rusty v2 — Claude Code Build Prompt
 
-**A 100% Rust + WebAssembly + egui tutorial application that teaches Rust through research-backed pedagogy and in-app interactive exercises.**
+**A 100% Rust native desktop application that teaches Rust by guiding learners through real `cargo` invocations inside an embedded terminal, against a sandboxed workspace of real cargo projects.**
 
-> Paste this entire file into Claude Code as the initial prompt. Claude Code should read it, ask any clarifying questions in a single batch, then execute the phased plan. Do **not** skip phases. Do **not** stub things out "for later" unless explicitly noted as a Phase N+1 deferral.
+**Stack:** Rust → emilk/egui (via eframe) → native binary. No WASM in Rusty's runtime. No backend. No website. Distribution is GitHub clone + bootstrap script.
+
+> Paste this entire file into Claude Code as the initial prompt. Read it fully, ask clarifying questions in ONE batch, then execute the phased plan. Do not skip phases. Do not stub anything out unless explicitly noted as deferred.
+
+> **This is v2 and supersedes v1 entirely.** v1 targeted a browser-first WASM deployment with three competing executor strategies; v2 is a native app that shells out to the learner's real Rust toolchain. Section 12 (mascot/voice) is the only major part carried forward unchanged.
 
 ---
 
 ## 0. Identity and Constraints
 
 ### Project name
-**Rusty** — named after the user's dog, who is large and orange. See Section 12 for the full mascot/voice spec; this is not optional flavor, it constrains the UI.
+**Rusty** — named after the user's dog (large, orange). See Section 12 for the mascot and voice spec; it constrains the UI.
+
+### Distribution model: GitHub-native
+
+The repository **is** the product. No hosted website, no download page, no auto-update mechanism, no app-store presence. Learners get Rusty by:
+
+```bash
+git clone https://github.com/<owner>/rusty.git
+cd rusty
+./install.sh        # or .\install.ps1 on Windows
+```
+
+`install.sh` does three things, in order:
+
+1. **Detects** the Rust toolchain (`rustup`, `rustc`, `cargo`). If absent, **prompts** the user (interactive y/N) to install it via the official rustup one-liner: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`. Never installs Rust silently. If the learner declines, prints clean manual instructions and exits cleanly.
+2. **Builds Rusty from source** via `cargo build --release`. The first compile is Rusty's first lesson before the lessons even start: the learner watches their freshly installed toolchain compile a real Rust project.
+3. **Launches** the resulting binary at `./target/release/rusty`.
+
+The bootstrap is **a pedagogical artifact, not a setup step.** It is the learner's first contact with the Rust toolchain and should feel that way — narrated and paced, not silent.
+
+"Updating Rusty" means `git pull && cargo build --release`. That is the entire update story.
 
 ### Hard technical constraints
 
-These are non-negotiable. Flag any tension before resolving.
+Non-negotiable. Flag any tension before resolving.
 
-1. **100% Rust.** No JavaScript source files. WASM glue from `wasm-bindgen` is acceptable because it is generated, not authored.
-2. **`egui` for UI.** Use `eframe` as the application shell. The same binary targets native (`cargo run`) and WASM (`trunk serve`).
-3. **WASM target is the primary deployment.** Native build exists for fast dev iteration and is a non-negotiable second-class target.
-4. **In-app exercise execution.** Exercises must compile and run *inside the browser*, not on a server. See Section 5 for the execution model.
-5. **No backend server required for the MVP.** Static hosting only (GitHub Pages, Cloudflare Pages, or local file).
-6. **Persistence via browser `localStorage`** (through `eframe`'s built-in persistence layer). No cloud sync in MVP.
-7. **Accessibility:** keyboard-only navigation must work for every exercise. Screen-reader labels on all interactive elements.
-8. **MSRV** (Minimum Supported Rust Version): latest stable at build time. Document the exact version in `rust-toolchain.toml`.
+1. **100% Rust.** No JavaScript, no Python, no Node. The install script is bash/PowerShell (unavoidable for bootstrap), but every other line of code is Rust. Once Rust is installed, all further setup work happens in cargo.
+2. **`egui` for UI**, via `eframe` as the application shell. Both are from emilk on GitHub. Native target only.
+3. **Native desktop application.** macOS (Intel + Apple Silicon), Linux (x86_64), Windows (x86_64). No browser build.
+4. **Rust toolchain is a hard runtime dependency.** Rusty assumes `rustc`, `cargo`, and `rust-analyzer` are present on PATH at runtime. The install script ensures this.
+5. **Workspace is fully sandboxed.** All learner work happens inside `<rusty-repo>/workspace/lessons/<lesson-id>/`. The embedded terminal's `cwd` is locked inside this tree. `cd` above the sandbox root is intercepted and refused with a friendly message. Rusty is not a general-purpose shell.
+6. **Embedded PTY terminal.** Real pseudo-terminal, real ANSI rendering, real interactivity. This is the single most technically risky piece of the build. Spike it in Phase 1.
+7. **No telemetry, no analytics, no network calls at runtime.** The install script may invoke rustup with consent; the running app makes zero network requests.
+8. **MSRV:** latest stable at install time, pinned in `rust-toolchain.toml`.
 
-### Stretch constraints (flag tradeoffs, don't silently violate)
+### Stretch constraints
 
-- Bundle size target: **< 5 MB** gzipped WASM for the MVP. Use `wasm-opt -Oz`, `lto = "fat"`, `codegen-units = 1`, `panic = "abort"`.
-- First-paint target: **< 2 seconds** on a 10 Mbps connection.
-- Cold start (first interactive): **< 5 seconds**.
+- **Cold-start to first interactive lesson: < 3 seconds** after the initial release build.
+- **Single binary.** No dynamic libs beyond OS-provided ones. The `rusty` executable finds its lessons via a known relative path from the binary.
+- **Reproducible builds.** Commit `Cargo.lock`. CI verifies clean build on all three OSes.
 
-### What we are NOT building in MVP
+### Explicitly NOT in MVP
 
-- No multi-user accounts.
-- No social features (leaderboards, sharing).
-- No payment / monetization.
-- No mobile-specific UI (responsive web is fine; native mobile app is out).
-- No AI tutor / LLM integration. (Phase 4+ consideration only.)
-- No content beyond the lessons specified in Section 4. We are building the *system*, with a representative slice of content to validate it.
+- No browser/WASM build of Rusty itself.
+- No hosted version.
+- No multi-user features, accounts, sharing, social, or sync.
+- No payment, monetization, or telemetry.
+- No mobile UI.
+- No AI tutor / LLM integration. (Phase 6+ at earliest.)
+- No content beyond the lessons in Section 4.
+- No "leave the sandbox" terminal mode.
+- No auto-updater — `git pull` is the update mechanism.
 
 ---
 
-## 1. Why This Exists (Pedagogical Thesis)
+## 1. Pedagogical Thesis
 
-Rusty is not "the Rust Book in egui." It is an attempt to operationalize four research-backed learning principles that most programming tutorials violate:
+Rusty operationalizes five research-backed learning principles that most programming tutorials violate.
 
 ### 1.1 Retrieval practice over re-reading
 **Source:** Roediger & Karpicke (2006), *Test-Enhanced Learning: Taking Memory Tests Improves Long-Term Retention*. Psychological Science, 17(3).
 
-**Finding:** Active recall (being tested) produces dramatically better long-term retention than repeated study, even when learners *believe* re-reading is more effective.
+Active recall produces dramatically better long-term retention than repeated study.
 
-**Implication for Rusty:** Every lesson ends with a recall prompt *before* any exercise. The recall is short-answer or multiple-choice on the lesson's key claim, graded immediately. No skipping.
+**Application:** Every lesson ends with a recall prompt *before* any exercise. Short-answer or multiple-choice on the lesson's key claim, graded immediately. No skipping.
 
 ### 1.2 Spaced repetition
 **Source:** Cepeda, Pashler, Vul, Wixted, & Rohrer (2006), *Distributed Practice in Verbal Recall Tasks: A Review and Quantitative Synthesis*. Psychological Bulletin, 132(3).
 
-**Finding:** Spacing reviews over expanding intervals produces 2–3× better retention than massed practice, with an optimal review gap roughly 10–30% of the desired retention interval.
+Spacing reviews over expanding intervals produces 2–3× better retention than massed practice.
 
-**Implication for Rusty:** Use a simplified SM-2 scheduler (the Anki algorithm) for concept reviews. Each lesson has 3–5 "atomic concepts" tracked individually. Each session opens with due reviews before new material.
+**Application:** Simplified SM-2 scheduler. Each lesson has 3–5 "atomic concepts" tracked individually. Each session opens with due reviews before new material.
 
 ### 1.3 Worked examples → faded scaffolding → independent practice
-**Source:** Sweller (1988), *Cognitive Load During Problem Solving*. Cognitive Science, 12. And: Renkl & Atkinson (2003) on the *expertise reversal effect* and faded examples.
+**Source:** Sweller (1988), *Cognitive Load During Problem Solving*. Cognitive Science, 12. Also Renkl & Atkinson (2003) on faded examples and the expertise reversal effect.
 
-**Finding:** Novices learn far more from studying worked examples than from solving problems unaided. The benefit reverses as expertise grows — experts learn more from problem-solving. The bridge is *faded* examples: start fully worked, progressively blank out steps.
+Novices learn far more from studying worked examples than from solving unaided. The benefit reverses with expertise. The bridge is *faded* examples.
 
-**Implication for Rusty:** Every exercise type comes in a triple — `Worked` (read and annotate), `Faded` (fill in 1–3 blanks), `Open` (write from scratch). Learner advancement through the triple is driven by performance, not seat time.
+**Application:** Every exercise comes as a triple — `Worked` (read and annotate), `Faded` (fill in 1–3 blanks in real source files), `Open` (write from scratch). Advancement is performance-driven. Faded exercises are real `src/main.rs` files with `// TODO` markers the learner edits in place.
 
 ### 1.4 Productive failure with immediate compiler feedback
-**Source:** Kapur (2008), *Productive Failure*. Cognition and Instruction, 26(3). Combined with the established literature on immediate vs. delayed feedback (Shute, 2008).
+**Source:** Kapur (2008), *Productive Failure*. Cognition and Instruction, 26(3). Shute (2008), *Focus on Formative Feedback*, on immediate vs. delayed feedback.
 
-**Finding:** Struggling productively *before* receiving instruction improves transfer. But once struggling, feedback should be immediate and specific.
+Struggling productively *before* receiving instruction improves transfer. Once struggling, feedback should be immediate.
 
-**Implication for Rusty:** Some exercises present the problem *before* the lesson explanation (productive failure mode), then the lesson reveals what the learner was trying to discover. The Rust compiler's error messages are leveraged as the immediate-feedback channel — Rusty surfaces the real `rustc`/`miri` output, annotated.
+**Application:** Some exercises present the problem before the explanation. The learner attempts a solution, sees real `rustc` output, and only then reads the framing that turns the error into insight.
 
-### 1.5 The Rust-specific bet
+### 1.5 Real-tool learning (the vimtutor principle)
+**Source:** Brown, Collins, & Duguid (1989), *Situated Cognition and the Culture of Learning*. Educational Researcher, 18(1). Lave & Wenger (1991), *Situated Learning: Legitimate Peripheral Participation*.
 
-Rust's compiler is the best feedback teacher in mainstream languages. Most Rust tutorials waste this by paraphrasing errors instead of showing them. Rusty does the opposite: **the compiler's actual output is the primary teaching surface.** Lessons are scaffolding around compiler conversations.
+Tools learned via simulators or sandboxes often don't transfer to the real tool. Tools learned *with* the real tool, in a guided context, do.
+
+**Application:** Every command the learner types is a real command, executed by a real shell, against a real cargo project, producing real output. Rusty does not paraphrase or simulate. Its role is to *frame* the real tool, not replace it. This is the `vimtutor` model: `vimtutor` teaches Vim by *being* Vim with a curated text file loaded. Rusty teaches Rust by *being* a real cargo workspace with curated lessons loaded.
+
+### 1.6 The Rust-specific bet
+
+Rust's compiler is the best feedback teacher in mainstream languages. Most Rust tutorials waste this by paraphrasing errors instead of showing them. Rusty does the opposite: **`rustc`'s actual output is the primary teaching surface.** Lessons are scaffolding around real compiler conversations, displayed in a real terminal pane, annotated by Rusty in a side panel.
 
 ---
 
-## 2. Architecture Overview
+## 2. Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                     Rusty (eframe app)                      │
-│                                                                │
-│  ┌────────────┐  ┌────────────┐  ┌─────────────────────────┐ │
-│  │  Lesson    │  │  Exercise  │  │  Scheduler (SM-2-lite)  │ │
-│  │  Renderer  │  │  Runner    │  │  + Progress Store       │ │
-│  └─────┬──────┘  └──────┬─────┘  └──────────┬──────────────┘ │
-│        │                │                    │                │
-│  ┌─────▼────────────────▼────────────────────▼─────────────┐ │
-│  │              Curriculum Model (typed)                    │ │
-│  │  Lesson → Concept[] → Exercise[] (Worked|Faded|Open)     │ │
-│  └──────────────────────────┬───────────────────────────────┘ │
-│                             │                                  │
-│  ┌──────────────────────────▼───────────────────────────────┐ │
-│  │           In-Browser Rust Execution Layer                │ │
-│  │  - Static analyzer (syn-based) for shape checks          │ │
-│  │  - rustc_codegen_cranelift-via-wasm OR remote eval (TBD) │ │
-│  │  - Sandboxed runner with stdout/stderr capture           │ │
-│  └──────────────────────────────────────────────────────────┘ │
-│                                                                │
-│  ┌──────────────────────────────────────────────────────────┐ │
-│  │  Persistence (eframe::Storage → localStorage on WASM)    │ │
-│  └──────────────────────────────────────────────────────────┘ │
-└──────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                       Rusty (eframe, native)                          │
+│                                                                        │
+│  ┌──────────────────────────┐   ┌──────────────────────────────┐   │
+│  │   Lesson pane (left)     │   │   Workspace pane (right)     │   │
+│  │                          │   │                              │   │
+│  │   - prose                │   │   ┌──────────────────────┐  │   │
+│  │   - recall prompts       │   │   │   File tree         │  │   │
+│  │   - "now run →           │   │   ├──────────────────────┤  │   │
+│  │       cargo run"         │   │   │   Code editor       │  │   │
+│  │   - annotation of last   │   │   │   (real files,       │  │   │
+│  │     terminal output      │   │   │    real on-disk      │  │   │
+│  │   - hint button          │   │   │    edits)            │  │   │
+│  │                          │   │   ├──────────────────────┤  │   │
+│  │                          │   │   │   Embedded terminal │  │   │
+│  │                          │   │   │   (PTY → real shell │  │   │
+│  │                          │   │   │    in sandbox dir)  │  │   │
+│  └──────────────────────────┘   │   └──────────────────────┘  │   │
+│                                  └──────────────────────────────┘   │
+│                                                                        │
+│  Sandbox: <rusty-repo>/workspace/lessons/<lesson-id>/                │
+│  ↑ a real cargo project on disk: real Cargo.toml, real src/         │
+└─────────────────────────────────────────────────────────────────────┘
+        │                      │                       │
+        │ spawns               │ reads/writes          │ parses
+        ▼                      ▼                       ▼
+  real `cargo`,            real files in         `cargo --message-
+  `rustc`,                 workspace/lessons/    format=json` stream
+  `rust-analyzer`                                 (for annotations)
 ```
 
-### The "in-browser Rust execution" question
-
-This is the **single hardest architectural decision** and you must surface it in your first clarifying-questions batch. Three options, in increasing order of ambition:
-
-**Option A — Pattern-match grader (lowest risk).** Use `syn` (compiled to WASM) to parse the learner's submitted code into an AST and check structural properties: "did they call `iter().map()`?", "is this function pure?", "does this match expected signature?". Compilation and execution happen *conceptually* but not literally. Exercises are designed to be graded by AST shape and unit-test-like assertions over expected output strings the learner provides.
-
-  - **Pro:** Trivially achievable. `syn` works in WASM today. Ships in MVP.
-  - **Con:** Doesn't actually run the code. Learners can't see runtime output of their own programs. Borrow-checker errors can't be shown for arbitrary code.
-
-**Option B — Hosted compile endpoint (medium risk, breaks "no backend" rule).** Send code to a sandboxed `rustc` instance. The Rust Playground does this. We could embed a thin client.
-
-  - **Pro:** Full real-rustc errors. Real execution.
-  - **Con:** Violates Section 0 constraint #5 (no backend). Defer to Phase 3+.
-
-**Option C — `rustc` in WASM (highest risk, true to spec).** Compile `rustc` itself to WASM, or use `rustc_codegen_cranelift` + a WASM-hosted Cranelift to compile learner code to WASM in the browser, then execute it in a nested WASM sandbox.
-
-  - **Pro:** True 100% Rust + WASM. No backend. Real compiler.
-  - **Con:** As of mid-2026, this is research-tier. `rustc` is a multi-hundred-MB compiler. Cranelift-as-WASM exists in experimental form but the toolchain is fragile. Bundle size will blow past the 5 MB target unless we ship `rustc` as a separately-loaded chunk.
-
-**Default recommendation for MVP:** Option A, with the architecture designed so Option C can replace the executor module without touching the rest of the app. The `Executor` trait abstracts this:
-
-```rust
-pub trait Executor: Send + Sync {
-    fn analyze(&self, code: &str, exercise: &Exercise) -> AnalysisResult;
-    fn execute(&self, code: &str, stdin: &str) -> ExecutionResult;
-}
-
-pub struct SynPatternExecutor;       // Phase 1 default
-pub struct PlaygroundExecutor;       // Phase 3 optional
-pub struct CraneliftWasmExecutor;    // Phase 4+ research
-```
-
-**Confirm this decision with the user before writing any executor code.**
-
-### Core crate layout
+### Crate layout
 
 ```
 rusty/
-├── Cargo.toml                  # workspace
+├── Cargo.toml                      # workspace
 ├── rust-toolchain.toml
+├── install.sh                      # bootstrap (Unix)
+├── install.ps1                     # bootstrap (Windows)
 ├── crates/
-│   ├── rusty-app/            # eframe binary, native + wasm targets
-│   ├── rusty-curriculum/     # typed lesson/exercise model + content loader
-│   ├── rusty-scheduler/      # SM-2-lite spaced repetition
-│   ├── rusty-executor/       # trait + SynPatternExecutor impl
-│   ├── rusty-grader/         # exercise grading rules
-│   └── rusty-pedagogy/       # research citations + helpers, kept honest
+│   ├── rusty-app/                  # eframe binary
+│   ├── rusty-curriculum/           # typed lesson model + loader
+│   ├── rusty-scheduler/            # SM-2-lite spaced repetition
+│   ├── rusty-grader/               # cargo-test-based grading + AST hints
+│   ├── rusty-pedagogy/             # research citations + helpers
+│   ├── rusty-host/                 # PTY, cargo subprocess, file I/O
+│   └── rusty-terminal/             # ANSI/VT100 rendering on egui
 ├── content/
-│   └── lessons/                # .toml-fronted .md lesson files
-├── assets/                     # fonts, icons (egui-loadable)
-├── web/
-│   ├── index.html              # trunk template
-│   └── style.css               # minimal, egui handles most
+│   └── lessons/
+│       └── foundations-01-hello/
+│           ├── lesson.toml         # metadata, prose, recall, exercises
+│           ├── starter/            # cargo project as it begins
+│           │   ├── Cargo.toml
+│           │   └── src/main.rs
+│           └── solution/           # for hint reveal + grader reference
+│               └── src/main.rs
+├── workspace/                      # learner sandbox (gitignored)
+│   └── lessons/                    # populated on first open per lesson
+├── assets/                         # fonts, mascot SVGs
 └── docs/
     ├── ARCHITECTURE.md
-    ├── PEDAGOGY.md             # the research, citations, application
-    └── CONTENT_AUTHORING.md
+    ├── PEDAGOGY.md
+    ├── CONTENT_AUTHORING.md
+    └── INSTALL.md
 ```
+
+### The three subprocess relationships
+
+The architecture rests on three subprocess interactions, all owned by `rusty-host`:
+
+**1. PTY-attached shell.** A persistent shell process wired to a terminal widget in the egui UI. `cwd` locked to `<rusty-repo>/workspace/lessons/<current-lesson>/`. The learner can type any command, but `cd ..` past the sandbox root is intercepted and refused with a friendly message.
+
+Use the `portable-pty` crate for cross-platform PTY (abstracts macOS/Linux unix pty and Windows ConPTY). For ANSI rendering, evaluate `egui_term` first; if it's not mature enough at build time, roll a thin VT100 renderer using `vte` for escape-sequence parsing and egui's text widgets for rendering. Decide in the Phase 1 spike.
+
+**2. `cargo` invocations for grading.** When the learner clicks "Check," Rusty spawns `cargo test --message-format=json` in the sandbox, captures the JSON diagnostic stream, parses it via the `cargo_metadata` crate, and runs the grader against the result. Separate subprocess from the PTY shell; invisible to the learner.
+
+**3. `rust-analyzer` as an LSP subprocess.** Spawned once per session, kept alive, talked to over JSON-RPC. Rusty consumes diagnostics, hover info, and completions, and renders them inside the egui code editor — squiggles in the gutter, type info on hover, autocomplete on `.`. This is what makes editing feel alive *before* the learner ever hits Run.
+
+This three-process model is the entire executor story. There is no `SynPatternExecutor`, no rubrc, no hosted endpoint, no rust-in-WASM gymnastics. The compiler is on disk; we just talk to it.
+
+### Sandbox enforcement
+
+The PTY shell's `cwd` is the learner's lesson directory. Three layers of sandbox enforcement:
+
+1. **`cwd` is set explicitly** when the PTY is spawned and on each lesson change.
+2. **`cd` command interception:** Rusty parses input lines before forwarding to the PTY. If a line starts with `cd ` and the resolved target is outside the sandbox root, it's rejected with a message: *"Rusty's terminal stays inside the lesson directory. Try `cd .` to see where you are."*
+3. **Path validation on every file operation** the app does. The grader, the file tree, the editor — all refuse paths outside the sandbox.
+
+This is sandbox-as-good-UX, not sandbox-as-security. A determined learner can escape via shell tricks; that's fine. The goal is to keep accidental wandering inside the safe zone, not to imprison.
 
 ---
 
 ## 3. Curriculum Data Model
 
-The model is typed Rust, not free-form Markdown. Content lives in TOML-fronted Markdown files but is deserialized into these types at load time.
+Lessons live as `lesson.toml` + a real cargo project on disk. Loaded into typed Rust at runtime.
 
 ```rust
 pub struct Lesson {
-    pub id: LessonId,                    // e.g. "ownership-01-moves"
+    pub id: LessonId,                    // "foundations-01-hello"
     pub title: String,
-    pub track: Track,                    // Foundations, Intermediate, etc.
+    pub track: Track,
     pub prereqs: Vec<LessonId>,
     pub estimated_minutes: u8,
     pub concepts: Vec<Concept>,          // 3–5 atomic concepts
-    pub body: Vec<Block>,                // prose, code, callouts
-    pub recall_prompt: RecallPrompt,     // mandatory before exercises
+    pub body: Vec<Block>,                // prose, code, callouts, "now run X" prompts
+    pub recall_prompt: RecallPrompt,
     pub exercises: Vec<Exercise>,
-    pub further_reading: Vec<Reference>, // from the resources list
+    pub starter_project: PathBuf,        // relative to lesson dir
+    pub solution_project: PathBuf,
+    pub further_reading: Vec<Reference>,
 }
 
 pub struct Concept {
     pub id: ConceptId,                   // tracked individually for SRS
-    pub claim: String,                   // one-sentence statement
+    pub claim: String,
     pub why_it_matters: String,
     pub common_misconception: Option<String>,
 }
 
 pub enum Exercise {
-    Worked(WorkedExample),               // annotated read-through
-    Faded(FadedExample),                 // fill blanks
+    Worked(WorkedExample),
+    Faded(FadedExample),                 // edit real src/ with TODO markers
     Open(OpenChallenge),                 // write from scratch
-    PredictThenRun(PredictExercise),     // productive failure
+    PredictThenRun(PredictExercise),
 }
 
-pub struct PredictExercise {
-    pub code: String,
-    pub question: String,                // "What does this print?"
-    pub correct_answer: AnswerSpec,
-    pub reveal_after: RevealMode,        // immediate | after-attempt
-    pub explanation: String,             // shown after answer
+pub struct FadedExample {
+    pub file_path: PathBuf,              // within sandbox
+    pub todo_markers: Vec<TodoMarker>,   // line ranges, expected shape
+    pub check_command: String,           // typically "cargo test"
+    pub success_criterion: SuccessCriterion,
+}
+
+pub enum SuccessCriterion {
+    CargoTestPasses,
+    CargoRunOutputMatches(String),
+    AstShape(AstRule),                   // for style enforcement
+    All(Vec<SuccessCriterion>),
 }
 ```
 
-The `Exercise` enum is the heart of the pedagogical model. Each lesson must contain at least one exercise of *each* variant to enforce the Worked → Faded → Open progression.
+The exercise enum is the pedagogical commitment encoded in types. Each lesson must contain at least one of each Worked/Faded/Open variant.
 
 ---
 
@@ -234,35 +283,52 @@ The `Exercise` enum is the heart of the pedagogical model. Each lesson must cont
 
 Build **one complete track** — *Foundations* — to validate the system. Eight lessons:
 
-1. **Hello, compiler.** What `cargo run` actually does. Reading your first compile error.
+1. **Hello, compiler.** What `cargo new`, `cargo build`, `cargo run` actually do. Reading your first error.
 2. **Variables, mutability, shadowing.** Why immutable-by-default.
-3. **Ownership basics: move semantics.** The single hardest concept; budget two lessons.
-4. **Ownership continued: borrows and lifetimes (informal).** No `'a` syntax yet.
+3. **Ownership basics: move semantics.** Hardest concept; budget two lessons.
+4. **Borrows and lifetimes (informal).** No `'a` syntax yet.
 5. **Structs and methods.**
-6. **Enums and pattern matching.** `Option<T>` introduced here, not earlier.
+6. **Enums and pattern matching.** `Option<T>` introduced here.
 7. **Error handling with `Result<T, E>` and `?`.**
-8. **Collections: `Vec`, `String`, `HashMap`.** And iterators as a teaser for the next track.
+8. **Collections: `Vec`, `String`, `HashMap`.** Iterators as teaser for next track.
 
-Each lesson: ~5 minutes of reading, 3 exercises minimum (one of each Worked/Faded/Open), one PredictThenRun, one recall prompt.
+Each lesson: ~5 minutes of reading, 3 exercises minimum (Worked + Faded + Open), one PredictThenRun, one recall prompt, ~10–15 minutes total.
 
-After this track ships, content scales by authoring more TOML files — no code changes.
+After Foundations ships, content scales by authoring more lesson directories — no code changes.
 
 ---
 
-## 5. In-App Execution Model (MVP — Option A details)
+## 5. Grading Model
 
-The `SynPatternExecutor` works like this:
+The grader's primary mechanism is real `cargo test`. Secondary mechanisms hint at style.
 
-1. Learner types code into an egui code editor (`egui_extras::syntax_highlighting` for Rust).
-2. On "Check" press, code is parsed with `syn::parse_file`.
-3. `Grader` runs the exercise's rule set against the AST:
-    - **Structural rules:** `must_contain_fn("foo")`, `must_use_iter_adapter("map")`, `must_not_use_clone()`, `must_match_signature(...)`.
-    - **Token rules:** `forbidden_tokens(["unsafe"])`, `required_tokens(["match"])`.
-    - **Shape rules:** `function_is_pure("foo")`, `no_unwrap_outside_main()`.
-4. For `PredictThenRun`, the learner submits the *predicted output*, not code. Grader is a string comparator with whitespace tolerance.
-5. Compiler-style feedback: graders return structured `Diagnostic` values rendered in egui to look and feel like `rustc` output (same color scheme, same arrow underlines, same "help:" lines).
+### Primary: cargo test
 
-The diagnostic renderer is **the most important UX surface in the app.** Get it right early. It is the operationalization of pedagogy thesis 1.5.
+Every Faded and Open exercise has a `tests/` directory in its starter project. The grader spawns `cargo test --message-format=json` and parses the result.
+
+- **All tests pass** → exercise complete, advance.
+- **Some tests fail** → show which, render `rustc`'s real diagnostic in the lesson pane's annotation area, suggest re-reading the relevant concept.
+- **Compile error** → don't even reach tests; render the compile error prominently, annotate it with the matching concept ("this is error E0382 — see Lesson 3 on move semantics").
+
+### Secondary: AST hints
+
+For style and idiom feedback (not pass/fail), parse the learner's submission with `syn` and run optional checks:
+
+- "You solved it with a loop; the idiomatic Rust solution uses `.iter().sum()`. Want to see?"
+- "You used `.unwrap()`; this works but the lesson on error handling will show you why `?` is better here."
+
+AST hints **never block advancement.** They are post-success suggestions.
+
+### Compiler error mapping
+
+Maintain a curated map of `rustc` error codes (E0382, E0502, E0106, etc.) to the lesson that teaches the relevant concept. When the grader sees a known error code, the annotation pane links to the lesson:
+
+```
+error[E0382]: borrow of moved value: `s`
+   ↑ this is Lesson 3 ("Ownership Basics") — open it
+```
+
+The map starts small (covers Foundations errors only) and grows as tracks are added.
 
 ---
 
@@ -272,91 +338,110 @@ Each phase ends with a working, demonstrable app. Don't start the next phase unt
 
 ### Phase 0 — Spec lock and skeleton (target: 1 day)
 - Read this prompt fully. Surface clarifying questions in **one batch**.
-- Confirm Executor decision (default to Option A unless user overrides).
-- Create the workspace skeleton (all crates, empty libs).
-- `cargo check` and `trunk build` both succeed with empty UI ("Rusty" title only).
+- Confirm three-process architecture and PTY library choice (default: `portable-pty`).
+- Decide ANSI renderer: try `egui_term` first; fall back to `vte` + custom egui widget.
+- Create workspace skeleton — all crates, empty libs.
+- `cargo check` passes across workspace.
 - Commit: `chore: workspace skeleton`.
 
-### Phase 1 — Curriculum model + one lesson (target: 2–3 days)
-- Implement `rusty-curriculum` types and TOML+Markdown loader.
-- Author lesson 1 ("Hello, compiler.") as a single content file.
-- Implement minimal lesson renderer in egui — just prose and code blocks.
-- App displays lesson 1. No exercises yet, no execution.
+### Phase 1 — PTY spike + sandboxed shell (target: 3–5 days)
+- Implement `rusty-host`'s PTY layer: spawn a shell, attach stdin/stdout, ANSI-render output in an egui panel.
+- Verify `cargo run --version` works inside the embedded terminal.
+- Verify ANSI colors render correctly (`ls --color=always` is a good test).
+- Implement sandbox `cwd` lock and `cd ..` interception.
+- App opens, shows an empty lesson pane on the left and a working terminal on the right.
+- **This phase de-risks the entire project. If PTY rendering doesn't work cleanly, stop and reconsider before Phase 2.**
+- Commit: `feat(host): embedded PTY with sandbox enforcement`.
+
+### Phase 2 — Curriculum model + lesson 1 (target: 2–3 days)
+- Implement `rusty-curriculum` types and `lesson.toml` + Markdown loader.
+- Author lesson 1 (`foundations-01-hello`): `lesson.toml`, `starter/`, `solution/`.
+- Implement lesson renderer in the left pane: prose, code blocks, "now run →" prompts.
+- On lesson open, `starter/` is copied into `workspace/lessons/foundations-01-hello/`, the terminal's `cwd` updates, the file tree displays it.
+- Learner can read lesson 1 and type `cargo run` in the terminal to see output.
 - Commit: `feat(curriculum): lesson model + lesson 1 renders`.
 
-### Phase 2 — Exercise runner + `SynPatternExecutor` (target: 3–5 days)
-- Implement `Executor` trait and `SynPatternExecutor`.
-- Implement `Grader` with the rules listed in Section 5.
-- Implement the `rustc`-style `Diagnostic` renderer (this is its own little project — give it attention).
-- Add three exercises to lesson 1: one Worked, one Faded, one Open.
-- All three are completable in-app.
-- Commit: `feat(executor): syn-based grading with rustc-style diagnostics`.
+### Phase 3 — Editor + grader + diagnostics (target: 4–6 days)
+- Add `egui` code editor for the workspace files. Syntax highlighting via `egui_extras::syntax_highlighting` or `syntect`.
+- Implement `rusty-grader` with `cargo test --message-format=json` parsing via `cargo_metadata`.
+- Build the compiler-error-to-lesson map for Foundations error codes.
+- Implement the annotation pane: when grading runs, the lesson pane shows the result with concept links.
+- Add three exercises to lesson 1 (Worked + Faded + Open). All completable in-app.
+- Commit: `feat(grader): cargo-test grading with annotated diagnostics`.
 
-### Phase 3 — Recall, scheduling, persistence (target: 3 days)
-- Implement `RecallPrompt` (multiple-choice + short-answer).
-- Implement `rusty-scheduler` with SM-2-lite. Concepts have `ease`, `interval_days`, `due_at` per learner.
-- Implement persistence via `eframe::Storage`. Verify it survives page reload on WASM.
-- Add a "Due Reviews" landing screen that appears before new lessons if reviews are due.
+### Phase 4 — rust-analyzer integration (target: 3–5 days)
+- Spawn `rust-analyzer` as an LSP subprocess from `rusty-host`.
+- Implement minimal LSP client: `textDocument/didOpen`, `didChange`, `publishDiagnostics`, `hover`, `completion`.
+- Render diagnostics as gutter squiggles in the code editor.
+- Render hover info on cursor hover.
+- Wire completions to autocomplete on `.`.
+- **This is the phase that makes Rusty feel alive.** Before it, the learner edits and waits for grading. After it, errors appear as they type.
+- Commit: `feat(lsp): rust-analyzer integration with live diagnostics`.
+
+### Phase 5 — Recall, scheduling, persistence (target: 3 days)
+- Implement `RecallPrompt` rendering and grading.
+- Implement `rusty-scheduler` with SM-2-lite. Concepts have `ease`, `interval_days`, `due_at`.
+- Persist progress to `<rusty-repo>/.rusty-state/progress.json` (gitignored).
+- Add a "Due Reviews" landing screen that appears before new lessons when reviews are due.
 - Commit: `feat(scheduler): spaced repetition + persistence`.
 
-### Phase 4 — Content fill: lessons 2–8 (target: 5–7 days)
-- Author the remaining seven Foundations lessons in TOML+Markdown.
-- For each: 3+ exercises, 1 PredictThenRun, 1 recall prompt, prereqs wired correctly.
-- Run through the whole track yourself once before declaring done.
+### Phase 6 — Content fill: lessons 2–8 (target: 5–7 days)
+- Author the remaining seven Foundations lessons.
+- Each: `lesson.toml`, real `starter/` and `solution/` cargo projects, 3+ exercises, 1 PredictThenRun, 1 recall prompt, prereqs wired.
+- Walk through the full track yourself before declaring done.
 - Commit per lesson: `content(lesson-N): <title>`.
 
-### Phase 5 — Polish and ship (target: 2–3 days)
-- Bundle size audit: `wasm-opt -Oz`, measure, optimize.
-- Keyboard navigation pass: every interactive element reachable.
-- Screen-reader labels via egui's accessibility hooks.
-- `docs/CONTENT_AUTHORING.md` so future lessons can be added without touching app code.
-- GitHub Actions: build, test, deploy to GitHub Pages.
-- README with screenshots and link to live demo.
+### Phase 7 — Bootstrap + polish + ship (target: 3–4 days)
+- Write `install.sh` and `install.ps1`. Test on clean machines (or VMs) for all three OSes.
+- Bootstrap detection logic: clean, friendly, never silent on Rust install.
+- Keyboard navigation pass: every interactive element reachable without mouse.
+- Mascot illustration (see Section 12).
+- README with screenshots, install instructions, "what is this" framing.
+- GitHub Actions: build + test on Linux/macOS/Windows on every push.
 - Commit: `chore: ship MVP`.
 
-### Phase 6+ — Deferred
-- Option B or C executor.
-- More tracks (Intermediate, Async, Macros).
-- LLM-assisted explanations.
+### Phase 8+ — Deferred
+
+- More tracks (Intermediate, Async, Macros, WASM-as-topic).
 - Community-contributed lessons.
+- LLM-assisted lesson hints.
+- Optional stripped-down browser preview (if the curriculum/scheduler/grader crates stayed portable).
 
 ---
 
 ## 7. Reference Material
 
-These are the resources Rusty draws from. Use them as primary sources when authoring lesson content and when designing exercises. Lesson `further_reading` fields should cite specific sections of these.
+These are the resources Rusty draws from. Use as primary sources when authoring lesson content and exercises. Lesson `further_reading` fields should cite specific sections.
 
 ### Canonical Rust resources
 
 **Books and official docs:**
 
 - The Rust Programming Language ("the Book") — https://doc.rust-lang.org/book/
-- Brown University interactive Book — https://rust-book.cs.brown.edu/ — *Especially relevant: this is itself a research-backed Rust teaching tool. Study its "ownership inventory" visualizations and quiz patterns; Rusty should be at least as rigorous.*
+- Brown University interactive Book — https://rust-book.cs.brown.edu/ — *Itself a research-backed Rust teaching tool. Study its "ownership inventory" visualizations and quiz patterns.*
 - Rust by Example — https://doc.rust-lang.org/rust-by-example/
-- Rustlings — https://github.com/rust-lang/rustlings — *The closest existing thing to what Rusty is. Study its exercise structure; do not copy it. Rusty's edge is in-app execution and spaced repetition.*
-- Programming Rust (Blandy/Orendorff/Tindall, 2nd ed., O'Reilly) — paid, used as a sanity check on technical claims
-- Rust for Rustaceans (Gjengset) — intermediate; informs Phase 6+ tracks
+- Rustlings — https://github.com/rust-lang/rustlings — *The closest existing thing to Rusty. Study its exercise structure and hint system. Rusty's edge over Rustlings: integrated terminal, spaced repetition, lesson scaffolding, mascot personality.*
+- Programming Rust (Blandy/Orendorff/Tindall, 2nd ed., O'Reilly) — sanity check on technical claims
+- Rust for Rustaceans (Gjengset) — informs Phase 8+ tracks
 - Rust Atomics and Locks (Mara Bos) — https://marabos.nl/atomics/ — for the eventual concurrency track
 - The Rust Reference — https://doc.rust-lang.org/reference/
 - The Rustonomicon — https://doc.rust-lang.org/nomicon/
 - The Cargo Book — https://doc.rust-lang.org/cargo/
 - The Little Book of Rust Macros — https://veykril.github.io/tlborm/
 - Rust Design Patterns — https://rust-unofficial.github.io/patterns/
-- Rust and WebAssembly book — https://rustwasm.github.io/docs/book/ — *Read before Phase 0; informs the trunk+wasm-bindgen setup.*
-- `wasm-bindgen` guide — https://rustwasm.github.io/wasm-bindgen/
 - Crafting Interpreters (Nystrom) — https://craftinginterpreters.com/ — *Lesson design inspiration; Nystrom's progressive disclosure is the bar.*
 
-**Reading newsletters and blogs:**
+**Reading + blogs:**
 
 - This Week in Rust — https://this-week-in-rust.org/
 - Without Boats — https://without.boats/
 - fasterthanli.me (Amos) — https://fasterthanli.me/
-- Niko Matsakis's blog — https://smallcultfollowing.com/babysteps/
+- Niko Matsakis — https://smallcultfollowing.com/babysteps/
 
-### Repositories to study (and what to take from each)
+### Repositories to study
 
 **For learn-by-doing patterns:**
-- rust-lang/rustlings — https://github.com/rust-lang/rustlings — exercise difficulty curve, hint system
+- rust-lang/rustlings — https://github.com/rust-lang/rustlings — exercise curve, hint system, completion detection
 - rust-lang/rust-by-example — https://github.com/rust-lang/rust-by-example — minimal-example pedagogy
 
 **For idiomatic Rust to model lesson examples on:**
@@ -366,29 +451,38 @@ These are the resources Rusty draws from. Use them as primary sources when autho
 - clap-rs/clap — https://github.com/clap-rs/clap
 - tokio-rs/mini-redis — https://github.com/tokio-rs/mini-redis
 
-**For algorithms in readable form (cite in lessons; use as worked-example sources):**
-- EbTech/rust-algorithms — https://github.com/EbTech/rust-algorithms — *Whitebox cookbook. When a lesson needs a concrete algorithm example, prefer EbTech's version over petgraph's generic one for readability.*
+**For algorithms in readable form (cite in lessons):**
+- EbTech/rust-algorithms — https://github.com/EbTech/rust-algorithms — *Whitebox cookbook. When a lesson needs a concrete algorithm example, prefer EbTech's version over petgraph's for readability.*
 
-**For the eframe/egui app shell itself:**
-- emilk/egui — https://github.com/emilk/egui — *Primary dependency. Read `egui_demo_app` to see best-practice patterns. Study the immediate-mode state model before writing any UI code.*
-- emilk/eframe_template — https://github.com/emilk/eframe_template — *Use as the bootstrap template for the `rusty-app` crate.*
+**For the eframe/egui app shell (CORE DEPENDENCY — emilk):**
+- emilk/egui — https://github.com/emilk/egui — *Primary UI dependency. Read `egui_demo_app` for best-practice patterns. Study the immediate-mode state model before writing any UI code.*
+- emilk/eframe_template — https://github.com/emilk/eframe_template — *Use as the bootstrap template for `rusty-app`. Strip the WASM scaffolding; we don't need it.*
 
-**For parsing learner code (Executor implementation):**
+**For the embedded terminal (Phase 1 — high-risk):**
+- wez/wezterm — https://github.com/wezterm/wezterm — *Pure-Rust terminal emulator. Reference implementation for PTY + ANSI rendering. Not a direct dependency; a model.*
+- alacritty/alacritty — https://github.com/alacritty/alacritty — *Same idea, OpenGL-based. Reference only.*
+- alacritty/vte — https://github.com/alacritty/vte — **direct dependency for ANSI escape parsing.**
+- wezterm/wezterm/pty — packaged as `portable-pty` on crates.io — **direct dependency for cross-platform PTY.**
+- a-b-street/egui_term — search latest; evaluate maturity in Phase 0.
+
+**For parsing learner code (grader AST hints):**
 - dtolnay/syn — https://github.com/dtolnay/syn
-- chumsky-parser/chumsky — https://github.com/zesterer/chumsky — *only if syn proves insufficient*
+- oli-obk/cargo_metadata — https://github.com/oli-obk/cargo_metadata — **direct dependency for `cargo --message-format=json` parsing.**
 
-**For the diagnostic renderer:**
-- rust-lang/annotate-snippets-rs — https://github.com/rust-lang/annotate-snippets-rs — *This is the crate `rustc` itself uses to format diagnostics. Use it directly if it compiles to WASM; otherwise mimic its output format pixel-for-pixel.*
+**For the LSP integration (Phase 4):**
+- rust-lang/rust-analyzer — https://github.com/rust-lang/rust-analyzer — runtime dependency (subprocess), not a Rust dep
+- ebkalderon/tower-lsp — https://github.com/ebkalderon/tower-lsp — *LSP client patterns; we're a client not a server but the protocol structures are the same*
+- gluon-lang/lsp-types — https://github.com/gluon-lang/lsp-types — **direct dependency for typed LSP messages.**
 
 **For error handling:**
 - dtolnay/anyhow — https://github.com/dtolnay/anyhow
 - dtolnay/thiserror — https://github.com/dtolnay/thiserror
 
-**For incremental computation (Phase 6+; informs grading caching):**
-- salsa-rs/salsa — https://github.com/salsa-rs/salsa
-- leptos-rs/leptos — https://github.com/leptos-rs/leptos — reactive primitives reference
+**For lesson content loading:**
+- toml-rs/toml — frontmatter parsing
+- raphlinus/pulldown-cmark — Markdown rendering for lesson prose
 
-**For graph and data-structure needs in lessons:**
+**For graph / data structures in lesson examples:**
 - petgraph/petgraph — https://github.com/petgraph/petgraph
 - crossbeam-rs/crossbeam — https://github.com/crossbeam-rs/crossbeam
 - rayon-rs/rayon — https://github.com/rayon-rs/rayon
@@ -398,85 +492,92 @@ These are the resources Rusty draws from. Use them as primary sources when autho
 
 ### Pedagogy research (cite in `docs/PEDAGOGY.md`)
 
-- Roediger, H. L., & Karpicke, J. D. (2006). Test-enhanced learning: Taking memory tests improves long-term retention. *Psychological Science*, 17(3), 249–255.
-- Cepeda, N. J., Pashler, H., Vul, E., Wixted, J. T., & Rohrer, D. (2006). Distributed practice in verbal recall tasks: A review and quantitative synthesis. *Psychological Bulletin*, 132(3), 354–380.
-- Sweller, J. (1988). Cognitive load during problem solving: Effects on learning. *Cognitive Science*, 12(2), 257–285.
-- Renkl, A., & Atkinson, R. K. (2003). Structuring the transition from example study to problem solving in cognitive skill acquisition: A cognitive load perspective. *Educational Psychologist*, 38(1), 15–22.
+- Roediger, H. L., & Karpicke, J. D. (2006). Test-enhanced learning. *Psychological Science*, 17(3), 249–255.
+- Cepeda, N. J., Pashler, H., Vul, E., Wixted, J. T., & Rohrer, D. (2006). Distributed practice in verbal recall tasks. *Psychological Bulletin*, 132(3), 354–380.
+- Sweller, J. (1988). Cognitive load during problem solving. *Cognitive Science*, 12(2), 257–285.
+- Renkl, A., & Atkinson, R. K. (2003). Structuring the transition from example study to problem solving. *Educational Psychologist*, 38(1), 15–22.
 - Kapur, M. (2008). Productive failure. *Cognition and Instruction*, 26(3), 379–424.
 - Shute, V. J. (2008). Focus on formative feedback. *Review of Educational Research*, 78(1), 153–189.
-- Bjork, R. A., & Bjork, E. L. (1992). A new theory of disuse and an old theory of stimulus fluctuation. *From Learning Processes to Cognitive Processes*. (For the "desirable difficulties" framework.)
-- Wozniak, P. A. (1990). Optimization of learning. *Master's thesis.* (Origin of SM-2.)
+- Bjork, R. A., & Bjork, E. L. (1992). A new theory of disuse and an old theory of stimulus fluctuation. *From Learning Processes to Cognitive Processes*. (For "desirable difficulties.")
+- Wozniak, P. A. (1990). *Optimization of learning.* Master's thesis. (Origin of SM-2.)
+- Brown, J. S., Collins, A., & Duguid, P. (1989). Situated cognition and the culture of learning. *Educational Researcher*, 18(1), 32–42.
+- Lave, J., & Wenger, E. (1991). *Situated Learning: Legitimate Peripheral Participation.* Cambridge University Press.
 
 ---
 
 ## 8. Acceptance Criteria
 
-The MVP is "done" when *all* of the following hold:
+MVP is "done" when all of these hold:
 
-1. `cargo run -p rusty-app` opens a native window showing Rusty.
-2. `trunk serve` serves the WASM build, which loads in Chrome, Firefox, and Safari with no console errors.
-3. Bundle is < 5 MB gzipped.
-4. All eight Foundations lessons render with their full content.
-5. Every exercise in every lesson is completable in-app, with grading feedback rendered in `rustc`-style.
-6. Spaced repetition reviews appear correctly after their intervals (test with system clock manipulation, not real-time waiting).
-7. Progress survives page reload.
-8. Keyboard-only completion of any lesson is possible.
-9. `docs/PEDAGOGY.md` cites every research claim with a real reference. Any claim that can't be cited is flagged or removed.
-10. `docs/CONTENT_AUTHORING.md` enables a non-Rust author to add a ninth lesson without touching app code, and the lesson loads correctly.
-11. GitHub Actions workflow builds and deploys to GitHub Pages on push to `main`.
-12. `cargo test` passes across all crates. Curriculum loader has property tests. Grader has unit tests for every rule type.
+1. `git clone` + `./install.sh` on a clean macOS, Linux, and Windows machine completes successfully and launches Rusty.
+2. The install script detects missing Rust, asks consent, and runs rustup if confirmed. Declining exits cleanly.
+3. Rusty's main window opens with a working embedded terminal that can run `cargo --version` and render ANSI color.
+4. The terminal's `cwd` is locked to the active lesson's sandbox. `cd /` is intercepted and refused.
+5. All eight Foundations lessons render and are walkable end-to-end.
+6. Each lesson's three exercises (Worked + Faded + Open) are completable, with `cargo test`-based grading rendering real `rustc` diagnostics.
+7. rust-analyzer integration: editing a file shows squiggles for real errors within < 2 seconds.
+8. Spaced repetition reviews appear after their intervals (test by clock manipulation).
+9. Progress survives app restart.
+10. Keyboard-only completion of any lesson is possible.
+11. `docs/PEDAGOGY.md` cites every research claim with a real reference.
+12. `docs/CONTENT_AUTHORING.md` enables a non-Rust author to add a ninth lesson by creating one directory.
+13. GitHub Actions builds + tests on all three OSes on push to `main`.
+14. `cargo test` passes across all crates. Grader has unit tests for every `SuccessCriterion` variant. Curriculum loader has property tests.
 
 ---
 
 ## 9. Working Style for Claude Code
 
-This is how to execute. These map to the user's working preferences and the Sprint Loops methodology.
+Maps to user preferences and Sprint Loops methodology.
 
-1. **Read this prompt entirely before writing any code.** Yes, the whole thing.
-2. **Surface clarifying questions in ONE batch up front.** Do not drip them across the session. The user is time-constrained (15-month-old at home).
-3. **Confirm the Executor decision explicitly** before any executor code is written. Default to Option A but ask.
-4. **Phase boundaries are commit points.** Do not advance to phase N+1 until phase N's deliverable runs end-to-end.
-5. **Use real crate versions, not placeholders.** Check `crates.io` for current versions; don't guess.
-6. **No `todo!()` or `unimplemented!()` macros in committed code** unless explicitly marked as a deferred phase. If you find yourself wanting to stub, stop and ask.
-7. **Run the code.** Don't claim a phase is done without `cargo run` and `trunk serve` both succeeding.
-8. **Show compiler errors verbatim** when you hit them; do not paraphrase. The user reads `rustc` output fluently and wants the real text.
-9. **When unsure between two designs, present both with tradeoffs**, recommend one, then wait. The user will choose.
-10. **No flattery.** No "great question!" No "absolutely!" Get to the answer.
-11. **`[[wikilinks]]` in any markdown deliverable** — wrap project names (Rusty, Tescellate, Carbide), framework names (egui, eframe, trunk), and conceptual terms (Ownership, Borrow Checker, Spaced Repetition) in double-brackets. The user files all Claude output into an Obsidian vault and needs the link graph.
-12. **TOML or YAML frontmatter on every `.md` file you create.** Include `tags`, `project`, `related` (to other vault notes), and `status`.
-13. **The user learns by typing commands manually.** Do not run `cargo init` or `git init` for them in Phase 0. Tell them the exact command and wait. From Phase 1 onward, you may execute, but show the command first.
+1. **Read this prompt entirely before any code.**
+2. **Surface clarifying questions in ONE batch up front.** Don't drip them. User is time-constrained.
+3. **Confirm Phase 0 decisions explicitly** before Phase 1 begins. Especially PTY library and ANSI renderer.
+4. **Phase boundaries are commit points.** Don't advance until phase N runs end-to-end.
+5. **Use real crate versions, not placeholders.** Check `crates.io` for current versions before adding to `Cargo.toml`.
+6. **No `todo!()` or `unimplemented!()` in committed code** unless explicitly deferred. If you want to stub, stop and ask.
+7. **Run the code.** Don't claim phase done without launching the binary and clicking through.
+8. **Show compiler errors verbatim** when you hit them. User reads `rustc` output fluently and wants the real text.
+9. **When choosing between two designs, present both with tradeoffs, recommend one, wait.**
+10. **No flattery.** No "great question!" Get to the answer.
+11. **`[[wikilinks]]` in any markdown deliverable.** Wrap project names (Rusty, Tescellate, Carbide), framework names (egui, eframe, cargo, rust-analyzer), and conceptual terms (Ownership, Borrow Checker, Spaced Repetition, PTY, LSP) in double-brackets. User's vault needs the link graph.
+12. **TOML or YAML frontmatter on every `.md` file you create.** Include `tags`, `project`, `related`, `status`.
+13. **User learns by typing commands manually.** In Phase 0–1, show commands and wait for user to run them. From Phase 2 onward you may execute, but show the command first.
 
 ---
 
-## 10. First-Turn Checklist for Claude Code
+## 10. First-Turn Checklist
 
-When you receive this prompt, your **first response** should be exactly these three things in this order:
+Your first response must be exactly these three things in this order:
 
 1. **Restate the goal in three sentences.** Confirm understanding.
-2. **List your clarifying questions** as a batched, numbered list. Aim for under 10. Include the Executor decision (Section 2) as question 1.
-3. **State what you propose to do first** (which should be "create the workspace skeleton" once questions are answered).
+2. **List your clarifying questions** as a batched, numbered list. Aim for under 10. Include the PTY library choice and ANSI renderer decision as questions 1 and 2.
+3. **State what you propose to do first** (which should be "create the workspace skeleton" after questions are answered).
 
-Do not write any Rust code in the first turn. Do not create any files in the first turn. Wait for the user's answers.
+**Do not write any Rust code in the first turn. Do not create any files in the first turn. Wait for the user's answers.**
 
 ---
 
-## 11. Out-of-Scope Reminders (sanity tripwires)
+## 11. Tripwires (stop and reread this prompt if any of these happen)
 
-If you find yourself about to do any of these, stop and re-read this prompt:
-
-- Authoring lessons in HTML, JS, or any non-Rust UI framework.
-- Reaching for a JavaScript library because "it's easier in JS."
-- Adding a backend "just for the executor."
+- Authoring lessons in HTML, JS, or anything non-Rust.
+- Reaching for a JavaScript dependency because "it's easier in JS."
+- Adding a backend server.
+- Trying to compile Rust in the browser.
+- Bundling `rustc` with Rusty (we depend on the system toolchain).
+- Skipping the PTY spike to "get to the fun stuff."
 - Skipping a phase's commit point because "the next phase is small."
 - Stubbing the grader because "we'll grade properly later."
 - Writing pedagogy claims without a citation in `docs/PEDAGOGY.md`.
+- Letting native-only code (`std::process`, raw filesystem outside sandbox) leak into `rusty-curriculum`, `rusty-scheduler`, `rusty-grader`, or `rusty-pedagogy`. Those four stay portable; everything OS-dependent goes in `rusty-host`.
+- Allowing the embedded terminal to escape the sandbox.
 - Saying "great idea!" instead of just answering.
 
 ---
 
 ## 12. Mascot and Voice
 
-**Rusty is named after the user's dog: large, orange, presumably good.** This is not decoration — it is a constraint on voice and UX.
+**Rusty is named after the user's dog: large, orange, presumably good.** This is not decoration — it's a constraint on voice and UX.
 
 A large orange dog as the app's mascot implies a specific tone:
 
@@ -485,20 +586,20 @@ A large orange dog as the app's mascot implies a specific tone:
 - **Never judgmental about mistakes.** The borrow checker is already strict enough. Rusty (the app) is the part that's on the learner's side.
 - **Physically present in the UI, but never in the way.** A small idle illustration in a corner, an ear-perk on a correct answer, a head-tilt on an error. No barking pop-ups. No "Rusty wants to teach you about Lifetimes!" modals. Think Clippy's *opposite*.
 
-**Mascot deliverables for Phase 5 (polish):**
+**Mascot deliverables for Phase 7 (polish):**
 - A single SVG illustration of Rusty in three states: idle (sitting), happy (tail up, ears forward), thinking (head tilt). Hand-drawn or commissioned; do not generate with AI image tools — the user has a real dog and the mascot should look like *a* dog, not the median of all dogs.
-- A 16×16 favicon derived from the idle pose.
-- No animation in MVP. Static state transitions only. Animation is Phase 6+ and requires a real designer.
+- A 16×16 favicon derived from the idle pose (for the README and the GitHub repo).
+- No animation in MVP. Static state transitions only. Animation is Phase 8+.
 
 **Naming hygiene throughout the codebase:**
-- The crate prefix is `rusty-` (already in the layout).
-- The application title bar reads "Rusty — Learn Rust by Doing." Subtitle is optional and can be cut.
-- Error messages and UI copy refer to the app as "Rusty," not "the app" or "this tool." First person ("I noticed you...") is forbidden — it makes mascots creepy. Third-person observational ("Looks like the borrow checker isn't happy with line 4") is the voice.
+- Crate prefix is `rusty-` (already in the layout).
+- Application title bar reads "Rusty — Learn Rust by Doing." Subtitle optional.
+- Error messages and UI copy refer to the app as "Rusty," not "the app" or "this tool." First person ("I noticed you...") is forbidden — first-person mascots are uncanny. Third-person observational ("Looks like the borrow checker isn't happy with line 4") is the voice.
 - Do *not* anthropomorphize Rust the language as Rusty the dog. They are different entities. Rusty teaches Rust; Rusty is not Rust.
 
-### The actual architectural lesson hiding in here
+### The architectural lesson hiding in here
 
-The mascot constraint maps to a real architecture principle: **the app's personality should live in one file, not be scattered.** Create `crates/rusty-app/src/voice.rs` containing every user-facing string and every mascot-state trigger. When the user wants to change tone, translate to another language, or A/B test encouragement levels, it is one file. Push variability to the edges; keep the engine fixed. The `rusty-app` binary should be feature-complete after Phase 5 and never need to change to ship new content — if a Phase 6 lesson requires app-code changes, that's a signal the curriculum model in Section 3 has a missing degree of freedom; patch the model, don't special-case the lesson.
+The mascot constraint maps to a real architecture principle: **the app's personality lives in one file, not scattered.** Create `crates/rusty-app/src/voice.rs` containing every user-facing string and every mascot-state trigger. When the user wants to change tone, translate, or A/B test encouragement levels, it's one file. Push variability to the edges; keep the engine fixed. The `rusty-app` binary should be feature-complete after Phase 7 and never need to change to ship new content — if a Phase 8 lesson requires app-code changes, the curriculum model in Section 3 has a missing degree of freedom; patch the model, don't special-case the lesson.
 
 If you find yourself writing UI copy inline in an egui widget, stop and move it to `voice.rs`. Same for mascot state changes — they should be triggered by events emitted from the grader and scheduler, not by `if` statements in the renderer.
 
