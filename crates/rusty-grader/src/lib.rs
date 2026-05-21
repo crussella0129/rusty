@@ -1,21 +1,12 @@
-//! `rusty-grader` — exercise grading rules for Rusty.
+//! `rusty-grader` — turns captured `cargo` output into a grading [`Verdict`] and maps
+//! compiler error codes to the lessons that teach them.
 //!
-//! Phase 0 placeholder. The real grader (the `SuccessCriterion` evaluator over a
-//! parsed `cargo test --message-format=json` result, plus optional `syn`-based AST
-//! style hints) lands in Phase 3 (editor + grader + diagnostics).
-//!
-//! Portability contract: this crate grades *already-captured* cargo output passed in
-//! by `rusty-host`; it never spawns `cargo` itself. No `std::process` here.
+//! Portability contract: this crate is OS-portable. It parses *already-captured* cargo
+//! JSON/stdout (`cargo_metadata` is a pure parser, no process/FS) and never spawns
+//! cargo itself — `rusty-host` runs the subprocess and passes the output in (§11).
 
-/// Crate identity marker, replaced by the real grading types in Phase 3.
-pub const CRATE_NAME: &str = "rusty-grader";
+pub mod diagnostic;
+pub mod verdict;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_crate_name() {
-        assert_eq!(CRATE_NAME, "rusty-grader");
-    }
-}
+pub use diagnostic::{parse_diagnostics, Diag, Level, Span};
+pub use verdict::{grade_cargo_test, grade_run_output, verdict_from_diags, Verdict};

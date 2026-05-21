@@ -101,3 +101,9 @@
 - **Completed:** 2026-05-21T18:58:38Z
 - **Files modified:** `Cargo.toml`, `crates/rusty-app/{Cargo.toml,src/markdown.rs,src/lesson_view.rs,src/main.rs,src/voice.rs}`
 - **Commit:** `c9399b7`
+
+## T-301 (sprint 3)
+- **Description:** `rusty-grader` diagnostic model + parser + verdict. Local `Diag{code,level,message,rendered,primary_span}`/`Level`/`Span` (decoupled from cargo_metadata); `parse_diagnostics(json)` via `Message::parse_stream(...).filter_map(Result::ok)` keeping `CompilerMessage` (code via `.map(|c| c.code)`; non_exhaustive `DiagnosticLevel`→`Level::Other` wildcard; primary span = `is_primary`); `Verdict{Pass,CompileError,TestsFailed,RunMismatch}` + `grade_cargo_test`/`verdict_from_diags`/`grade_run_output` (CRLF→LF + trailing-ws/blank-line normalization). Added cargo_metadata+serde. 8 unit tests pass incl. a **real captured E0382 fixture** (validates the cargo_metadata API). Crate stays portable.
+- **Completed:** 2026-05-21T23:34:21Z
+- **Files modified:** `crates/rusty-grader/{Cargo.toml,src/lib.rs,src/diagnostic.rs,src/verdict.rs,tests/fixtures/{e0382.json,build_finished.json}}`, `Cargo.toml`
+- **Commit:** `effb2f7`

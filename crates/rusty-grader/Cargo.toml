@@ -7,3 +7,7 @@ repository.workspace = true
 rust-version.workspace = true
 publish = false
 description = "Exercise grading rules (cargo-test results + AST hints) for Rusty (portable; no OS deps)."
+
+[dependencies]
+cargo_metadata.workspace = true
+serde = { workspace = true, features = ["derive"] }
