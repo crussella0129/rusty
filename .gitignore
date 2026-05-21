@@ -20,6 +20,14 @@ target
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+# >>> rusty runtime >>>
+# The learner sandbox: starter projects are copied here per lesson at runtime
+# (prompt §2). Regenerated from content/lessons/*/starter/ — never committed.
+workspace/
+# Progress store: SM-2 scheduler state + lesson completion (prompt §5). Local only.
+.rusty-state/
+# <<< rusty runtime <<<
+
 # >>> sprint-loops >>>
 # Ephemeral sprint working memory — regenerable; the real outcome lives in the
 # per-task git commits + decisions.md. KEEP tracked (long-term memory the

@@ -23,3 +23,9 @@
 - **Completed:** 2026-05-21T06:43:00Z
 - **Files modified:** `crates/rusty-app/{Cargo.toml,src/main.rs,src/voice.rs}`
 - **Commit:** `f47a30b`
+
+## T-005 (sprint 0)
+- **Description:** Add a marker-commented `rusty runtime` block to `.gitignore` excluding `workspace/` (per-lesson learner sandbox) and `.rusty-state/` (progress store). Verified: synthetic files under both paths are not listed by `git status --porcelain`.
+- **Completed:** 2026-05-21T06:45:00Z
+- **Files modified:** `.gitignore`
+- **Commit:** `ac795a9`
