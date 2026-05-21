@@ -6,7 +6,9 @@
 //! cargo itself — `rusty-host` runs the subprocess and passes the output in (§11).
 
 pub mod diagnostic;
+pub mod error_map;
 pub mod verdict;
 
 pub use diagnostic::{parse_diagnostics, Diag, Level, Span};
+pub use error_map::concept_for_code;
 pub use verdict::{grade_cargo_test, grade_run_output, verdict_from_diags, Verdict};

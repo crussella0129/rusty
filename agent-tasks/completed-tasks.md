@@ -107,3 +107,9 @@
 - **Completed:** 2026-05-21T23:34:21Z
 - **Files modified:** `crates/rusty-grader/{Cargo.toml,src/lib.rs,src/diagnostic.rs,src/verdict.rs,tests/fixtures/{e0382.json,build_finished.json}}`, `Cargo.toml`
 - **Commit:** `effb2f7`
+
+## T-302 (sprint 3)
+- **Description:** `concept_for_code(&str) -> Option<&'static str>` mapping Foundations rustc error codes to lesson ids (E0382→ownership-moves; E0499/E0502/E0505/E0506/E0106/E0621→borrows; E0308→variables; E0425/E0433→hello). Forward-looking (returns ids for not-yet-authored lessons; renderer links only existing ones). 3 unit tests.
+- **Completed:** 2026-05-21T23:36:00Z
+- **Files modified:** `crates/rusty-grader/src/{error_map.rs,lib.rs}`
+- **Commit:** `6ad3e8a`

@@ -1,6 +1,5 @@
 # Agent Tasks (Persistent Backlog)
 
-- [ ] T-302 (sprint 3): error-code→lesson concept map — touches: `crates/rusty-grader/src/{error_map.rs,lib.rs}`
 - [ ] T-303 (sprint 3): evaluate(SuccessCriterion) bridge + CargoOutcome — touches: `crates/rusty-grader/{Cargo.toml,src/lib.rs,src/evaluate.rs}`
 - [ ] T-304 (sprint 3): rusty-host run_cargo_test/run + grade() orchestrator — touches: `crates/rusty-host/{Cargo.toml,src/grade.rs,src/lib.rs,tests/grade.rs}`
 
