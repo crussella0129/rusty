@@ -1,6 +1,5 @@
 # Agent Tasks (Persistent Backlog)
 
-- [ ] T-004 (sprint 0): Add rusty-app eframe binary + voice.rs — touches: `crates/rusty-app/{Cargo.toml,src/main.rs,src/voice.rs}`
 - [ ] T-005 (sprint 0): Exclude workspace/ and .rusty-state/ from git — touches: `.gitignore`
 - [ ] T-006 (sprint 0): Scaffold directory tree + docs stubs — touches: `content/lessons/.gitkeep`, `assets/.gitkeep`, `docs/*.md`
 

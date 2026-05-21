@@ -1,0 +1,18 @@
+[package]
+name = "rusty-app"
+version = "0.0.0"
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+description = "Rusty — the eframe desktop application that teaches Rust by doing."
+
+# The shipped executable is `rusty` (prompt §0: launches `./target/release/rusty`).
+[[bin]]
+name = "rusty"
+path = "src/main.rs"
+
+[dependencies]
+eframe.workspace = true
+egui.workspace = true

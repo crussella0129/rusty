@@ -17,3 +17,9 @@
 - **Completed:** 2026-05-21T06:38:00Z
 - **Files modified:** `crates/rusty-host/{Cargo.toml,src/lib.rs}`, `crates/rusty-terminal/{Cargo.toml,src/lib.rs}`
 - **Commit:** `47f5a93`
+
+## T-004 (sprint 0)
+- **Description:** Add the `rusty-app` eframe binary (`[[bin]]` name `rusty`) with `voice.rs` (centralized `WINDOW_TITLE`) and `main.rs` running `eframe::run_native`. Adapted to eframe 0.34's new `App` trait: the required method is `fn ui(&mut self, ui, frame)` (framework wraps the central panel), replacing the old `update` + manual `CentralPanel::show` (now deprecated). Workspace now has 7 members. Window-launch is a manual Test-Phase smoke check.
+- **Completed:** 2026-05-21T06:43:00Z
+- **Files modified:** `crates/rusty-app/{Cargo.toml,src/main.rs,src/voice.rs}`
+- **Commit:** `f47a30b`
