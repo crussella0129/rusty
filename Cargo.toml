@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+edition = "2021"
+authors = ["Charles Russella"]
+repository = "https://github.com/crussella0129/rusty"
+rust-version = "1.93"
+
+# Pinned to current crates.io releases (resolved via `cargo search`, 2026-05-21).
+# Later phases consume the rest; only eframe/egui are needed for the Phase-0 skeleton.
+[workspace.dependencies]
+eframe = "0.34"
+egui = "0.34"
+egui_extras = "0.34"
+serde = { version = "1", features = ["derive"] }
+toml = "1"
+anyhow = "1"
+thiserror = "2"

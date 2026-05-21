@@ -1,0 +1,9 @@
+[package]
+name = "rusty-grader"
+version = "0.0.0"
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+description = "Exercise grading rules (cargo-test results + AST hints) for Rusty (portable; no OS deps)."
