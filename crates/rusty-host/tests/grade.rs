@@ -88,6 +88,14 @@ fn test_grade_failing_test_is_tests_failed() {
 }
 
 #[test]
+fn test_grade_nonexistent_sandbox_errors() {
+    // `grade()` returns Result precisely so spawn/exec failures propagate rather than
+    // being silently graded as Pass.
+    let missing = std::env::temp_dir().join("rusty_s3_does_not_exist_zzz");
+    assert!(grade(&missing, &SuccessCriterion::CargoTestPasses).is_err());
+}
+
+#[test]
 fn test_grade_run_output_match_and_mismatch() {
     let dir = temp_project(
         "run",

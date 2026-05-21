@@ -14,6 +14,9 @@ pub fn run_cargo_test(sandbox: &Path) -> Result<(String, bool)> {
     let output = Command::new("cargo")
         .args(["test", "--message-format=json"])
         .current_dir(sandbox)
+        // Build in the sandbox's own `target/`, never an inherited CARGO_TARGET_DIR
+        // (which would let concurrent grades collide and leak artifacts).
+        .env_remove("CARGO_TARGET_DIR")
         .output()
         .with_context(|| format!("running cargo test in {}", sandbox.display()))?;
     let json = String::from_utf8_lossy(&output.stdout).into_owned();
@@ -25,6 +28,7 @@ pub fn run_cargo_run(sandbox: &Path) -> Result<String> {
     let output = Command::new("cargo")
         .args(["run", "-q"])
         .current_dir(sandbox)
+        .env_remove("CARGO_TARGET_DIR")
         .output()
         .with_context(|| format!("running cargo run in {}", sandbox.display()))?;
     Ok(String::from_utf8_lossy(&output.stdout).into_owned())

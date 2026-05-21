@@ -86,6 +86,12 @@ mod tests {
     }
 
     #[test]
+    fn test_grade_cargo_test_pass_from_json() {
+        // The named entry point over a real (empty/clean) JSON stream → Pass.
+        assert_eq!(grade_cargo_test("", true), Verdict::Pass);
+    }
+
+    #[test]
     fn test_grade_cargo_test_compile_error() {
         let v = verdict_from_diags(vec![err_diag()], false);
         match v {

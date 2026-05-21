@@ -86,8 +86,12 @@ mod tests {
             .find(|d| d.code.as_deref() == Some("E0382"))
             .expect("an E0382 diagnostic");
         assert_eq!(e0382.level, Level::Error);
+        assert!(e0382.message.contains("borrow of moved value"));
         assert!(e0382.rendered.as_deref().unwrap_or("").contains("E0382"));
-        assert!(e0382.primary_span.is_some());
+        // Assert the *primary* span was selected (not merely any span).
+        let span = e0382.primary_span.as_ref().expect("primary span");
+        assert_eq!(span.line_start, 4);
+        assert_eq!(span.column_start, 20);
     }
 
     #[test]
@@ -95,5 +99,16 @@ mod tests {
         // A `build-finished` line carries no compiler message.
         let json = include_str!("../tests/fixtures/build_finished.json");
         assert!(parse_diagnostics(json).is_empty());
+    }
+
+    #[test]
+    fn test_parse_diagnostics_warning_is_not_error() {
+        // A real `unused_variables` warning → a Warning-level Diag (not Error), so a
+        // clean-but-warning build still grades as Pass.
+        let json = include_str!("../tests/fixtures/warning.json");
+        let diags = parse_diagnostics(json);
+        assert_eq!(diags.len(), 1);
+        assert_eq!(diags[0].level, Level::Warning);
+        assert!(diags.iter().all(|d| d.level != Level::Error));
     }
 }
