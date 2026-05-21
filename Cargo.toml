@@ -18,3 +18,6 @@ serde = { version = "1", features = ["derive"] }
 toml = "1"
 anyhow = "1"
 thiserror = "2"
+# Phase 1 — embedded terminal: cross-platform PTY (wezterm) + ANSI/VT parser (alacritty).
+portable-pty = "0.9"
+vte = "0.15"

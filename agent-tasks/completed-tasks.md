@@ -35,3 +35,9 @@
 - **Completed:** 2026-05-21T06:47:00Z
 - **Files modified:** `content/lessons/.gitkeep`, `assets/.gitkeep`, `docs/ARCHITECTURE.md`, `docs/PEDAGOGY.md`, `docs/CONTENT_AUTHORING.md`, `docs/INSTALL.md`
 - **Commit:** `5e41b1b`
+
+## T-101 (sprint 1)
+- **Description:** Add `portable-pty = "0.9"` + `vte = "0.15"` to `[workspace.dependencies]`; wire `portable-pty` + `anyhow` into `rusty-host`, `vte` + `egui` into `rusty-terminal`. Workspace compiles clean.
+- **Completed:** 2026-05-21T14:31:13Z
+- **Files modified:** `Cargo.toml`, `crates/rusty-host/Cargo.toml`, `crates/rusty-terminal/Cargo.toml`
+- **Commit:** `ebeb2d8`

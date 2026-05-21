@@ -7,3 +7,7 @@ repository.workspace = true
 rust-version.workspace = true
 publish = false
 description = "Rusty's OS boundary: PTY shell, cargo subprocess, rust-analyzer LSP, and sandboxed file I/O."
+
+[dependencies]
+portable-pty.workspace = true
+anyhow.workspace = true
