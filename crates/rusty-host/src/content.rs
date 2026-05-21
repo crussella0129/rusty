@@ -31,11 +31,20 @@ pub fn prepare_sandbox(content_dir: &Path, workspace_root: &Path, id: &str) -> R
 }
 
 fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<()> {
+    // Read the source first, so a missing `starter/` errors *before* we create an
+    // empty destination (which would otherwise satisfy the idempotency check and
+    // leave a corrupt, empty sandbox).
+    let entries = std::fs::read_dir(src).with_context(|| format!("reading {}", src.display()))?;
     std::fs::create_dir_all(dst)?;
-    for entry in std::fs::read_dir(src)? {
+    for entry in entries {
         let entry = entry?;
+        let name = entry.file_name();
+        // Never copy build artifacts into the learner sandbox.
+        if name.to_str() == Some("target") {
+            continue;
+        }
         let path = entry.path();
-        let target = dst.join(entry.file_name());
+        let target = dst.join(&name);
         if path.is_dir() {
             copy_dir_recursive(&path, &target)?;
         } else {

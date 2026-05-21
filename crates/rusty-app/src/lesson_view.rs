@@ -58,3 +58,74 @@ fn render_block(ui: &mut egui::Ui, block: &Block) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rusty_curriculum::parse_lesson;
+
+    // A lesson exercising every Block variant and all three callout tones, plus
+    // markdown (heading/bold/italic/inline-code/fenced-code/bullets).
+    const ALL_BLOCKS: &str = r##"
+        id = "t"
+        title = "T"
+        track = "Foundations"
+        estimated_minutes = 1
+        starter_project = "s"
+        solution_project = "sol"
+
+        [[body]]
+        kind = "prose"
+        text = "# H\n\n**b** and `c` and *i*\n\n- one\n- two"
+
+        [[body]]
+        kind = "code"
+        lang = "rust"
+        source = "fn main() {}"
+
+        [[body]]
+        kind = "now_run"
+        command = "cargo run"
+        note = "go"
+
+        [[body]]
+        kind = "callout"
+        tone = "note"
+        text = "a note"
+
+        [[body]]
+        kind = "callout"
+        tone = "tip"
+        text = "a tip"
+
+        [[body]]
+        kind = "callout"
+        tone = "warning"
+        text = "a warning"
+
+        [recall_prompt]
+        kind = "short_answer"
+        question = "q"
+        expected = "a"
+        explanation = "e"
+    "##;
+
+    /// Render every block variant through a real headless egui layout pass; the test
+    /// fails if any render branch panics. (egui has no pixel assertion, but `run`
+    /// exercises the full layout/galley path without a GPU or window.)
+    #[test]
+    fn test_render_all_blocks_does_not_panic() {
+        let lesson = parse_lesson(ALL_BLOCKS).expect("fixture lesson parses");
+        let ctx = egui::Context::default();
+        let input = egui::RawInput {
+            screen_rect: Some(egui::Rect::from_min_size(
+                egui::pos2(0.0, 0.0),
+                egui::vec2(800.0, 600.0),
+            )),
+            ..Default::default()
+        };
+        let _ = ctx.run_ui(input, |ui| {
+            render(ui, &lesson);
+        });
+    }
+}

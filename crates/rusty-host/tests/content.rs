@@ -96,6 +96,44 @@ fn test_load_lesson_from_temp() {
     assert_eq!(lesson.title, "Temp");
 }
 
+#[test]
+fn test_prepare_sandbox_skips_target() {
+    let content_dir = unique_temp("content");
+    write(
+        &content_dir.join("starter").join("Cargo.toml"),
+        "[workspace]\n[package]\nname=\"x\"\nversion=\"0.0.0\"\nedition=\"2021\"\n",
+    );
+    // A build-artifact dir that must NOT be copied into the sandbox.
+    write(
+        &content_dir.join("starter").join("target").join("junk.bin"),
+        "stale",
+    );
+    let workspace_root = unique_temp("ws");
+
+    let sandbox = prepare_sandbox(&content_dir, &workspace_root, "lid").unwrap();
+    assert!(sandbox.join("Cargo.toml").is_file());
+    assert!(!sandbox.join("target").exists(), "target/ must be skipped");
+}
+
+#[test]
+fn test_prepare_sandbox_missing_starter_errors_cleanly() {
+    let content_dir = unique_temp("content"); // no starter/ inside
+    let workspace_root = unique_temp("ws");
+    let result = prepare_sandbox(&content_dir, &workspace_root, "lid");
+    assert!(result.is_err(), "missing starter/ should error");
+    // And must not leave a usable-looking (empty) sandbox behind.
+    assert!(
+        !workspace_root.join("lessons").join("lid").exists(),
+        "no partial sandbox should remain"
+    );
+}
+
+#[test]
+fn test_load_lesson_missing_file_errors() {
+    let content_dir = unique_temp("empty"); // no lesson.toml
+    assert!(load_lesson(&content_dir).is_err());
+}
+
 /// Load the real authored lesson 1 from the repo's `content/` tree.
 #[test]
 fn test_load_lesson_real_content() {
