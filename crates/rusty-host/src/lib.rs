@@ -8,9 +8,11 @@
 //! Architectural contract (prompt §11): all `std::process`, raw filesystem, and
 //! platform-specific code lives here (or in `rusty-terminal`) — nowhere else.
 
+pub mod content;
 pub mod pty;
 pub mod sandbox;
 
+pub use content::{load_lesson, prepare_sandbox};
 pub use pty::PtySession;
 pub use sandbox::{default_shell, resolve_cd, CdOutcome};
 

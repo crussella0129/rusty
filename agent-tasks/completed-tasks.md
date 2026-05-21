@@ -83,3 +83,9 @@
 - **Completed:** 2026-05-21T18:49:24Z
 - **Files modified:** `crates/rusty-curriculum/src/{loader.rs,lib.rs}`
 - **Commit:** `13460e5`
+
+## T-203 (sprint 2)
+- **Description:** `rusty-host::content` — `load_lesson(dir)` (read lesson.toml + delegate to pure `parse_lesson`) and `prepare_sandbox(content_dir, workspace_root, id)` (recursive `starter/`→`workspace/lessons/<id>/` copy, idempotent so learner edits survive). Added `rusty-curriculum` path dep. 3 integration tests with temp fixtures (copies starter, idempotent-preserves-edit, load from temp). Real-lesson load test added with T-204 content.
+- **Completed:** 2026-05-21T18:50:53Z
+- **Files modified:** `crates/rusty-host/src/{content.rs,lib.rs}`, `crates/rusty-host/Cargo.toml`, `crates/rusty-host/tests/content.rs`
+- **Commit:** `a8cd61f`

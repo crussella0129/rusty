@@ -1,6 +1,5 @@
 # Agent Tasks (Persistent Backlog)
 
-- [ ] T-203 (sprint 2): rusty-host load_lesson + prepare_sandbox (recursive starter copy) — touches: `crates/rusty-host/src/{content.rs,lib.rs}`, `crates/rusty-host/Cargo.toml`, `crates/rusty-host/tests/content.rs`
 - [ ] T-204 (sprint 2): author foundations-01-hello (lesson.toml + starter/ + solution/, [workspace] detach) — touches: `content/lessons/foundations-01-hello/**`
 - [ ] T-205 (sprint 2): pulldown-cmark→egui markdown + lesson_view renderer — touches: `Cargo.toml`, `crates/rusty-app/{Cargo.toml,src/markdown.rs,src/lesson_view.rs,src/main.rs}`
 - [ ] T-206 (sprint 2): load+render lesson 1, PTY in lesson sandbox, fallible new() — touches: `crates/rusty-app/src/{main.rs,voice.rs}`
