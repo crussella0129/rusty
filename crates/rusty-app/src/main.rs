@@ -26,6 +26,27 @@ fn main() -> eframe::Result {
     )
 }
 
+/// What submitting the current input line should do, decided purely from the line +
+/// sandbox paths. Separated from the byte-writing in `handle_typed` so it is unit-
+/// testable without a live PTY.
+#[derive(Debug, PartialEq, Eq)]
+enum SubmitAction {
+    /// Forward the Enter to the shell unchanged.
+    Forward,
+    /// Refuse the line (sandbox-escaping `cd`); cancel + show the refusal.
+    Refuse,
+    /// An in-sandbox `cd`: forward it and track the new working directory.
+    ChangeDir(PathBuf),
+}
+
+fn submit_action(line: &str, cwd: &std::path::Path, root: &std::path::Path) -> SubmitAction {
+    match resolve_cd(line, cwd, root) {
+        CdOutcome::Refused => SubmitAction::Refuse,
+        CdOutcome::Allowed(path) => SubmitAction::ChangeDir(path),
+        CdOutcome::NotCd => SubmitAction::Forward,
+    }
+}
+
 /// Create (if needed) and return the spike's sandbox directory under the repo.
 fn sandbox_root() -> PathBuf {
     let root = std::env::current_dir()
@@ -76,19 +97,19 @@ impl RustyApp {
         for &b in typed {
             match b {
                 b'\r' | b'\n' => {
-                    match resolve_cd(&self.line, &self.cwd, &self.root) {
-                        CdOutcome::Refused => {
+                    match submit_action(&self.line, &self.cwd, &self.root) {
+                        SubmitAction::Refuse => {
                             // Cancel the half-typed command and explain, instead of
                             // letting the shell change directory out of the sandbox.
                             let _ = self.session.write(&[0x03]); // Ctrl-C
                             let msg = format!("\r\n{}\r\n", voice::CD_REFUSED);
                             self.term.feed(msg.as_bytes());
                         }
-                        CdOutcome::Allowed(path) => {
+                        SubmitAction::ChangeDir(path) => {
                             self.cwd = path;
                             let _ = self.session.write(&[b]);
                         }
-                        CdOutcome::NotCd => {
+                        SubmitAction::Forward => {
                             let _ = self.session.write(&[b]);
                         }
                     }
@@ -157,5 +178,51 @@ impl eframe::App for RustyApp {
 
         // 6. Forward keystrokes (with `cd` interception).
         self.handle_typed(&typed);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn root() -> PathBuf {
+        if cfg!(windows) {
+            PathBuf::from(r"C:\sandbox\lessons\spike")
+        } else {
+            PathBuf::from("/sandbox/lessons/spike")
+        }
+    }
+
+    #[test]
+    fn test_submit_forward_for_noncd() {
+        let r = root();
+        assert_eq!(
+            submit_action("cargo --version", &r, &r),
+            SubmitAction::Forward
+        );
+    }
+
+    #[test]
+    fn test_submit_refuse_for_escaping_cd() {
+        let r = root();
+        assert_eq!(submit_action("cd ..", &r, &r), SubmitAction::Refuse);
+    }
+
+    #[test]
+    fn test_submit_changedir_for_inside_cd() {
+        let r = root();
+        match submit_action("cd sub", &r, &r) {
+            SubmitAction::ChangeDir(p) => assert!(p.ends_with("sub")),
+            other => panic!("expected ChangeDir, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_submit_changedir_for_bare_cd_is_root() {
+        let r = root();
+        match submit_action("cd", &r, &r) {
+            SubmitAction::ChangeDir(p) => assert!(p.ends_with("spike")),
+            other => panic!("expected ChangeDir(root), got {other:?}"),
+        }
     }
 }

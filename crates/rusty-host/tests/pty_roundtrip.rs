@@ -4,9 +4,10 @@
 //!
 //! Windows note: ConPTY withholds *all* output until the attached terminal answers
 //! its startup cursor-position query (`ESC[6n`) with a CPR report (`ESC[row;colR`).
-//! These tests include a minimal DSR responder so the shell can proceed; the real
-//! app answers the same query with the grid's actual cursor position (renderer +
-//! app wiring), so this mirrors production behaviour rather than working around it.
+//! These tests include a minimal *fixed* DSR responder (`ESC[1;1R`) so the shell can
+//! proceed. Production computes the reply from the grid's real cursor position
+//! (`Grid::queue_cpr` / `Terminal::take_replies`, covered by the rusty-terminal unit
+//! tests); this responder only proves the raw PTY plumbing, not that reply path.
 
 use std::time::{Duration, Instant};
 

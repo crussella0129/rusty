@@ -179,4 +179,17 @@ mod tests {
         assert_eq!(g.cursor_row, 1);
         assert_eq!(g.cursor_col, 2);
     }
+
+    #[test]
+    fn test_grid_resize_preserves_topleft_and_clamps_cursor() {
+        // Fill row 0, move cursor to the far corner, then shrink.
+        let mut g = run(b"AB", 4, 8);
+        g.move_to(3, 7);
+        g.resize(2, 4);
+        assert_eq!(g.rows, 2);
+        assert_eq!(g.cols, 4);
+        assert_eq!(g.cell(0, 0).ch, 'A'); // top-left content preserved
+        assert_eq!(g.cell(0, 1).ch, 'B');
+        assert!(g.cursor_row < 2 && g.cursor_col < 4); // cursor clamped into range
+    }
 }
