@@ -5,8 +5,10 @@
 //! which calls this crate's pure [`parse_lesson`]. Phase 2 implements the model;
 //! exercise *rendering/grading* lands in Phase 3.
 
+pub mod loader;
 pub mod model;
 
+pub use loader::{parse_lesson, CurriculumError};
 pub use model::{
     Block, CalloutTone, Concept, ConceptId, Exercise, Lesson, LessonId, RecallPrompt, Reference,
     SuccessCriterion, Track,

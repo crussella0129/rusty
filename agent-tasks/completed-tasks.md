@@ -77,3 +77,9 @@
 - **Completed:** 2026-05-21T18:48:31Z
 - **Files modified:** `crates/rusty-curriculum/{Cargo.toml,src/lib.rs,src/model.rs}`, `Cargo.toml`
 - **Commit:** `acc6277`
+
+## T-202 (sprint 2)
+- **Description:** Pure `parse_lesson(&str) -> Result<Lesson, CurriculumError>` (`toml::from_str` + validation: non-empty id/title/body) with `thiserror` `CurriculumError{Parse,Invalid}`. 3 tests (valid parse, invalid TOML→Parse, empty id→Invalid). No filesystem (portability).
+- **Completed:** 2026-05-21T18:49:24Z
+- **Files modified:** `crates/rusty-curriculum/src/{loader.rs,lib.rs}`
+- **Commit:** `13460e5`
