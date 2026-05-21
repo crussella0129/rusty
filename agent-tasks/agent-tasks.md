@@ -1,6 +1,5 @@
 # Agent Tasks (Persistent Backlog)
 
-- [ ] T-303 (sprint 3): evaluate(SuccessCriterion) bridge + CargoOutcome — touches: `crates/rusty-grader/{Cargo.toml,src/lib.rs,src/evaluate.rs}`
 - [ ] T-304 (sprint 3): rusty-host run_cargo_test/run + grade() orchestrator — touches: `crates/rusty-host/{Cargo.toml,src/grade.rs,src/lib.rs,tests/grade.rs}`
 
 - [ ] T-EX1 (deferred → Phase 3): author lesson 1 exercises (Worked/Faded/Open + PredictThenRun) per §3/§4. (From s2 critique C-007.)

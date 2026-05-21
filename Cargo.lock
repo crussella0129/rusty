@@ -2770,6 +2770,7 @@ name = "rusty-grader"
 version = "0.0.0"
 dependencies = [
  "cargo_metadata",
+ "rusty-curriculum",
  "serde",
 ]
 

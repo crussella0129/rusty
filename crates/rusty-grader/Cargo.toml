@@ -11,3 +11,4 @@ description = "Exercise grading rules (cargo-test results + AST hints) for Rusty
 [dependencies]
 cargo_metadata.workspace = true
 serde = { workspace = true, features = ["derive"] }
+rusty-curriculum = { path = "../rusty-curriculum" }

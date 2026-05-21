@@ -113,3 +113,9 @@
 - **Completed:** 2026-05-21T23:36:00Z
 - **Files modified:** `crates/rusty-grader/src/{error_map.rs,lib.rs}`
 - **Commit:** `6ad3e8a`
+
+## T-303 (sprint 3)
+- **Description:** `evaluate(&SuccessCriterion, &CargoOutcome) -> Verdict` bridging the curriculum criterion to the grader; `CargoOutcome{test_json,test_exit_ok,run_stdout}`. Added `rusty-curriculum` dep (portable). 2 unit tests (CargoTestPasses→Pass; CargoRunOutputMatches match→Pass / mismatch→RunMismatch).
+- **Completed:** 2026-05-21T23:37:32Z
+- **Files modified:** `crates/rusty-grader/{Cargo.toml,src/lib.rs,src/evaluate.rs}`
+- **Commit:** `2bb94fe`
