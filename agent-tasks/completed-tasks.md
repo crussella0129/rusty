@@ -71,3 +71,9 @@
 - **Completed:** 2026-05-21T15:12:00Z
 - **Files modified:** `crates/rusty-app/src/{main.rs,voice.rs}`, `crates/rusty-app/Cargo.toml`, `crates/rusty-terminal/src/{terminal.rs,lib.rs}`
 - **Commit:** `4f9e16c`
+
+## T-201 (sprint 2)
+- **Description:** Typed curriculum model in `rusty-curriculum` (`Lesson`, `Track`, `Concept`, `LessonId`/`ConceptId`, internally-tagged `Block`/`RecallPrompt`/`Exercise`/`SuccessCriterion`, `Reference`, `CalloutTone`) with serde. **C-001 spike PASSED:** `toml` 1.x deserializes internally-tagged enums from `[[body]]`/`[recall_prompt]` tables — no adjacently-tagged fallback needed. Added `serde`/`toml`/`thiserror` deps; added root `Cargo.toml` `exclude=["content","workspace"]` (C-003). 2 deser tests pass; crate stays portable.
+- **Completed:** 2026-05-21T18:48:31Z
+- **Files modified:** `crates/rusty-curriculum/{Cargo.toml,src/lib.rs,src/model.rs}`, `Cargo.toml`
+- **Commit:** `acc6277`

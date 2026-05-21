@@ -1,20 +1,13 @@
-//! `rusty-curriculum` — the typed lesson/exercise model and content loader for Rusty.
+//! `rusty-curriculum` — the typed lesson/exercise model and content parser for Rusty.
 //!
-//! Phase 0 placeholder. The real `Lesson` / `Concept` / `Exercise` types and the
-//! `lesson.toml` + Markdown loader land in Phase 2 (curriculum model + lesson 1).
-//!
-//! Portability contract: this crate must stay OS-portable. No `std::process`, no
-//! raw filesystem access, no PTY — all of that lives in `rusty-host`.
+//! Portability contract: this crate is OS-portable. No `std::process`, no raw
+//! filesystem, no PTY — the filesystem read of `lesson.toml` lives in `rusty-host`,
+//! which calls this crate's pure [`parse_lesson`]. Phase 2 implements the model;
+//! exercise *rendering/grading* lands in Phase 3.
 
-/// Crate identity marker, replaced by the real curriculum types in Phase 2.
-pub const CRATE_NAME: &str = "rusty-curriculum";
+pub mod model;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_crate_name() {
-        assert_eq!(CRATE_NAME, "rusty-curriculum");
-    }
-}
+pub use model::{
+    Block, CalloutTone, Concept, ConceptId, Exercise, Lesson, LessonId, RecallPrompt, Reference,
+    SuccessCriterion, Track,
+};

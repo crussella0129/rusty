@@ -1,6 +1,9 @@
 [workspace]
 resolver = "2"
 members = ["crates/*"]
+# Lesson cargo projects under content/ (and their copies under workspace/) are their
+# own workspaces — never claim them as members of Rusty's workspace.
+exclude = ["content", "workspace"]
 
 [workspace.package]
 edition = "2021"

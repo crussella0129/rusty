@@ -7,3 +7,8 @@ repository.workspace = true
 rust-version.workspace = true
 publish = false
 description = "Typed lesson/exercise model and content loader for Rusty (portable; no OS deps)."
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+toml.workspace = true
+thiserror.workspace = true
