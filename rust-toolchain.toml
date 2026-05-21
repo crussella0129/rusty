@@ -1,0 +1,12 @@
+# Rusty pins the *stable* channel so every learner compiles with their own latest
+# stable Rust — prompt §0: "MSRV: latest stable at install time." Because Rusty is
+# distributed as `git clone` + `cargo build` (the bootstrap *is* the first lesson),
+# pinning an exact old version would force learners to download a stale toolchain;
+# tracking stable is the correct behaviour for this teaching app.
+#
+# Exact stable version at authoring time (2026-05-21): 1.93.1 (2026-02-11).
+# No `targets` pin — each platform builds for its own host (native macOS/Linux/Windows).
+[toolchain]
+channel = "stable"
+components = ["rustfmt", "clippy"]
+profile = "default"

@@ -1,6 +1,5 @@
 # Agent Tasks (Persistent Backlog)
 
-- [ ] T-002 (sprint 0): Pin toolchain in `rust-toolchain.toml` — touches: `rust-toolchain.toml`
 - [ ] T-003 (sprint 0): Add host-boundary crates rusty-host + rusty-terminal — touches: `crates/rusty-{host,terminal}/{Cargo.toml,src/lib.rs}`
 - [ ] T-004 (sprint 0): Add rusty-app eframe binary + voice.rs — touches: `crates/rusty-app/{Cargo.toml,src/main.rs,src/voice.rs}`
 - [ ] T-005 (sprint 0): Exclude workspace/ and .rusty-state/ from git — touches: `.gitignore`
