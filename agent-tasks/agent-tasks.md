@@ -1,6 +1,5 @@
 # Agent Tasks (Persistent Backlog)
 
-- [ ] T-102 (sprint 1): rusty-host::sandbox default_shell() + resolve_cd() — touches: `crates/rusty-host/src/{sandbox.rs,lib.rs}`
 - [ ] T-103 (sprint 1): rusty-host::pty::PtySession (spawn/reader-thread/write/resize) — touches: `crates/rusty-host/src/{pty.rs,lib.rs}`
 - [ ] T-104 (sprint 1): rusty-terminal Cell/Grid + vte Performer — touches: `crates/rusty-terminal/src/{cell.rs,grid.rs,performer.rs,lib.rs}`
 - [ ] T-105 (sprint 1): rusty-terminal::widget terminal_ui (paint + input) — touches: `crates/rusty-terminal/src/{widget.rs,lib.rs}`

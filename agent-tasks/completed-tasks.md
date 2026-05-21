@@ -41,3 +41,9 @@
 - **Completed:** 2026-05-21T14:31:13Z
 - **Files modified:** `Cargo.toml`, `crates/rusty-host/Cargo.toml`, `crates/rusty-terminal/Cargo.toml`
 - **Commit:** `ebeb2d8`
+
+## T-102 (sprint 1)
+- **Description:** `rusty-host::sandbox` — `default_shell()` (pwsh/cmd on Windows, $SHELL//bin/bash on unix) and pure `resolve_cd(line, cwd, root) -> CdOutcome{Allowed|Refused|NotCd}` using lexical segment-stack normalization (handles `..`, absolute, drive-root, nested `a/../b`). 10 unit tests pass.
+- **Completed:** 2026-05-21T14:34:00Z
+- **Files modified:** `crates/rusty-host/src/sandbox.rs`, `crates/rusty-host/src/lib.rs`
+- **Commit:** `82a3e52`
