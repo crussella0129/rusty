@@ -12,6 +12,22 @@
 /// The application title, shown in the OS window title bar and the central panel.
 pub const WINDOW_TITLE: &str = "Rusty — Learn Rust by Doing";
 
+/// Heading of the (currently empty) lesson pane on the left.
+pub const LESSON_PANE_TITLE: &str = "Lesson";
+
+/// Placeholder shown in the lesson pane until lessons land (Phase 2).
+pub const LESSON_PANE_PLACEHOLDER: &str =
+    "Lessons arrive in the next phase. For now, try the terminal on the right — \
+     run `cargo --version` to see your toolchain.";
+
+/// Label above the embedded terminal pane.
+pub const TERMINAL_PANE_LABEL: &str = "Terminal (sandboxed)";
+
+/// Shown when the learner tries to `cd` out of the lesson sandbox. Third-person,
+/// patient voice (§12) — Rusty is on the learner's side.
+pub const CD_REFUSED: &str =
+    "Rusty's terminal stays inside the lesson directory. Try `cd .` to see where you are.";
+
 #[cfg(test)]
 mod tests {
     use super::*;

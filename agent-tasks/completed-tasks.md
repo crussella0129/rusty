@@ -65,3 +65,9 @@
 - **Completed:** 2026-05-21T15:00:00Z
 - **Files modified:** `crates/rusty-terminal/src/{widget.rs,lib.rs}`
 - **Commit:** `8887089`
+
+## T-106 (sprint 1)
+- **Description:** Wire the PTY + terminal into `rusty-app`. `RustyApp` holds a `rusty_terminal::Terminal` (parser+grid wrapper, added to keep `rusty-app` off a direct `vte` dep), a `PtySession` spawned in `workspace/lessons/spike/` with a cloned `egui::Context` repaint callback, and a mirrored input line for `cd` interception. `App::ui` drains output→grid, answers DSR/CPR replies, lays out `Panel::left` (lesson placeholder) + `CentralPanel` terminal via `show_inside`, resizes grid+PTY to the fitted dims, and forwards keystrokes — refusing sandbox-escaping `cd` (Ctrl-C + `voice::CD_REFUSED`). New voice copy. Full workspace: 33 tests pass; clippy/fmt clean; 7s GUI smoke launch OK (window + PTY alive). **API note:** eframe 0.34 keeps `App::ui` required (no ADR supersession after all); panels use `show_inside` and `Panel::left`/`default_size` (the `Context`-level `.show()`/`SidePanel`/`default_width` are deprecated).
+- **Completed:** 2026-05-21T15:12:00Z
+- **Files modified:** `crates/rusty-app/src/{main.rs,voice.rs}`, `crates/rusty-app/Cargo.toml`, `crates/rusty-terminal/src/{terminal.rs,lib.rs}`
+- **Commit:** `4f9e16c`
