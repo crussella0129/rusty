@@ -60,10 +60,52 @@ fn submit_action(line: &str, cwd: &std::path::Path, root: &std::path::Path) -> S
 
 /// Map a finished grade result into the (annotation, grade-error) the pane shows.
 /// Pure, so the channel-delivered outcome is testable without the egui loop.
-fn grade_outcome(result: Result<Verdict, String>) -> (Option<Annotation>, Option<String>) {
+fn grade_outcome(result: &Result<Verdict, String>) -> (Option<Annotation>, Option<String>) {
     match result {
-        Ok(verdict) => (Some(annotate(&verdict)), None),
-        Err(msg) => (None, Some(msg)),
+        Ok(verdict) => (Some(annotate(verdict)), None),
+        Err(msg) => (None, Some(msg.clone())),
+    }
+}
+
+/// In-memory learner progress through the current lesson's steps (one slot per step).
+/// Persistence across launches is deferred (the old Phase 5); this resets each run.
+#[derive(Default)]
+struct LessonProgress {
+    /// Per-step: has this step's gate been satisfied (a `Verdict::Pass`)?
+    completed: Vec<bool>,
+    /// Per-step: how many failed Checks so far (drives the tip after the first).
+    attempts: Vec<u32>,
+}
+
+impl LessonProgress {
+    fn new(steps: usize) -> Self {
+        Self {
+            completed: vec![false; steps],
+            attempts: vec![0; steps],
+        }
+    }
+
+    /// Fold a finished grade for `step` into progress: a `Pass` completes the step
+    /// (revealing the next); anything else bumps its attempt count (drives the tip).
+    fn apply(&mut self, step: usize, verdict: &Verdict) {
+        if step >= self.completed.len() {
+            return;
+        }
+        if matches!(verdict, Verdict::Pass) {
+            self.completed[step] = true;
+        } else {
+            self.attempts[step] += 1;
+        }
+    }
+
+    /// Whether every step is complete (the lesson is finished). Empty → not complete.
+    fn all_complete(&self) -> bool {
+        !self.completed.is_empty() && self.completed.iter().all(|&c| c)
+    }
+
+    /// Borrow the per-step completion flags (for `visible_prefix`).
+    fn completed(&self) -> &[bool] {
+        &self.completed
     }
 }
 
@@ -104,6 +146,10 @@ struct RustyApp {
     annotation: Option<Annotation>,
     /// A host-side grade error (couldn't run cargo at all), shown plainly.
     grade_error: Option<String>,
+    /// Progressive-disclosure progress through the lesson's steps (in-memory).
+    progress: LessonProgress,
+    /// Which step the in-flight grade is for (so its result updates that step).
+    pending_step: Option<usize>,
 }
 
 impl RustyApp {
@@ -137,6 +183,7 @@ impl RustyApp {
             .as_ref()
             .map(|l| vec![l.id.0.clone()])
             .unwrap_or_default();
+        let progress = LessonProgress::new(lesson.as_ref().map(|l| l.steps.len()).unwrap_or(0));
 
         Self {
             term: Terminal::new(INIT_ROWS, INIT_COLS),
@@ -153,6 +200,8 @@ impl RustyApp {
             grade_job: None,
             annotation: None,
             grade_error: None,
+            progress,
+            pending_step: None,
         }
     }
 
@@ -162,18 +211,27 @@ impl RustyApp {
         let Some(rx) = &self.grade_job else { return };
         match rx.try_recv() {
             Ok(received) => {
-                (self.annotation, self.grade_error) = grade_outcome(received);
+                // Update the graded step's progress (a `Pass` reveals the next step), then
+                // render the verdict in the annotation pane.
+                if let (Ok(verdict), Some(step)) = (&received, self.pending_step) {
+                    self.progress.apply(step, verdict);
+                }
+                (self.annotation, self.grade_error) = grade_outcome(&received);
                 self.grade_job = None;
+                self.pending_step = None;
             }
             Err(TryRecvError::Empty) => {} // still running
-            Err(TryRecvError::Disconnected) => self.grade_job = None,
+            Err(TryRecvError::Disconnected) => {
+                self.grade_job = None;
+                self.pending_step = None;
+            }
         }
     }
 
     /// Spawn the cargo grade (process #2) on a background thread so a multi-second
     /// `cargo test` never freezes the UI; the result is delivered over a channel and
     /// polled each frame (mirrors the PTY's thread + repaint pattern).
-    fn start_grade(&mut self, criterion: SuccessCriterion, ctx: &egui::Context) {
+    fn start_grade(&mut self, step: usize, criterion: SuccessCriterion, ctx: &egui::Context) {
         if self.grade_job.is_some() {
             return; // one grade at a time
         }
@@ -188,6 +246,7 @@ impl RustyApp {
         self.annotation = None;
         self.grade_error = None;
         self.grade_job = Some(rx);
+        self.pending_step = Some(step);
     }
 
     /// Forward the bytes typed this frame to the shell, intercepting sandbox-escaping
@@ -255,7 +314,7 @@ impl eframe::App for RustyApp {
 
         // 4. Lesson pane — lesson 1 prose, its exercises, and the annotation pane, all
         //    in one scroll area. Captures a Check request to grade after the panel.
-        let mut check_request: Option<SuccessCriterion> = None;
+        let mut check_request: Option<(usize, SuccessCriterion)> = None;
         egui::Panel::left("lesson_pane")
             .resizable(true)
             .default_size(380.0)
@@ -264,8 +323,13 @@ impl eframe::App for RustyApp {
                     .auto_shrink([false, false])
                     .show(ui, |ui| {
                         if let Some(lesson) = &self.lesson {
-                            check_request =
-                                lesson_view::render(ui, lesson, &mut self.ex_state, checking);
+                            check_request = lesson_view::render(
+                                ui,
+                                lesson,
+                                &self.progress,
+                                &mut self.ex_state,
+                                checking,
+                            );
                         } else {
                             ui.heading(voice::LESSON_PANE_TITLE);
                             ui.separator();
@@ -291,10 +355,10 @@ impl eframe::App for RustyApp {
                     });
             });
 
-        // 5. Kick off grading for a pressed Check (off the UI thread).
-        if let Some(criterion) = check_request {
+        // 5. Kick off grading for a pressed Check (off the UI thread), targeting its step.
+        if let Some((step, criterion)) = check_request {
             let ctx = ui.ctx().clone();
-            self.start_grade(criterion, &ctx);
+            self.start_grade(step, criterion, &ctx);
         }
 
         // 6. Terminal pane (right) and code-editor pane (centre).
@@ -376,16 +440,42 @@ mod tests {
     // heartbeat (no headless egui event loop to assert against).
     #[test]
     fn test_grade_outcome_ok_builds_annotation() {
-        let (ann, err) = grade_outcome(Ok(Verdict::Pass));
+        let (ann, err) = grade_outcome(&Ok(Verdict::Pass));
         assert!(ann.is_some());
         assert!(err.is_none());
     }
 
     #[test]
     fn test_grade_outcome_err_surfaces_message() {
-        let (ann, err) = grade_outcome(Err("cargo not found".to_string()));
+        let (ann, err) = grade_outcome(&Err("cargo not found".to_string()));
         assert!(ann.is_none());
         assert_eq!(err.as_deref(), Some("cargo not found"));
+    }
+
+    #[test]
+    fn test_apply_grade_pass_completes() {
+        let mut p = LessonProgress::new(3);
+        p.apply(1, &Verdict::Pass);
+        assert!(p.completed[1], "a Pass completes the step");
+        assert_eq!(p.attempts[1], 0, "a Pass does not bump attempts");
+    }
+
+    #[test]
+    fn test_apply_grade_fail_bumps_attempts() {
+        let mut p = LessonProgress::new(3);
+        p.apply(1, &Verdict::TestsFailed);
+        assert!(!p.completed[1], "a non-Pass leaves the step incomplete");
+        assert_eq!(p.attempts[1], 1, "a non-Pass bumps the attempt count");
+    }
+
+    #[test]
+    fn test_all_complete_predicate() {
+        let mut p = LessonProgress::new(2);
+        assert!(!p.all_complete(), "fresh progress is not complete");
+        p.apply(0, &Verdict::Pass);
+        assert!(!p.all_complete(), "one of two done is not complete");
+        p.apply(1, &Verdict::Pass);
+        assert!(p.all_complete(), "all steps done → complete");
     }
 
     #[test]
@@ -397,7 +487,7 @@ mod tests {
             let _ = tx.send(Ok(Verdict::TestsFailed));
         });
         let received = rx.recv().expect("a result arrives over the channel");
-        let (ann, _) = grade_outcome(received);
+        let (ann, _) = grade_outcome(&received);
         assert_eq!(ann.unwrap().headline, rusty_grader::Headline::TestsFailed);
     }
 }

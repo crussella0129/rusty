@@ -161,3 +161,9 @@
 - **Completed:** 2026-05-22T15:55:00Z
 - **Files modified:** `crates/rusty-curriculum/src/{model.rs,loader.rs,lib.rs}`, `crates/rusty-app/src/{lesson_view.rs,exercise_view.rs,main.rs,voice.rs}`, `content/lessons/foundations-01-hello/lesson.toml`, `crates/rusty-host/tests/content.rs`
 - **Commit:** `f8071b4`
+
+## T-502 (sprint 5)
+- **Description:** In-memory progress + gated render + grade→step wiring. `LessonProgress{completed: Vec<bool>, attempts: Vec<u32>}` (sized to `steps.len()`) in `RustyApp` with `apply(step,&Verdict)` (Pass→`completed[step]=true`; else `attempts[step]+=1`), `all_complete()`, `completed()`. `lesson_view::render` now takes `&LessonProgress`, renders only `steps[..visible_prefix(steps, completed)]` (so a gating step hides everything after it until it passes), returns `Option<(usize, SuccessCriterion)>` (the pressed step's index), and reveals the recall prompt + further-reading wrap-up once `all_complete()`. `main`: `start_grade(step, criterion, ctx)` records `pending_step`; `poll_grade` folds the verdict into `progress.apply(step, …)` before mapping the annotation; `grade_outcome` now borrows `&Result`. New voice headings RECALL/FURTHER_READING. 7 new tests (apply pass/fail, all_complete predicate, gated-render hides-past-gate + visible_prefix==2, complete-progress renders recall/further-reading; grade_outcome borrow-updated). 113 workspace tests green; clippy/fmt clean.
+- **Completed:** 2026-05-22T16:10:00Z
+- **Files modified:** `crates/rusty-app/src/{main.rs,lesson_view.rs,voice.rs}`
+- **Commit:** `e750e13`

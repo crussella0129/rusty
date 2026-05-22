@@ -33,6 +33,12 @@ pub const EDITOR_SAVED: &str = "Saved ✓";
 /// Shown when no `.rs` files are found in the sandbox.
 pub const EDITOR_NO_FILES: &str = "Rusty found no Rust files to edit in this lesson yet.";
 
+/// Heading above the end-of-lesson recall prompt.
+pub const RECALL_HEADING: &str = "Quick check";
+
+/// Heading above the further-reading links.
+pub const FURTHER_READING_HEADING: &str = "Further reading";
+
 /// Label for a Worked example.
 pub const EXERCISE_WORKED: &str = "Worked example";
 

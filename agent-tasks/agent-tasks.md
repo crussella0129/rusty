@@ -9,6 +9,5 @@
 <!-- Sprint 4 (Phase 3b) build tasks T-401..T-405 all completed — see completed-tasks.md. -->
 
 ## Sprint 5 (Progressive content disclosure)
-- [ ] T-502: in-memory `LessonProgress` + gated render + grade→step wiring (`apply_grade`/`all_complete`). — touches: `crates/rusty-app/src/{main.rs,lesson_view.rs,exercise_view.rs}`.
 - [ ] T-503: reveal animation (fade newest step via `animate_bool_with_time`+`multiply_opacity`). — touches: `crates/rusty-app/src/lesson_view.rs`.
 - [ ] T-504: tips (hint after first fail) + lesson-1 hints + lesson-complete flourish. — touches: `crates/rusty-app/src/{lesson_view.rs,voice.rs}`, `content/lessons/foundations-01-hello/lesson.toml`.
