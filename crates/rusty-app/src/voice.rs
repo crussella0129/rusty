@@ -18,6 +18,21 @@ pub const LESSON_PANE_TITLE: &str = "Lesson";
 /// Label above the embedded terminal pane.
 pub const TERMINAL_PANE_LABEL: &str = "Terminal (sandboxed)";
 
+/// Label above the code-editor pane.
+pub const EDITOR_PANE_LABEL: &str = "Editor";
+
+/// Prefix before the editor's file picker.
+pub const EDITOR_FILES_LABEL: &str = "Files:";
+
+/// The editor's Save button.
+pub const EDITOR_SAVE: &str = "Save";
+
+/// Shown briefly after a successful save.
+pub const EDITOR_SAVED: &str = "Saved ✓";
+
+/// Shown when no `.rs` files are found in the sandbox.
+pub const EDITOR_NO_FILES: &str = "Rusty found no Rust files to edit in this lesson yet.";
+
 /// Prefix for a lesson's "now run this" prompt, e.g. "▶ run: cargo run".
 pub const RUN_PROMPT_PREFIX: &str = "▶ run: ";
 

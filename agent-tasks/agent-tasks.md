@@ -7,6 +7,5 @@
 - [ ] T-PORT-GUARD (deferred → Phase 1 / sprint 1): add an automated portability guard (e.g. `cargo-deny` rule or `#![forbid]`-style contract) preventing `std::process`/OS-FS/PTY deps from leaking into the four portable crates (rusty-curriculum, rusty-scheduler, rusty-grader, rusty-pedagogy). Cheap to add once real code exists. — touches: `deny.toml` or crate-level lints. (From s0 plan critique C-006.)
 
 ## Sprint 4 (Phase 3b — editor + on-screen diagnostics + lesson-1 exercises)
-- [ ] T-403: egui code editor widget (sandbox `.rs` picker + highlight layouter + Save). — touches: `crates/rusty-app/src/{editor.rs,main.rs}`, `crates/rusty-app/Cargo.toml`.
 - [ ] T-404: annotation pane + exercise UI + threaded Check→grade. — touches: `crates/rusty-app/src/{annotation.rs,exercise_view.rs,lesson_view.rs,main.rs,voice.rs}`.
 - [ ] T-405 (consumes backlog T-EX1): author lesson-1 exercises (Worked/Faded/Open/PredictThenRun) + gradeable starter/solution. — touches: `content/lessons/foundations-01-hello/**`, curriculum test.

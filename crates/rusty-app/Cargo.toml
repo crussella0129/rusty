@@ -16,6 +16,10 @@ path = "src/main.rs"
 [dependencies]
 eframe.workspace = true
 egui.workspace = true
+# Code-editor syntax highlighting via `egui_extras::syntax_highlighting` — the module
+# ships in the default build; we deliberately do NOT enable the heavy `syntect` feature
+# (its built-in fallback highlights Rust well enough, per prompt §6).
+egui_extras.workspace = true
 pulldown-cmark.workspace = true
 rusty-curriculum = { path = "../rusty-curriculum" }
 rusty-host = { path = "../rusty-host" }

@@ -6,12 +6,14 @@
 //! keystrokes, answers the ConPTY cursor-position handshake, and refuses `cd`s that
 //! would escape the lesson sandbox.
 
+mod editor;
 mod lesson_view;
 mod markdown;
 mod voice;
 
 use std::path::PathBuf;
 
+use editor::Editor;
 use eframe::egui;
 use rusty_curriculum::Lesson;
 use rusty_host::{default_shell, load_lesson, prepare_sandbox, resolve_cd, CdOutcome, PtySession};
@@ -75,6 +77,8 @@ struct RustyApp {
     /// The loaded lesson, or `None` if loading failed (then `load_error` is set).
     lesson: Option<Lesson>,
     load_error: Option<String>,
+    /// The code editor over the lesson sandbox's `.rs` files.
+    editor: Editor,
 }
 
 impl RustyApp {
@@ -103,6 +107,8 @@ impl RustyApp {
         )
         .expect("spawn shell");
 
+        let editor = Editor::new(&sandbox);
+
         Self {
             term: Terminal::new(INIT_ROWS, INIT_COLS),
             session,
@@ -112,6 +118,7 @@ impl RustyApp {
             line: String::new(),
             lesson,
             load_error,
+            editor,
         }
     }
 
@@ -191,13 +198,21 @@ impl eframe::App for RustyApp {
                 }
             });
 
-        // 4. Terminal pane.
+        // 4. Terminal pane (right) and code-editor pane (centre).
         let mut typed: Vec<u8> = Vec::new();
         let mut fit = self.dims;
+        egui::Panel::right("terminal_pane")
+            .resizable(true)
+            .default_size(440.0)
+            .show_inside(ui, |ui| {
+                ui.label(voice::TERMINAL_PANE_LABEL);
+                ui.separator();
+                fit = terminal_ui(ui, &self.term.grid, &mut typed);
+            });
         egui::CentralPanel::default().show_inside(ui, |ui| {
-            ui.label(voice::TERMINAL_PANE_LABEL);
+            ui.label(voice::EDITOR_PANE_LABEL);
             ui.separator();
-            fit = terminal_ui(ui, &self.term.grid, &mut typed);
+            self.editor.ui(ui);
         });
 
         // 5. Resize the grid + PTY to the space the terminal pane actually got.

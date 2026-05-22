@@ -137,3 +137,9 @@
 - **Completed:** 2026-05-22T06:30:00Z
 - **Files modified:** `crates/rusty-grader/src/{annotate.rs,lib.rs}`
 - **Commit:** `b75c156`
+
+## T-403 (sprint 4)
+- **Description:** egui code editor in `rusty-app::editor` — `Editor` over a lesson sandbox: a file picker (`selectable_label` per `.rs` file from `list_sandbox_rs_files`, prefers `main.rs`/`lib.rs`), a `TextEdit::multiline().code_editor()` whose `layouter` calls `egui_extras::syntax_highlighting::highlight` (built-in fallback, no `syntect`) and builds the galley via `ui.painter().layout_job` (the `&self` path; `Fonts::layout_job` needs `&mut`), and a Save that writes through the host guard. Pure `load_contents` split out for testing. Wired into `main.rs`: layout is now lesson (left) | editor (centre) | terminal (right `Panel::right`). **Build notes:** egui_extras has no `syntax_highlighting` feature (the module ships by default; only `syntect` is gated) — added `egui_extras.workspace = true` with no extra feature; layouter closure sig in egui 0.34 is `FnMut(&Ui, &dyn TextBuffer, f32) -> Arc<Galley>`. 3 unit tests (pure load clears dirty; headless render of a loaded buffer exercises the highlight layouter; headless render of an empty sandbox shows the no-files notice). 12 app tests pass.
+- **Completed:** 2026-05-22T06:55:00Z
+- **Files modified:** `crates/rusty-app/src/{editor.rs,main.rs,voice.rs}`, `crates/rusty-app/Cargo.toml`
+- **Commit:** `d225b7a`
