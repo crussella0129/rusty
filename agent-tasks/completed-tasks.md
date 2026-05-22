@@ -143,3 +143,9 @@
 - **Completed:** 2026-05-22T06:55:00Z
 - **Files modified:** `crates/rusty-app/src/{editor.rs,main.rs,voice.rs}`, `crates/rusty-app/Cargo.toml`
 - **Commit:** `d225b7a`
+
+## T-404 (sprint 4)
+- **Description:** Annotation pane + exercise UI + threaded grading. `annotation.rs` draws a `rusty_grader::Annotation` (headline+colour, verbatim rustc body blocks monospaced, concept links — a live `ui.link` when `link_is_available` against the loaded lesson ids, else a weak "coming soon" label). `exercise_view.rs` renders all four `Exercise` variants and returns the `SuccessCriterion` to grade on a Check press; `criterion_for_exercise` (Some for Faded/Open, None for Worked/PredictThenRun) is the single gate for the Check control; `ExerciseState` holds the predict-then-run reveal toggles (answer hidden until "Reveal"). `lesson_view::render` lost its internal `ScrollArea` so the left panel scrolls prose+exercises+annotation together. `main.rs`: new fields (`known_lessons`, `ex_state`, `grade_job`, `annotation`, `grade_error`); `start_grade` spawns `rusty_host::grade` (process #2) on a `std::thread` → `mpsc` channel + `ctx.request_repaint()`, `poll_grade` drains it each frame (mirrors the PTY pattern) — a multi-second `cargo test` never freezes the UI; a "checking…" state shows meanwhile. Added `rusty-grader` as a direct app dep (the pure model; no `cargo_metadata` leak). 5 unit/headless tests (link availability, annotation renders all 4 shapes, criterion_for_exercise gate, reveal toggle, every Exercise variant renders). 17 app tests pass; full workspace green.
+- **Completed:** 2026-05-22T07:20:00Z
+- **Files modified:** `crates/rusty-app/src/{annotation.rs,exercise_view.rs,lesson_view.rs,main.rs,voice.rs}`, `crates/rusty-app/Cargo.toml`
+- **Commit:** `867d607`

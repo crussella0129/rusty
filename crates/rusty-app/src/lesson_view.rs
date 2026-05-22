@@ -5,18 +5,15 @@ use rusty_curriculum::{Block, CalloutTone, Lesson};
 
 use crate::{markdown, voice};
 
-/// Render the whole lesson (title + body blocks) in a scroll area.
+/// Render the lesson's title + body blocks. The caller owns the scroll area (so the
+/// exercises and annotation pane can scroll together with the prose).
 pub fn render(ui: &mut egui::Ui, lesson: &Lesson) {
     ui.heading(&lesson.title);
     ui.separator();
-    egui::ScrollArea::vertical()
-        .auto_shrink([false, false])
-        .show(ui, |ui| {
-            for block in &lesson.body {
-                render_block(ui, block);
-                ui.add_space(8.0);
-            }
-        });
+    for block in &lesson.body {
+        render_block(ui, block);
+        ui.add_space(8.0);
+    }
 }
 
 fn render_block(ui: &mut egui::Ui, block: &Block) {

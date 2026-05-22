@@ -2864,6 +2864,7 @@ dependencies = [
  "egui_extras",
  "pulldown-cmark",
  "rusty-curriculum",
+ "rusty-grader",
  "rusty-host",
  "rusty-terminal",
 ]

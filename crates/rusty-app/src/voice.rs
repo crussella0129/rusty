@@ -33,6 +33,48 @@ pub const EDITOR_SAVED: &str = "Saved ✓";
 /// Shown when no `.rs` files are found in the sandbox.
 pub const EDITOR_NO_FILES: &str = "Rusty found no Rust files to edit in this lesson yet.";
 
+/// Heading above a lesson's exercises.
+pub const EXERCISES_HEADING: &str = "Exercises";
+
+/// Label for a Worked example.
+pub const EXERCISE_WORKED: &str = "Worked example";
+
+/// The grade-this-exercise button.
+pub const EXERCISE_CHECK: &str = "Check";
+
+/// Shown while a grade is running on the background thread.
+pub const EXERCISE_CHECKING: &str = "Rusty is checking your work…";
+
+/// Reveal button for a predict-then-run exercise.
+pub const EXERCISE_REVEAL: &str = "Reveal the answer";
+
+/// Prefix for the Faded exercise's "edit this file" hint, e.g. "Edit src/lib.rs…".
+pub const EXERCISE_FADED_EDIT_PREFIX: &str = "Edit ";
+
+/// Suffix for the Faded edit hint.
+pub const EXERCISE_FADED_EDIT_SUFFIX: &str = " in the editor, then press Check.";
+
+// --- Annotation pane (the on-screen rustc-style result, prompt §5). ---
+
+/// Headline when a check passes.
+pub const ANNOTATION_PASS: &str = "Rusty checked it — that passes. ✓";
+
+/// Headline when the code did not compile.
+pub const ANNOTATION_COMPILE_ERROR: &str =
+    "It didn't compile yet — here is exactly what the compiler said:";
+
+/// Headline when it compiled but a test failed.
+pub const ANNOTATION_TESTS_FAILED: &str = "It compiled, but a test didn't pass yet.";
+
+/// Headline when `cargo run` output didn't match.
+pub const ANNOTATION_RUN_MISMATCH: &str = "It ran, but the output wasn't what was expected:";
+
+/// Prefix on an available concept link, e.g. "E0382 → teaches: …".
+pub const CONCEPT_LINK_TEACHES: &str = " → teaches: ";
+
+/// Suffix marking a concept link whose lesson isn't authored yet.
+pub const CONCEPT_LINK_COMING_SOON: &str = " (coming soon)";
+
 /// Prefix for a lesson's "now run this" prompt, e.g. "▶ run: cargo run".
 pub const RUN_PROMPT_PREFIX: &str = "▶ run: ";
 

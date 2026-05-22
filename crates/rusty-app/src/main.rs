@@ -6,16 +6,21 @@
 //! keystrokes, answers the ConPTY cursor-position handshake, and refuses `cd`s that
 //! would escape the lesson sandbox.
 
+mod annotation;
 mod editor;
+mod exercise_view;
 mod lesson_view;
 mod markdown;
 mod voice;
 
 use std::path::PathBuf;
+use std::sync::mpsc::{Receiver, TryRecvError};
 
 use editor::Editor;
 use eframe::egui;
-use rusty_curriculum::Lesson;
+use exercise_view::ExerciseState;
+use rusty_curriculum::{Lesson, SuccessCriterion};
+use rusty_grader::{annotate, Annotation, Verdict};
 use rusty_host::{default_shell, load_lesson, prepare_sandbox, resolve_cd, CdOutcome, PtySession};
 use rusty_terminal::{terminal_ui, Terminal};
 
@@ -79,6 +84,16 @@ struct RustyApp {
     load_error: Option<String>,
     /// The code editor over the lesson sandbox's `.rs` files.
     editor: Editor,
+    /// Lesson ids that exist (so concept-links to them render as live, not "coming soon").
+    known_lessons: Vec<String>,
+    /// Per-exercise UI state (predict-then-run reveal toggles).
+    ex_state: ExerciseState,
+    /// An in-flight grade running on a background thread (process #2), if any.
+    grade_job: Option<Receiver<Result<Verdict, String>>>,
+    /// The annotation pane's current content (the last verdict), if any.
+    annotation: Option<Annotation>,
+    /// A host-side grade error (couldn't run cargo at all), shown plainly.
+    grade_error: Option<String>,
 }
 
 impl RustyApp {
@@ -108,6 +123,10 @@ impl RustyApp {
         .expect("spawn shell");
 
         let editor = Editor::new(&sandbox);
+        let known_lessons = lesson
+            .as_ref()
+            .map(|l| vec![l.id.0.clone()])
+            .unwrap_or_default();
 
         Self {
             term: Terminal::new(INIT_ROWS, INIT_COLS),
@@ -119,7 +138,52 @@ impl RustyApp {
             lesson,
             load_error,
             editor,
+            known_lessons,
+            ex_state: ExerciseState::default(),
+            grade_job: None,
+            annotation: None,
+            grade_error: None,
         }
+    }
+
+    /// Poll the background grade thread; when it finishes, build the annotation (or
+    /// surface a host error) and clear the in-flight job.
+    fn poll_grade(&mut self) {
+        let Some(rx) = &self.grade_job else { return };
+        match rx.try_recv() {
+            Ok(Ok(verdict)) => {
+                self.annotation = Some(annotate(&verdict));
+                self.grade_error = None;
+                self.grade_job = None;
+            }
+            Ok(Err(msg)) => {
+                self.grade_error = Some(msg);
+                self.annotation = None;
+                self.grade_job = None;
+            }
+            Err(TryRecvError::Empty) => {} // still running
+            Err(TryRecvError::Disconnected) => self.grade_job = None,
+        }
+    }
+
+    /// Spawn the cargo grade (process #2) on a background thread so a multi-second
+    /// `cargo test` never freezes the UI; the result is delivered over a channel and
+    /// polled each frame (mirrors the PTY's thread + repaint pattern).
+    fn start_grade(&mut self, criterion: SuccessCriterion, ctx: &egui::Context) {
+        if self.grade_job.is_some() {
+            return; // one grade at a time
+        }
+        let sandbox = self.root.clone();
+        let ctx = ctx.clone();
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let result = rusty_host::grade(&sandbox, &criterion).map_err(|e| format!("{e:#}"));
+            let _ = tx.send(result);
+            ctx.request_repaint();
+        });
+        self.annotation = None;
+        self.grade_error = None;
+        self.grade_job = Some(rx);
     }
 
     /// Forward the bytes typed this frame to the shell, intercepting sandbox-escaping
@@ -181,24 +245,61 @@ impl eframe::App for RustyApp {
             let _ = self.session.write(&replies);
         }
 
-        // 3. Lesson pane — render lesson 1, or an error if it failed to load.
+        // 3. Poll an in-flight grade before laying out the result pane.
+        self.poll_grade();
+        let checking = self.grade_job.is_some();
+
+        // 4. Lesson pane — lesson 1 prose, its exercises, and the annotation pane, all
+        //    in one scroll area. Captures a Check request to grade after the panel.
+        let mut check_request: Option<SuccessCriterion> = None;
         egui::Panel::left("lesson_pane")
             .resizable(true)
-            .default_size(360.0)
+            .default_size(380.0)
             .show_inside(ui, |ui| {
-                if let Some(lesson) = &self.lesson {
-                    lesson_view::render(ui, lesson);
-                } else {
-                    ui.heading(voice::LESSON_PANE_TITLE);
-                    ui.separator();
-                    ui.colored_label(egui::Color32::LIGHT_RED, voice::LESSON_LOAD_ERROR);
-                    if let Some(err) = &self.load_error {
-                        ui.label(egui::RichText::new(err).small().weak());
-                    }
-                }
+                egui::ScrollArea::vertical()
+                    .auto_shrink([false, false])
+                    .show(ui, |ui| {
+                        if let Some(lesson) = &self.lesson {
+                            lesson_view::render(ui, lesson);
+                            ui.add_space(8.0);
+                            check_request = exercise_view::render(
+                                ui,
+                                &lesson.exercises,
+                                &mut self.ex_state,
+                                checking,
+                            );
+                        } else {
+                            ui.heading(voice::LESSON_PANE_TITLE);
+                            ui.separator();
+                            ui.colored_label(egui::Color32::LIGHT_RED, voice::LESSON_LOAD_ERROR);
+                            if let Some(err) = &self.load_error {
+                                ui.label(egui::RichText::new(err).small().weak());
+                            }
+                        }
+
+                        // The annotation pane: the last graded result, or a host error.
+                        if checking {
+                            ui.separator();
+                            ui.label(egui::RichText::new(voice::EXERCISE_CHECKING).weak());
+                        }
+                        if let Some(ann) = &self.annotation {
+                            ui.separator();
+                            annotation::render(ui, ann, &self.known_lessons);
+                        }
+                        if let Some(err) = &self.grade_error {
+                            ui.separator();
+                            ui.colored_label(egui::Color32::LIGHT_RED, err);
+                        }
+                    });
             });
 
-        // 4. Terminal pane (right) and code-editor pane (centre).
+        // 5. Kick off grading for a pressed Check (off the UI thread).
+        if let Some(criterion) = check_request {
+            let ctx = ui.ctx().clone();
+            self.start_grade(criterion, &ctx);
+        }
+
+        // 6. Terminal pane (right) and code-editor pane (centre).
         let mut typed: Vec<u8> = Vec::new();
         let mut fit = self.dims;
         egui::Panel::right("terminal_pane")
@@ -215,14 +316,14 @@ impl eframe::App for RustyApp {
             self.editor.ui(ui);
         });
 
-        // 5. Resize the grid + PTY to the space the terminal pane actually got.
+        // 7. Resize the grid + PTY to the space the terminal pane actually got.
         if fit != self.dims {
             self.dims = fit;
             self.term.resize(fit.0, fit.1);
             let _ = self.session.resize(fit.0 as u16, fit.1 as u16);
         }
 
-        // 6. Forward keystrokes (with `cd` interception).
+        // 8. Forward keystrokes (with `cd` interception).
         self.handle_typed(&typed);
     }
 }

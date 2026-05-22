@@ -22,5 +22,7 @@ egui.workspace = true
 egui_extras.workspace = true
 pulldown-cmark.workspace = true
 rusty-curriculum = { path = "../rusty-curriculum" }
+# The pure annotation/verdict model the grading UI renders (no cargo_metadata leaks in).
+rusty-grader = { path = "../rusty-grader" }
 rusty-host = { path = "../rusty-host" }
 rusty-terminal = { path = "../rusty-terminal" }
