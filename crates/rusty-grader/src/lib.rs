@@ -5,11 +5,13 @@
 //! JSON/stdout (`cargo_metadata` is a pure parser, no process/FS) and never spawns
 //! cargo itself — `rusty-host` runs the subprocess and passes the output in (§11).
 
+pub mod annotate;
 pub mod diagnostic;
 pub mod error_map;
 pub mod evaluate;
 pub mod verdict;
 
+pub use annotate::{annotate, Annotation, ConceptLink, Headline};
 pub use diagnostic::{parse_diagnostics, Diag, Level, Span};
 pub use error_map::concept_for_code;
 pub use evaluate::{evaluate, CargoOutcome};

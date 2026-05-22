@@ -131,3 +131,9 @@
 - **Completed:** 2026-05-22T06:20:00Z
 - **Files modified:** `crates/rusty-host/src/{files.rs,sandbox.rs,lib.rs}`, `crates/rusty-host/tests/files.rs`
 - **Commit:** `6562cd4`
+
+## T-402 (sprint 4)
+- **Description:** Pure annotation model in `rusty-grader::annotate` — `annotate(&Verdict) -> Annotation{headline: Headline, body_blocks: Vec<String>, links: Vec<ConceptLink>}`. Body blocks are each error's verbatim rustc `rendered` text (fallback: message); links come from `concept_for_code`, deduplicated. Keeps `rusty-app` free of `cargo_metadata` (UI consumes plain owned types). Forward-looking: emits a link for any known code; the UI gates navigability. 7 unit tests incl. the C-002 case (E0425 → `foundations-01-hello`, the authored lesson) and link-dedup. Crate stays portable.
+- **Completed:** 2026-05-22T06:30:00Z
+- **Files modified:** `crates/rusty-grader/src/{annotate.rs,lib.rs}`
+- **Commit:** `b75c156`
