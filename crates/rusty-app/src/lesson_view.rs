@@ -8,7 +8,10 @@ use crate::{markdown, voice};
 /// Render the lesson's title + body blocks. The caller owns the scroll area (so the
 /// exercises and annotation pane can scroll together with the prose).
 pub fn render(ui: &mut egui::Ui, lesson: &Lesson) {
-    ui.heading(&lesson.title);
+    // The lesson name is THE title — render it larger than any in-body markdown heading
+    // (`render_markdown` tops out at size 22 for an H1), so lesson prose should not
+    // repeat the title as its own `# heading`.
+    ui.label(egui::RichText::new(&lesson.title).size(28.0).strong());
     ui.separator();
     for block in &lesson.body {
         render_block(ui, block);

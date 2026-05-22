@@ -26,8 +26,6 @@ why_it_matters = "Every runnable Rust program needs exactly one `main` — it is
 [[body]]
 kind = "prose"
 text = """
-# Hello, compiler.
-
 Welcome. Before we talk *about* Rust, let's run some. The terminal on the right is a
 real shell sitting inside this lesson's project folder — the same `cargo` you would
 use on any Rust project.
