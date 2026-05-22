@@ -255,4 +255,40 @@ mod tests {
         headless(|ui| ed.ui(ui));
         std::fs::remove_dir_all(&dir).ok();
     }
+
+    #[test]
+    fn test_editor_save_round_trip() {
+        // C-001: the editor's own `save()` wiring — buffer → write_sandbox_file → disk,
+        // with the dirty flag cleared and `SaveState::Saved` set.
+        let dir = temp_sandbox("save", "src/main.rs", "fn main() {}\n");
+        let mut ed = Editor::new(&dir);
+        ed.buffer = "fn main() { println!(\"x\"); }\n".to_string();
+        ed.dirty = true;
+        ed.save();
+        assert_eq!(ed.save_state, SaveState::Saved);
+        assert!(!ed.dirty, "a successful save clears the dirty flag");
+        let on_disk = std::fs::read_to_string(dir.join("src").join("main.rs")).unwrap();
+        assert_eq!(on_disk, "fn main() { println!(\"x\"); }\n");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn test_editor_save_noop_without_selection() {
+        // C-001 negative path: Save with nothing open must not panic and stays Idle.
+        let mut ed = bare();
+        ed.save();
+        assert_eq!(ed.save_state, SaveState::Idle);
+    }
+
+    #[test]
+    fn test_editor_open_switches_file() {
+        // C-003: selecting a *different* file loads its bytes (not just the auto-opened one).
+        let dir = temp_sandbox("switch", "src/main.rs", "fn main() {}\n");
+        std::fs::write(dir.join("src").join("other.rs"), "pub fn o() {}\n").unwrap();
+        let mut ed = Editor::new(&dir);
+        ed.open(Path::new("src/other.rs"));
+        assert_eq!(ed.selected.as_deref(), Some(Path::new("src/other.rs")));
+        assert_eq!(ed.buffer, "pub fn o() {}\n");
+        std::fs::remove_dir_all(&dir).ok();
+    }
 }

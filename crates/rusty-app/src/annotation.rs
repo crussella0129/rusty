@@ -67,7 +67,17 @@ pub fn render(ui: &mut egui::Ui, annotation: &Annotation, known_lessons: &[Strin
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rusty_grader::{annotate, Verdict};
+    use rusty_grader::{annotate, Diag, Level, Verdict};
+
+    fn err_diag(code: &str) -> Diag {
+        Diag {
+            code: Some(code.to_string()),
+            level: Level::Error,
+            message: "m".to_string(),
+            rendered: Some(format!("error[{code}]: …")),
+            primary_span: None,
+        }
+    }
 
     fn headless(mut f: impl FnMut(&mut egui::Ui)) {
         let ctx = egui::Context::default();
@@ -108,7 +118,9 @@ mod tests {
         let known = vec!["foundations-01-hello".to_string()];
         let verdicts = [
             Verdict::Pass,
-            Verdict::CompileError(vec![]),
+            // Two diags so BOTH link-render branches run: E0425 → lesson 1 (live `ui.link`),
+            // E0382 → an unauthored lesson (the weak "coming soon" label).
+            Verdict::CompileError(vec![err_diag("E0425"), err_diag("E0382")]),
             Verdict::TestsFailed,
             Verdict::RunMismatch {
                 expected: "hi".to_string(),

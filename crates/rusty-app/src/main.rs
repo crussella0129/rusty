@@ -57,6 +57,15 @@ fn submit_action(line: &str, cwd: &std::path::Path, root: &std::path::Path) -> S
     }
 }
 
+/// Map a finished grade result into the (annotation, grade-error) the pane shows.
+/// Pure, so the channel-delivered outcome is testable without the egui loop.
+fn grade_outcome(result: Result<Verdict, String>) -> (Option<Annotation>, Option<String>) {
+    match result {
+        Ok(verdict) => (Some(annotate(&verdict)), None),
+        Err(msg) => (None, Some(msg)),
+    }
+}
+
 /// Fallback sandbox dir if a lesson fails to load.
 fn fallback_sandbox() -> PathBuf {
     let root = std::env::current_dir()
@@ -151,14 +160,8 @@ impl RustyApp {
     fn poll_grade(&mut self) {
         let Some(rx) = &self.grade_job else { return };
         match rx.try_recv() {
-            Ok(Ok(verdict)) => {
-                self.annotation = Some(annotate(&verdict));
-                self.grade_error = None;
-                self.grade_job = None;
-            }
-            Ok(Err(msg)) => {
-                self.grade_error = Some(msg);
-                self.annotation = None;
+            Ok(received) => {
+                (self.annotation, self.grade_error) = grade_outcome(received);
                 self.grade_job = None;
             }
             Err(TryRecvError::Empty) => {} // still running
@@ -371,5 +374,35 @@ mod tests {
             SubmitAction::ChangeDir(p) => assert!(p.ends_with("spike")),
             other => panic!("expected ChangeDir(root), got {other:?}"),
         }
+    }
+
+    // C-002: the grade-result mapping that `poll_grade` applies to a channel-delivered
+    // outcome. The thread-spawn + egui repaint glue itself is validated in the visual
+    // heartbeat (no headless egui event loop to assert against).
+    #[test]
+    fn test_grade_outcome_ok_builds_annotation() {
+        let (ann, err) = grade_outcome(Ok(Verdict::Pass));
+        assert!(ann.is_some());
+        assert!(err.is_none());
+    }
+
+    #[test]
+    fn test_grade_outcome_err_surfaces_message() {
+        let (ann, err) = grade_outcome(Err("cargo not found".to_string()));
+        assert!(ann.is_none());
+        assert_eq!(err.as_deref(), Some("cargo not found"));
+    }
+
+    #[test]
+    fn test_grade_channel_delivers_and_maps() {
+        // The off-thread → channel handoff `start_grade`/`poll_grade` rely on: a Verdict
+        // sent from another thread is received and mapped to the right annotation.
+        let (tx, rx) = std::sync::mpsc::channel::<Result<Verdict, String>>();
+        std::thread::spawn(move || {
+            let _ = tx.send(Ok(Verdict::TestsFailed));
+        });
+        let received = rx.recv().expect("a result arrives over the channel");
+        let (ann, _) = grade_outcome(received);
+        assert_eq!(ann.unwrap().headline, rusty_grader::Headline::TestsFailed);
     }
 }

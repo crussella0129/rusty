@@ -216,6 +216,10 @@ mod tests {
             ..Default::default()
         };
         let _ = ctx.run_ui(input, |ui| {
+            // Render the hidden state, then reveal the PredictThenRun (index 3) and render
+            // again so the revealed branch (expected_output + explanation) also executes.
+            let _ = render(ui, &exercises, &mut state, false);
+            state.toggle_reveal(3);
             let _ = render(ui, &exercises, &mut state, false);
         });
     }
