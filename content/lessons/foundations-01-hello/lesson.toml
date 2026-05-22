@@ -100,6 +100,7 @@ explanation = 'Rust evaluates `1 + 2` to `3`, and `println!("{n}")` prints the v
 
 # Step 5 — Faded (gating: cargo test must pass).
 [[steps]]
+hint = "Rusty is looking for a function named `greeting` in `src/main.rs`. Add `fn greeting() -> String { String::from(\"Hello, Rusty!\") }` near the top, then Check again — the test calls exactly that."
 
 [steps.exercise]
 kind = "faded"

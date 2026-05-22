@@ -173,3 +173,9 @@
 - **Completed:** 2026-05-22T16:20:00Z
 - **Files modified:** `crates/rusty-app/src/lesson_view.rs`
 - **Commit:** `5181d7b`
+
+## T-504 (sprint 5)
+- **Description:** Tips + lesson-1 hints + lesson-complete flourish. Pure `lesson_view::tip_visible(step, attempts) -> bool` (gating step + `hint.is_some()` + `attempts >= 1`); the tip renders inside the gating step's frame (amber `voice::TIP_LABEL` + the hint markdown) after the first failed Check, reading `progress.attempts(step)` (accessor re-added to `LessonProgress`). When `all_complete()`, a green H2 `voice::LESSON_COMPLETE` flourish renders above the recall + further-reading wrap-up. Authored lesson 1's Faded step `hint` (points the learner at defining `greeting`). 2 new app tests (`test_tip_visible_predicate`; `test_tip_hidden_then_shown_render` — attempts 0 hidden → after a failed `apply` shown, both no-panic) + host `content.rs` now asserts ≥1 gating step has a hint. Full workspace green; clippy/fmt clean.
+- **Completed:** 2026-05-22T16:35:00Z
+- **Files modified:** `crates/rusty-app/src/{lesson_view.rs,voice.rs,main.rs}`, `content/lessons/foundations-01-hello/lesson.toml`, `crates/rusty-host/tests/content.rs`
+- **Commit:** `f88b9fc`

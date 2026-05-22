@@ -107,6 +107,11 @@ impl LessonProgress {
     fn completed(&self) -> &[bool] {
         &self.completed
     }
+
+    /// Failed-Check count for `step` (0 if out of range) — drives the tip after the first.
+    fn attempts(&self, step: usize) -> u32 {
+        self.attempts.get(step).copied().unwrap_or(0)
+    }
 }
 
 /// Fallback sandbox dir if a lesson fails to load.

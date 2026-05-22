@@ -186,4 +186,12 @@ fn test_lesson1_has_each_exercise_variant() {
             .any(|e| matches!(e, Exercise::PredictThenRun { .. })),
         "needs a PredictThenRun"
     );
+    // T-504: at least one gating step carries a hint (the tip shown after a failed Check).
+    assert!(
+        lesson
+            .steps
+            .iter()
+            .any(|s| s.is_gating() && s.hint.is_some()),
+        "needs a gating step with a hint"
+    );
 }

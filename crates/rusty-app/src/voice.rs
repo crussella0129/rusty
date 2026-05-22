@@ -39,6 +39,13 @@ pub const RECALL_HEADING: &str = "Quick check";
 /// Heading above the further-reading links.
 pub const FURTHER_READING_HEADING: &str = "Further reading";
 
+/// Label above the tip Rusty offers after a first failed Check.
+pub const TIP_LABEL: &str = "Rusty's tip";
+
+/// Shown once every step of the lesson is complete.
+pub const LESSON_COMPLETE: &str =
+    "Lesson complete — Rusty knew you'd get there. On to the next one.";
+
 /// Label for a Worked example.
 pub const EXERCISE_WORKED: &str = "Worked example";
 

@@ -9,4 +9,4 @@
 <!-- Sprint 4 (Phase 3b) build tasks T-401..T-405 all completed — see completed-tasks.md. -->
 
 ## Sprint 5 (Progressive content disclosure)
-- [ ] T-504: tips (hint after first fail) + lesson-1 hints + lesson-complete flourish. — touches: `crates/rusty-app/src/{lesson_view.rs,voice.rs}`, `content/lessons/foundations-01-hello/lesson.toml`.
+<!-- Sprint 5 build tasks T-501..T-504 all completed — see completed-tasks.md. -->

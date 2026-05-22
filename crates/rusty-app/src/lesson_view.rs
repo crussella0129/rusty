@@ -2,11 +2,20 @@
 //! lesson data; only chrome (labels, the run-prompt prefix) lives in [`crate::voice`].
 
 use rusty_curriculum::{
-    visible_prefix, Block, CalloutTone, Lesson, RecallPrompt, Reference, SuccessCriterion,
+    visible_prefix, Block, CalloutTone, Lesson, RecallPrompt, Reference, Step, SuccessCriterion,
 };
 
 use crate::exercise_view::{self, ExerciseState};
 use crate::{markdown, voice, LessonProgress};
+
+/// Amber used for Rusty's tip (a hint after the learner's first failed Check).
+const TIP_COLOR: egui::Color32 = egui::Color32::from_rgb(0xff, 0xb3, 0x00);
+
+/// Whether to show this step's tip: a gating step with a `hint` whose Check has failed at
+/// least once. Pure, so the tip-gate is unit-testable without egui.
+fn tip_visible(step: &Step, attempts: u32) -> bool {
+    step.is_gating() && step.hint.is_some() && attempts >= 1
+}
 
 /// Render the lesson's title, then its **visible** steps (progressive disclosure: a
 /// gating step hides everything after it until completed). Returns `Some((step_index,
@@ -53,6 +62,16 @@ pub fn render(
                         {
                             step_check = Some((i, c));
                         }
+                        // After the first failed Check, Rusty offers the step's tip.
+                        if tip_visible(step, progress.attempts(i)) {
+                            if let Some(hint) = &step.hint {
+                                ui.add_space(4.0);
+                                ui.label(
+                                    crate::theme::section_label(voice::TIP_LABEL).color(TIP_COLOR),
+                                );
+                                markdown::render_markdown(ui, hint);
+                            }
+                        }
                     });
                     ui.add_space(6.0);
                 }
@@ -64,9 +83,17 @@ pub fn render(
         }
     }
 
-    // The lesson's wrap-up (recall + further reading) materializes once every step is done.
+    // The lesson's wrap-up (a complete flourish + recall + further reading) materializes
+    // once every step is done.
     if progress.all_complete() {
         ui.separator();
+        ui.label(
+            egui::RichText::new(voice::LESSON_COMPLETE)
+                .size(crate::theme::H2)
+                .strong()
+                .color(egui::Color32::from_rgb(0x4c, 0xaf, 0x50)),
+        );
+        ui.add_space(6.0);
         render_recall(ui, &lesson.recall_prompt);
         render_further_reading(ui, &lesson.further_reading);
     }
@@ -307,5 +334,76 @@ mod tests {
                 let _ = render(ui, &lesson, &progress, &mut ex_state, false);
             });
         }
+    }
+
+    fn gating_step_with_hint() -> Step {
+        Step {
+            blocks: vec![],
+            exercise: Some(rusty_curriculum::Exercise::Faded {
+                prompt: "p".into(),
+                file_path: "src/main.rs".into(),
+                check_command: "cargo test".into(),
+                success_criterion: rusty_curriculum::SuccessCriterion::CargoTestPasses,
+            }),
+            hint: Some("define it".into()),
+        }
+    }
+
+    #[test]
+    fn test_tip_visible_predicate() {
+        let mut s = gating_step_with_hint();
+        assert!(!tip_visible(&s, 0), "no tip before any failed Check");
+        assert!(tip_visible(&s, 1), "tip after the first failure");
+        s.hint = None;
+        assert!(!tip_visible(&s, 3), "no tip without a hint");
+        let worked = Step {
+            blocks: vec![],
+            exercise: Some(rusty_curriculum::Exercise::Worked {
+                prompt: "p".into(),
+                code: "c".into(),
+                annotation: "a".into(),
+            }),
+            hint: Some("h".into()),
+        };
+        assert!(!tip_visible(&worked, 5), "a non-gating step never tips");
+    }
+
+    /// A one-gating-step lesson with a hint: attempts=0 hides the tip, attempts=1 shows it
+    /// — both render without panic. (T-504.)
+    #[test]
+    fn test_tip_hidden_then_shown_render() {
+        const HINTED: &str = r##"
+            id = "h"
+            title = "H"
+            track = "Foundations"
+            estimated_minutes = 1
+            starter_project = "s"
+            solution_project = "sol"
+
+            [[steps]]
+            hint = "Rusty says: define `greeting`."
+            [steps.exercise]
+            kind = "faded"
+            prompt = "fill it in"
+            file_path = "src/main.rs"
+            check_command = "cargo test"
+            success_criterion = { kind = "cargo_test_passes" }
+
+            [recall_prompt]
+            kind = "short_answer"
+            question = "q"
+            expected = "a"
+            explanation = "e"
+        "##;
+        let lesson = parse_lesson(HINTED).expect("hinted fixture parses");
+        let mut ex_state = ExerciseState::default();
+        let mut progress = LessonProgress::new(lesson.steps.len());
+        headless(|ui| {
+            let _ = render(ui, &lesson, &progress, &mut ex_state, false); // attempts 0: hidden
+        });
+        progress.apply(0, &rusty_grader::Verdict::TestsFailed); // attempts[0] = 1
+        headless(|ui| {
+            let _ = render(ui, &lesson, &progress, &mut ex_state, false); // tip now shown
+        });
     }
 }
