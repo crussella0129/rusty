@@ -125,3 +125,9 @@
 - **Completed:** 2026-05-21T23:41:54Z
 - **Files modified:** `crates/rusty-host/{Cargo.toml,src/grade.rs,src/lib.rs,tests/grade.rs}`
 - **Commit:** `bc3e8b9`
+
+## T-401 (sprint 4)
+- **Description:** Sandboxed editor file I/O in `rusty-host::files` — `list_sandbox_rs_files` (relative `.rs` paths, sorted, skips `target/`), `read_sandbox_file`, `write_sandbox_file` (creates parent dirs in-sandbox). All routed through a new `sandbox::contain(root, rel) -> Option<PathBuf>` guard (reuses the existing lexical normalize/starts_with logic, rebuilds onto the real root for valid fs paths) plus a *separate* explicit `target/` first-segment denial (C-001: `target/` is inside the sandbox, so containment alone would allow it). All editor `std::fs` stays in this crate (§11). 5 integration tests (list-skips-target, read/write round-trip + parent-dir creation, `../` escape refused, absolute-path refused, `target/` write refused).
+- **Completed:** 2026-05-22T06:20:00Z
+- **Files modified:** `crates/rusty-host/src/{files.rs,sandbox.rs,lib.rs}`, `crates/rusty-host/tests/files.rs`
+- **Commit:** `6562cd4`

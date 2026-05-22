@@ -83,6 +83,29 @@ pub fn resolve_cd(line: &str, cwd: &Path, root: &Path) -> CdOutcome {
     }
 }
 
+/// Resolve a learner-supplied *relative* path against the sandbox `root`, returning a
+/// real absolute path **iff** it stays inside the sandbox. Lexical/pure (no disk
+/// access). Used by the file-I/O layer ([`crate::files`]) to refuse reads/writes that
+/// would escape via `..` or an absolute path. The returned path is rebuilt onto the
+/// real `root` (not from segments) so it is a valid argument to `std::fs`.
+pub fn contain(root: &Path, rel: &Path) -> Option<PathBuf> {
+    if rel.is_absolute() {
+        return None;
+    }
+    let candidate = root.join(rel);
+    let cand = normalize(&candidate)?;
+    let root_norm = normalize(root)?;
+    if !starts_with(&cand, &root_norm) {
+        return None;
+    }
+    // Append only the in-sandbox tail segments onto the real root path.
+    let mut out = root.to_path_buf();
+    for (_, seg) in &cand[root_norm.len()..] {
+        out.push(seg);
+    }
+    Some(out)
+}
+
 /// A normalized path as a flat list of segments. Anchor segments (drive prefix, root
 /// separator) are `(false, ..)`; named directory segments are `(true, ..)`. Returns
 /// `None` if a `..` walks above the anchor — that always escapes the sandbox.

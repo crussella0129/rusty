@@ -9,11 +9,13 @@
 //! platform-specific code lives here (or in `rusty-terminal`) — nowhere else.
 
 pub mod content;
+pub mod files;
 pub mod grade;
 pub mod pty;
 pub mod sandbox;
 
 pub use content::{load_lesson, prepare_sandbox};
+pub use files::{list_sandbox_rs_files, read_sandbox_file, write_sandbox_file};
 pub use grade::{grade, run_cargo_run, run_cargo_test};
 pub use pty::PtySession;
 // Re-exported so callers (and integration tests) can name the verdict type.
