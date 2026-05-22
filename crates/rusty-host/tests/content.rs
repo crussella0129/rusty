@@ -149,7 +149,7 @@ fn test_load_lesson_real_content() {
     let lesson = load_lesson(&dir).expect("real lesson 1 loads");
     assert_eq!(lesson.id.0, "foundations-01-hello");
     assert_eq!(lesson.title, "Hello, compiler.");
-    assert!(!lesson.steps.is_empty());
+    assert_eq!(lesson.steps.len(), 6, "lesson 1 migrated to 6 steps");
 }
 
 /// T-405 / prompt §3: lesson 1 must contain at least one each of Worked / Faded /

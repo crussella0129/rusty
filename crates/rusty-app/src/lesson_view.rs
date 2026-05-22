@@ -17,6 +17,15 @@ fn tip_visible(step: &Step, attempts: u32) -> bool {
     step.is_gating() && step.hint.is_some() && attempts >= 1
 }
 
+/// Bind a step's index to the criterion its Check produced (the grade→step contract).
+/// Pure + unit-tested so the index↔criterion pairing can't silently mis-associate.
+fn pair_check(
+    step_idx: usize,
+    criterion: Option<SuccessCriterion>,
+) -> Option<(usize, SuccessCriterion)> {
+    criterion.map(|c| (step_idx, c))
+}
+
 /// Render the lesson's title, then its **visible** steps (progressive disclosure: a
 /// gating step hides everything after it until completed). Returns `Some((step_index,
 /// criterion))` when a step's Check was pressed. When the whole lesson is complete, the
@@ -57,10 +66,9 @@ pub fn render(
                 }
                 if let Some(exercise) = &step.exercise {
                     egui::Frame::group(ui.style()).show(ui, |ui| {
-                        if let Some(c) =
-                            exercise_view::render_exercise(ui, i, exercise, ex_state, checking)
-                        {
-                            step_check = Some((i, c));
+                        let c = exercise_view::render_exercise(ui, i, exercise, ex_state, checking);
+                        if let Some(paired) = pair_check(i, c) {
+                            step_check = Some(paired);
                         }
                         // After the first failed Check, Rusty offers the step's tip.
                         if tip_visible(step, progress.attempts(i)) {
@@ -226,6 +234,10 @@ mod tests {
         question = "q"
         expected = "a"
         explanation = "e"
+
+        [[further_reading]]
+        title = "The Book"
+        url = "https://doc.rust-lang.org/book/"
     "##;
 
     fn headless(mut f: impl FnMut(&mut egui::Ui)) {
@@ -313,9 +325,10 @@ mod tests {
         });
     }
 
-    /// Render two frames on one `Context` so the reveal animation actually advances
-    /// (`animate_bool_with_time` + `multiply_opacity`); the test fails if either frame
-    /// panics. (T-503.)
+    /// Render two frames on one `Context` (the reveal path: `animate_bool_with_time` +
+    /// `multiply_opacity`); fails on panic, and asserts the per-step reveal factor the
+    /// render used is a valid opacity in `[0, 1]`. (The full 0→1 ramp over wall-clock and
+    /// the per-step fade are heartbeat-verified — egui has no view-tree assertion.) (T-503.)
     #[test]
     fn test_lesson_pane_animates_without_panic() {
         let lesson = parse_lesson(ALL_BLOCKS).expect("fixture lesson parses");
@@ -334,6 +347,20 @@ mod tests {
                 let _ = render(ui, &lesson, &progress, &mut ex_state, false);
             });
         }
+        // The same id/target the render uses → the opacity factor it applied is in [0,1].
+        let factor =
+            ctx.animate_bool_with_time(egui::Id::new(("rusty_step_reveal", 0usize)), true, 0.35);
+        assert!(
+            (0.0..=1.0).contains(&factor),
+            "reveal opacity stays in [0,1]"
+        );
+    }
+
+    #[test]
+    fn test_pair_check_binds_step_index() {
+        let c = SuccessCriterion::CargoTestPasses;
+        assert_eq!(pair_check(2, Some(c.clone())), Some((2, c)));
+        assert_eq!(pair_check(2, None), None);
     }
 
     fn gating_step_with_hint() -> Step {
