@@ -9,9 +9,12 @@ use crate::{markdown, voice};
 /// exercises and annotation pane can scroll together with the prose).
 pub fn render(ui: &mut egui::Ui, lesson: &Lesson) {
     // The lesson name is THE title — render it larger than any in-body markdown heading
-    // (`render_markdown` tops out at size 22 for an H1), so lesson prose should not
-    // repeat the title as its own `# heading`.
-    ui.label(egui::RichText::new(&lesson.title).size(28.0).strong());
+    // (see `theme`), so lesson prose should not repeat the title as its own `# heading`.
+    ui.label(
+        egui::RichText::new(&lesson.title)
+            .size(crate::theme::TITLE)
+            .strong(),
+    );
     ui.separator();
     for block in &lesson.body {
         render_block(ui, block);
@@ -52,7 +55,7 @@ fn render_block(ui: &mut egui::Ui, block: &Block) {
                 ),
             };
             egui::Frame::group(ui.style()).show(ui, |ui| {
-                ui.label(egui::RichText::new(label).strong().color(color));
+                ui.label(crate::theme::section_label(label).color(color));
                 markdown::render_markdown(ui, text);
             });
         }

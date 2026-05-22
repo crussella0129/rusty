@@ -11,6 +11,7 @@ mod editor;
 mod exercise_view;
 mod lesson_view;
 mod markdown;
+mod theme;
 mod voice;
 
 use std::path::PathBuf;

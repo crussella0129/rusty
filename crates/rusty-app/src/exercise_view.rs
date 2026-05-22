@@ -54,7 +54,11 @@ pub fn render(
     if exercises.is_empty() {
         return None;
     }
-    ui.heading(voice::EXERCISES_HEADING);
+    ui.label(
+        egui::RichText::new(voice::EXERCISES_HEADING)
+            .size(crate::theme::H2)
+            .strong(),
+    );
     ui.separator();
 
     let mut requested: Option<SuccessCriterion> = None;
@@ -83,7 +87,7 @@ fn render_one(
             code,
             annotation,
         } => {
-            ui.label(egui::RichText::new(voice::EXERCISE_WORKED).strong());
+            ui.label(crate::theme::section_label(voice::EXERCISE_WORKED));
             markdown::render_markdown(ui, prompt);
             code_block(ui, code);
             ui.label(egui::RichText::new(annotation).weak());
@@ -114,7 +118,7 @@ fn render_one(
             markdown::render_markdown(ui, question);
             code_block(ui, code);
             if state.revealed(i) {
-                ui.label(egui::RichText::new("Output:").strong());
+                ui.label(crate::theme::section_label("Output:"));
                 code_block(ui, expected_output);
                 markdown::render_markdown(ui, explanation);
             } else if ui.button(voice::EXERCISE_REVEAL).clicked() {

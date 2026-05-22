@@ -124,13 +124,12 @@ pub fn render_markdown(ui: &mut egui::Ui, md: &str) {
     for block in to_blocks(md) {
         match block {
             MdBlock::Heading(level, text) => {
-                let size = match level {
-                    1 => 22.0,
-                    2 => 18.0,
-                    _ => 15.0,
-                };
                 ui.add_space(2.0);
-                ui.label(egui::RichText::new(text).size(size).strong());
+                ui.label(
+                    egui::RichText::new(text)
+                        .size(crate::theme::heading_size(level))
+                        .strong(),
+                );
             }
             MdBlock::Paragraph(spans) => {
                 paragraph(ui, &spans);
@@ -153,7 +152,7 @@ pub fn render_markdown(ui: &mut egui::Ui, md: &str) {
 
 fn paragraph(ui: &mut egui::Ui, spans: &[MdSpan]) {
     let mut job = egui::text::LayoutJob::default();
-    let body = egui::FontId::proportional(14.0);
+    let body = egui::FontId::proportional(crate::theme::BODY);
     let mono = egui::FontId::monospace(13.0);
     let normal = ui.visuals().text_color();
     let strong = ui.visuals().strong_text_color();

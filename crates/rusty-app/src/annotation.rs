@@ -31,7 +31,7 @@ fn headline(ui: &egui::Ui, h: Headline) -> (&'static str, egui::Color32) {
 /// Render an [`Annotation`]: headline, verbatim body blocks (monospace), concept links.
 pub fn render(ui: &mut egui::Ui, annotation: &Annotation, known_lessons: &[String]) {
     let (label, color) = headline(ui, annotation.headline);
-    ui.label(egui::RichText::new(label).strong().color(color));
+    ui.label(crate::theme::section_label(label).color(color));
 
     for block in &annotation.body_blocks {
         egui::Frame::group(ui.style()).show(ui, |ui| {
