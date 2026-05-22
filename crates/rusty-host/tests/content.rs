@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use rusty_curriculum::Exercise;
 use rusty_host::{load_lesson, prepare_sandbox};
 
 static COUNTER: AtomicU32 = AtomicU32::new(0);
@@ -148,4 +149,35 @@ fn test_load_lesson_real_content() {
     assert_eq!(lesson.id.0, "foundations-01-hello");
     assert_eq!(lesson.title, "Hello, compiler.");
     assert!(!lesson.body.is_empty());
+}
+
+/// T-405 / prompt §3: lesson 1 must contain at least one each of Worked / Faded /
+/// Open, plus a PredictThenRun.
+#[test]
+fn test_lesson1_has_each_exercise_variant() {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..")
+        .join("content")
+        .join("lessons")
+        .join("foundations-01-hello");
+    let lesson = load_lesson(&dir).expect("real lesson 1 loads");
+    let ex = &lesson.exercises;
+    assert!(
+        ex.iter().any(|e| matches!(e, Exercise::Worked { .. })),
+        "needs a Worked"
+    );
+    assert!(
+        ex.iter().any(|e| matches!(e, Exercise::Faded { .. })),
+        "needs a Faded"
+    );
+    assert!(
+        ex.iter().any(|e| matches!(e, Exercise::Open { .. })),
+        "needs an Open"
+    );
+    assert!(
+        ex.iter()
+            .any(|e| matches!(e, Exercise::PredictThenRun { .. })),
+        "needs a PredictThenRun"
+    );
 }

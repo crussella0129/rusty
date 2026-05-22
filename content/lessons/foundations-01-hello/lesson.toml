@@ -64,6 +64,51 @@ this track builds on that loop: change the source, run it, and read what the com
 tells you.
 """
 
+# --- Exercises (prompt §3: at least one each of Worked / Faded / Open, plus a
+# PredictThenRun). Worked and PredictThenRun are read/think; Faded and Open are graded
+# in-app by the Check button against the lesson sandbox. ---
+
+[[exercises]]
+kind = "worked"
+prompt = "Here is the smallest complete Rust program. `fn main()` is where every program starts, and `println!` prints a line to the terminal."
+code = '''
+fn main() {
+    println!("Hello, compiler.");
+}
+'''
+annotation = "`println!` is a macro (the `!` gives it away), and the text in quotes is what gets printed. You run a program like this with `cargo run`."
+
+[[exercises]]
+kind = "predict_then_run"
+code = '''
+fn main() {
+    let n = 1 + 2;
+    println!("{n}");
+}
+'''
+question = "Before running this, predict: what single line will it print?"
+expected_output = "3"
+explanation = 'Rust evaluates `1 + 2` to `3`, and `println!("{n}")` prints the value of `n` followed by a newline.'
+
+[[exercises]]
+kind = "faded"
+prompt = """
+The project's test calls a function `greeting()` that does not exist yet. Press **Check** (or run `cargo test`) and read the error Rusty shows you — that is error E0425, "cannot find function". Then define `greeting` in `src/main.rs` so it returns the String \"Hello, Rusty!\", and Check again.
+"""
+file_path = "src/main.rs"
+check_command = "cargo test"
+success_criterion = { kind = "cargo_test_passes" }
+
+[[exercises]]
+kind = "open"
+prompt = """
+Make the program announce itself. Edit `src/main.rs` so that `cargo run` prints exactly this line, then press **Check**:
+
+    I compiled my first Rust program!
+"""
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "I compiled my first Rust program!" }
+
 [recall_prompt]
 kind = "multiple_choice"
 question = "What does `cargo run` actually do?"

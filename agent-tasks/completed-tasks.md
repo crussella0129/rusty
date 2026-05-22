@@ -149,3 +149,9 @@
 - **Completed:** 2026-05-22T07:20:00Z
 - **Files modified:** `crates/rusty-app/src/{annotation.rs,exercise_view.rs,lesson_view.rs,main.rs,voice.rs}`, `crates/rusty-app/Cargo.toml`
 - **Commit:** `867d607`
+
+## T-405 (sprint 4, consumes backlog T-EX1)
+- **Description:** Authored lesson 1's exercises + made them gradeable in-app. Added `[[exercises]]` to `foundations-01-hello/lesson.toml`: a **Worked** (smallest program), a **PredictThenRun** (`1+2` → predict `3`), a **Faded** (`cargo test`: define `greeting()` so the provided `#[cfg(test)]` test passes), and an **Open** (`cargo run` must print `I compiled my first Rust program!`) — satisfying prompt §3's ≥1-each requirement. Reworked `starter/`/`solution/` `src/main.rs`: the Faded test calls `super::greeting()`, which is **undefined in the starter** so an unedited `cargo test` yields **E0425** (unresolved name) — which `concept_for_code` maps to the loaded `foundations-01-hello`, making the **live concept-link** path reachable during the heartbeat (C-002); the `#[cfg(test)]` placement keeps `cargo run` compiling regardless. Solution defines `greeting` and prints the Open line. 6 tests: a curriculum variant-coverage assertion in `tests/content.rs`, and 5 real-cargo grade integration tests in new `tests/lesson1_grade.rs` (solution test→Pass, starter test→CompileError w/ E0425, solution run→Pass, starter run→RunMismatch, and grade→annotate→live link to lesson 1). Full workspace green.
+- **Completed:** 2026-05-22T07:40:00Z
+- **Files modified:** `content/lessons/foundations-01-hello/{lesson.toml,starter/src/main.rs,solution/src/main.rs}`, `crates/rusty-host/tests/{content.rs,lesson1_grade.rs}`
+- **Commit:** `53a3049`
