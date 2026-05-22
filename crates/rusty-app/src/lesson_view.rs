@@ -1,13 +1,21 @@
 //! Renders a [`Lesson`]'s body blocks into the left pane. Lesson copy comes from the
 //! lesson data; only chrome (labels, the run-prompt prefix) lives in [`crate::voice`].
 
-use rusty_curriculum::{Block, CalloutTone, Lesson};
+use rusty_curriculum::{Block, CalloutTone, Lesson, SuccessCriterion};
 
+use crate::exercise_view::{self, ExerciseState};
 use crate::{markdown, voice};
 
-/// Render the lesson's title + body blocks. The caller owns the scroll area (so the
-/// exercises and annotation pane can scroll together with the prose).
-pub fn render(ui: &mut egui::Ui, lesson: &Lesson) {
+/// Render the lesson's title + its steps (each step's blocks, then its optional
+/// exercise). Returns the [`SuccessCriterion`] of a pressed Check, if any. The caller
+/// owns the scroll area + the annotation pane. (Gating/progress is wired in T-502; here
+/// every step renders.)
+pub fn render(
+    ui: &mut egui::Ui,
+    lesson: &Lesson,
+    ex_state: &mut ExerciseState,
+    checking: bool,
+) -> Option<SuccessCriterion> {
     // The lesson name is THE title — render it larger than any in-body markdown heading
     // (see `theme`), so lesson prose should not repeat the title as its own `# heading`.
     ui.label(
@@ -16,10 +24,24 @@ pub fn render(ui: &mut egui::Ui, lesson: &Lesson) {
             .strong(),
     );
     ui.separator();
-    for block in &lesson.body {
-        render_block(ui, block);
-        ui.add_space(8.0);
+
+    let mut check: Option<SuccessCriterion> = None;
+    for (i, step) in lesson.steps.iter().enumerate() {
+        for block in &step.blocks {
+            render_block(ui, block);
+            ui.add_space(8.0);
+        }
+        if let Some(exercise) = &step.exercise {
+            egui::Frame::group(ui.style()).show(ui, |ui| {
+                if let Some(c) = exercise_view::render_exercise(ui, i, exercise, ex_state, checking)
+                {
+                    check = Some(c);
+                }
+            });
+            ui.add_space(6.0);
+        }
     }
+    check
 }
 
 fn render_block(ui: &mut egui::Ui, block: &Block) {
@@ -67,8 +89,8 @@ mod tests {
     use super::*;
     use rusty_curriculum::parse_lesson;
 
-    // A lesson exercising every Block variant and all three callout tones, plus
-    // markdown (heading/bold/italic/inline-code/fenced-code/bullets).
+    // A lesson exercising every Block variant + all three callout tones + an inline
+    // exercise in a step, plus markdown (heading/bold/italic/inline-code/fenced/bullets).
     const ALL_BLOCKS: &str = r##"
         id = "t"
         title = "T"
@@ -77,34 +99,43 @@ mod tests {
         starter_project = "s"
         solution_project = "sol"
 
-        [[body]]
+        [[steps]]
+
+        [[steps.blocks]]
         kind = "prose"
         text = "# H\n\n**b** and `c` and *i*\n\n- one\n- two"
 
-        [[body]]
+        [[steps.blocks]]
         kind = "code"
         lang = "rust"
         source = "fn main() {}"
 
-        [[body]]
+        [[steps.blocks]]
         kind = "now_run"
         command = "cargo run"
         note = "go"
 
-        [[body]]
+        [[steps.blocks]]
         kind = "callout"
         tone = "note"
         text = "a note"
 
-        [[body]]
+        [[steps.blocks]]
         kind = "callout"
         tone = "tip"
         text = "a tip"
 
-        [[body]]
+        [[steps.blocks]]
         kind = "callout"
         tone = "warning"
         text = "a warning"
+
+        [[steps]]
+        [steps.exercise]
+        kind = "open"
+        prompt = "write it"
+        check_command = "cargo run"
+        success_criterion = { kind = "cargo_run_output_matches", expected = "x" }
 
         [recall_prompt]
         kind = "short_answer"
@@ -113,12 +144,13 @@ mod tests {
         explanation = "e"
     "##;
 
-    /// Render every block variant through a real headless egui layout pass; the test
-    /// fails if any render branch panics. (egui has no pixel assertion, but `run`
-    /// exercises the full layout/galley path without a GPU or window.)
+    /// Render every block variant + an inline exercise through a real headless egui
+    /// layout pass; the test fails if any render branch panics. (egui has no pixel
+    /// assertion, but `run` exercises the full layout/galley path without a GPU.)
     #[test]
     fn test_render_all_blocks_does_not_panic() {
         let lesson = parse_lesson(ALL_BLOCKS).expect("fixture lesson parses");
+        let mut ex_state = ExerciseState::default();
         let ctx = egui::Context::default();
         let input = egui::RawInput {
             screen_rect: Some(egui::Rect::from_min_size(
@@ -128,7 +160,7 @@ mod tests {
             ..Default::default()
         };
         let _ = ctx.run_ui(input, |ui| {
-            render(ui, &lesson);
+            let _ = render(ui, &lesson, &mut ex_state, false);
         });
     }
 }

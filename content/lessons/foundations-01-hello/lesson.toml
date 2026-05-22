@@ -23,7 +23,12 @@ id = "main-is-the-entry-point"
 claim = "Execution starts at `fn main()`."
 why_it_matters = "Every runnable Rust program needs exactly one `main` — it is where your program begins."
 
-[[body]]
+# --- Steps (ordered; a gating Faded/Open step hides later content until it passes). ---
+
+# Step 1 — the intro: read, then run the project once.
+[[steps]]
+
+[[steps.blocks]]
 kind = "prose"
 text = """
 Welcome. Before we talk *about* Rust, let's run some. The terminal on the right is a
@@ -35,7 +40,7 @@ project and then **execute** it. The first compile is slow because Rust does a l
 checking up front; later runs are fast.
 """
 
-[[body]]
+[[steps.blocks]]
 kind = "code"
 lang = "rust"
 source = """
@@ -44,17 +49,20 @@ fn main() {
 }
 """
 
-[[body]]
+[[steps.blocks]]
 kind = "now_run"
 command = "cargo run"
 note = "Watch the compile messages scroll, then find the printed line at the end."
 
-[[body]]
+[[steps.blocks]]
 kind = "callout"
 tone = "tip"
 text = "Only want to know if it *compiles*, without running it? Try `cargo check` — it skips code generation, so it is faster."
 
-[[body]]
+# Step 2 — what just happened.
+[[steps]]
+
+[[steps.blocks]]
 kind = "prose"
 text = """
 See that final line? You just compiled and ran a Rust program. Everything else in
@@ -62,11 +70,10 @@ this track builds on that loop: change the source, run it, and read what the com
 tells you.
 """
 
-# --- Exercises (prompt §3: at least one each of Worked / Faded / Open, plus a
-# PredictThenRun). Worked and PredictThenRun are read/think; Faded and Open are graded
-# in-app by the Check button against the lesson sandbox. ---
+# Step 3 — Worked example (read/think; non-gating).
+[[steps]]
 
-[[exercises]]
+[steps.exercise]
 kind = "worked"
 prompt = "Here is the smallest complete Rust program. `fn main()` is where every program starts, and `println!` prints a line to the terminal."
 code = '''
@@ -76,7 +83,10 @@ fn main() {
 '''
 annotation = "`println!` is a macro (the `!` gives it away), and the text in quotes is what gets printed. You run a program like this with `cargo run`."
 
-[[exercises]]
+# Step 4 — PredictThenRun (predict, then reveal; non-gating).
+[[steps]]
+
+[steps.exercise]
 kind = "predict_then_run"
 code = '''
 fn main() {
@@ -88,7 +98,10 @@ question = "Before running this, predict: what single line will it print?"
 expected_output = "3"
 explanation = 'Rust evaluates `1 + 2` to `3`, and `println!("{n}")` prints the value of `n` followed by a newline.'
 
-[[exercises]]
+# Step 5 — Faded (gating: cargo test must pass).
+[[steps]]
+
+[steps.exercise]
 kind = "faded"
 prompt = """
 The project's test calls a function `greeting()` that does not exist yet. Press **Check** (or run `cargo test`) and read the error Rusty shows you — that is error E0425, "cannot find function". Then define `greeting` in `src/main.rs` so it returns the String \"Hello, Rusty!\", and Check again.
@@ -97,7 +110,10 @@ file_path = "src/main.rs"
 check_command = "cargo test"
 success_criterion = { kind = "cargo_test_passes" }
 
-[[exercises]]
+# Step 6 — Open (gating: cargo run output must match).
+[[steps]]
+
+[steps.exercise]
 kind = "open"
 prompt = """
 Make the program announce itself. Edit `src/main.rs` so that `cargo run` prints exactly this line, then press **Check**:

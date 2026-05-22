@@ -43,37 +43,10 @@ impl ExerciseState {
     }
 }
 
-/// Render every exercise. Returns the criterion to grade if a Check was pressed this
-/// frame. `checking` disables Check buttons while a grade is in flight.
-pub fn render(
-    ui: &mut egui::Ui,
-    exercises: &[Exercise],
-    state: &mut ExerciseState,
-    checking: bool,
-) -> Option<SuccessCriterion> {
-    if exercises.is_empty() {
-        return None;
-    }
-    ui.label(
-        egui::RichText::new(voice::EXERCISES_HEADING)
-            .size(crate::theme::H2)
-            .strong(),
-    );
-    ui.separator();
-
-    let mut requested: Option<SuccessCriterion> = None;
-    for (i, ex) in exercises.iter().enumerate() {
-        egui::Frame::group(ui.style()).show(ui, |ui| {
-            if let Some(crit) = render_one(ui, i, ex, state, checking) {
-                requested = Some(crit);
-            }
-        });
-        ui.add_space(6.0);
-    }
-    requested
-}
-
-fn render_one(
+/// Render one step's exercise (identified by its step index `i`, used for the
+/// predict-then-run reveal state). Returns the criterion to grade if its Check was
+/// pressed this frame. `checking` disables the Check button while a grade is in flight.
+pub fn render_exercise(
     ui: &mut egui::Ui,
     i: usize,
     ex: &Exercise,
@@ -209,7 +182,7 @@ mod tests {
 
     #[test]
     fn test_exercise_view_renders_each_variant() {
-        let exercises = vec![worked(), faded(), open(), predict()];
+        let exercises = [worked(), faded(), open(), predict()];
         let mut state = ExerciseState::default();
         let ctx = egui::Context::default();
         let input = egui::RawInput {
@@ -220,11 +193,13 @@ mod tests {
             ..Default::default()
         };
         let _ = ctx.run_ui(input, |ui| {
-            // Render the hidden state, then reveal the PredictThenRun (index 3) and render
-            // again so the revealed branch (expected_output + explanation) also executes.
-            let _ = render(ui, &exercises, &mut state, false);
+            // Render each variant (predict at index 3); then reveal it and render again so
+            // the revealed branch (expected_output + explanation) also executes.
+            for (i, ex) in exercises.iter().enumerate() {
+                let _ = render_exercise(ui, i, ex, &mut state, false);
+            }
             state.toggle_reveal(3);
-            let _ = render(ui, &exercises, &mut state, false);
+            let _ = render_exercise(ui, 3, &exercises[3], &mut state, false);
         });
     }
 }

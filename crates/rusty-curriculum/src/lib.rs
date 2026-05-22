@@ -10,6 +10,6 @@ pub mod model;
 
 pub use loader::{parse_lesson, CurriculumError};
 pub use model::{
-    Block, CalloutTone, Concept, ConceptId, Exercise, Lesson, LessonId, RecallPrompt, Reference,
-    SuccessCriterion, Track,
+    visible_prefix, Block, CalloutTone, Concept, ConceptId, Exercise, Lesson, LessonId,
+    RecallPrompt, Reference, Step, SuccessCriterion, Track,
 };

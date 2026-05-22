@@ -264,14 +264,8 @@ impl eframe::App for RustyApp {
                     .auto_shrink([false, false])
                     .show(ui, |ui| {
                         if let Some(lesson) = &self.lesson {
-                            lesson_view::render(ui, lesson);
-                            ui.add_space(8.0);
-                            check_request = exercise_view::render(
-                                ui,
-                                &lesson.exercises,
-                                &mut self.ex_state,
-                                checking,
-                            );
+                            check_request =
+                                lesson_view::render(ui, lesson, &mut self.ex_state, checking);
                         } else {
                             ui.heading(voice::LESSON_PANE_TITLE);
                             ui.separator();

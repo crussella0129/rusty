@@ -80,7 +80,8 @@ fn test_load_lesson_from_temp() {
             starter_project = "starter"
             solution_project = "solution"
 
-            [[body]]
+            [[steps]]
+            [[steps.blocks]]
             kind = "prose"
             text = "Body."
 
@@ -148,7 +149,7 @@ fn test_load_lesson_real_content() {
     let lesson = load_lesson(&dir).expect("real lesson 1 loads");
     assert_eq!(lesson.id.0, "foundations-01-hello");
     assert_eq!(lesson.title, "Hello, compiler.");
-    assert!(!lesson.body.is_empty());
+    assert!(!lesson.steps.is_empty());
 }
 
 /// T-405 / prompt §3: lesson 1 must contain at least one each of Worked / Faded /
@@ -162,7 +163,12 @@ fn test_lesson1_has_each_exercise_variant() {
         .join("lessons")
         .join("foundations-01-hello");
     let lesson = load_lesson(&dir).expect("real lesson 1 loads");
-    let ex = &lesson.exercises;
+    // Exercises now live one-per-step; collect them across `steps`.
+    let ex: Vec<&Exercise> = lesson
+        .steps
+        .iter()
+        .filter_map(|s| s.exercise.as_ref())
+        .collect();
     assert!(
         ex.iter().any(|e| matches!(e, Exercise::Worked { .. })),
         "needs a Worked"
