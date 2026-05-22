@@ -167,3 +167,9 @@
 - **Completed:** 2026-05-22T16:10:00Z
 - **Files modified:** `crates/rusty-app/src/{main.rs,lesson_view.rs,voice.rs}`
 - **Commit:** `e750e13`
+
+## T-503 (sprint 5)
+- **Description:** Reveal animation. In `lesson_view::render`, each visible step is wrapped in `ui.scope(|ui| { ui.multiply_opacity(factor); … })` where `factor = ctx.animate_bool_with_time(Id::new(("rusty_step_reveal", i)), true, 0.35)` — a stable per-step id with a `true` target ramps 0→1 the first time the step appears (already-visible steps sit at 1), so a newly-revealed step (after a gate passes) fades in instead of popping. The scoped closure returns that step's Check request so the index↔criterion plumbing is preserved. 1 new test (`test_lesson_pane_animates_without_panic`: two frames on one `Context` so the animation advances). 28 app tests; clippy/fmt clean.
+- **Completed:** 2026-05-22T16:20:00Z
+- **Files modified:** `crates/rusty-app/src/lesson_view.rs`
+- **Commit:** `5181d7b`

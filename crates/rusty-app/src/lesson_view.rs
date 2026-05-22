@@ -32,18 +32,35 @@ pub fn render(
     let visible = visible_prefix(&lesson.steps, progress.completed());
     let mut check: Option<(usize, SuccessCriterion)> = None;
     for (i, step) in lesson.steps.iter().take(visible).enumerate() {
-        for block in &step.blocks {
-            render_block(ui, block);
-            ui.add_space(8.0);
-        }
-        if let Some(exercise) = &step.exercise {
-            egui::Frame::group(ui.style()).show(ui, |ui| {
-                if let Some(c) = exercise_view::render_exercise(ui, i, exercise, ex_state, checking)
-                {
-                    check = Some((i, c));
+        // Each step fades in the first time it becomes visible: a stable per-step id with
+        // a `true` target ramps 0→1 once (already-visible steps sit at 1). This is the
+        // "materialize" effect when a gate is passed and the next step appears.
+        let factor =
+            ui.ctx()
+                .animate_bool_with_time(egui::Id::new(("rusty_step_reveal", i)), true, 0.35);
+        let inner = ui
+            .scope(|ui| {
+                ui.multiply_opacity(factor);
+                let mut step_check: Option<(usize, SuccessCriterion)> = None;
+                for block in &step.blocks {
+                    render_block(ui, block);
+                    ui.add_space(8.0);
                 }
-            });
-            ui.add_space(6.0);
+                if let Some(exercise) = &step.exercise {
+                    egui::Frame::group(ui.style()).show(ui, |ui| {
+                        if let Some(c) =
+                            exercise_view::render_exercise(ui, i, exercise, ex_state, checking)
+                        {
+                            step_check = Some((i, c));
+                        }
+                    });
+                    ui.add_space(6.0);
+                }
+                step_check
+            })
+            .inner;
+        if inner.is_some() {
+            check = inner;
         }
     }
 
@@ -267,5 +284,28 @@ mod tests {
         headless(|ui| {
             let _ = render(ui, &lesson, &fresh, &mut ex_state, false);
         });
+    }
+
+    /// Render two frames on one `Context` so the reveal animation actually advances
+    /// (`animate_bool_with_time` + `multiply_opacity`); the test fails if either frame
+    /// panics. (T-503.)
+    #[test]
+    fn test_lesson_pane_animates_without_panic() {
+        let lesson = parse_lesson(ALL_BLOCKS).expect("fixture lesson parses");
+        let mut ex_state = ExerciseState::default();
+        let progress = LessonProgress::new(lesson.steps.len());
+        let ctx = egui::Context::default();
+        let input = egui::RawInput {
+            screen_rect: Some(egui::Rect::from_min_size(
+                egui::pos2(0.0, 0.0),
+                egui::vec2(800.0, 600.0),
+            )),
+            ..Default::default()
+        };
+        for _ in 0..2 {
+            let _ = ctx.run_ui(input.clone(), |ui| {
+                let _ = render(ui, &lesson, &progress, &mut ex_state, false);
+            });
+        }
     }
 }

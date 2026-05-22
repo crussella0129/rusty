@@ -9,5 +9,4 @@
 <!-- Sprint 4 (Phase 3b) build tasks T-401..T-405 all completed — see completed-tasks.md. -->
 
 ## Sprint 5 (Progressive content disclosure)
-- [ ] T-503: reveal animation (fade newest step via `animate_bool_with_time`+`multiply_opacity`). — touches: `crates/rusty-app/src/lesson_view.rs`.
 - [ ] T-504: tips (hint after first fail) + lesson-1 hints + lesson-complete flourish. — touches: `crates/rusty-app/src/{lesson_view.rs,voice.rs}`, `content/lessons/foundations-01-hello/lesson.toml`.
