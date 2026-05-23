@@ -95,7 +95,7 @@ pub fn render_exercise(
                 code_block(ui, expected_output);
                 markdown::render_markdown(ui, explanation);
             } else if ui.button(voice::EXERCISE_REVEAL).clicked() {
-                eprintln!("[rusty-trace] reveal step={i}");
+                crate::trace(&format!("reveal step={i}"));
                 state.toggle_reveal(i);
             }
         }
@@ -105,7 +105,7 @@ pub fn render_exercise(
     let criterion = criterion_for_exercise(ex)?;
     let clicked = check_button(ui, checking);
     if clicked {
-        eprintln!("[rusty-trace] check step={i} criterion={criterion:?}");
+        crate::trace(&format!("check step={i} criterion={criterion:?}"));
     }
     clicked.then(|| criterion.clone())
 }
