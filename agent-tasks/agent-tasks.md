@@ -13,5 +13,5 @@
 
 ## Sprint 6 (Bug triage: Reveal-Pass + ▶ run UX)
 <!-- T-601 completed; see completed-tasks.md. -->
-- [ ] T-602: Diagnostic eprintln traces + `enforce_gradeable_step` panic-guard. — touches: `crates/rusty-app/src/{main.rs,lesson_view.rs,exercise_view.rs}`.
+<!-- T-602 completed; see completed-tasks.md. -->
 - [ ] T-603: Apply root-cause fix + remove instrumentation (TBD pending T-602 trace). — touches: TBD.

@@ -95,6 +95,7 @@ pub fn render_exercise(
                 code_block(ui, expected_output);
                 markdown::render_markdown(ui, explanation);
             } else if ui.button(voice::EXERCISE_REVEAL).clicked() {
+                eprintln!("[rusty-trace] reveal step={i}");
                 state.toggle_reveal(i);
             }
         }
@@ -102,7 +103,11 @@ pub fn render_exercise(
 
     // Gradeable variants (Faded/Open — see `criterion_for_exercise`) get a Check button.
     let criterion = criterion_for_exercise(ex)?;
-    check_button(ui, checking).then(|| criterion.clone())
+    let clicked = check_button(ui, checking);
+    if clicked {
+        eprintln!("[rusty-trace] check step={i} criterion={criterion:?}");
+    }
+    clicked.then(|| criterion.clone())
 }
 
 /// A read-only monospace code block.

@@ -67,6 +67,30 @@ fn grade_outcome(result: &Result<Verdict, String>) -> (Option<Annotation>, Optio
     }
 }
 
+/// Sprint-6 boundary guard: panic if `step` is not a gradeable (`Faded`/`Open`) step.
+/// Called at the single chokepoint between a UI Check signal and `start_grade` so a
+/// misroute (a Reveal click somehow producing a check_request, etc.) panics loudly with
+/// the step index and the actual exercise kind — directly catching the Sprint-6 mystery
+/// bug at the moment it crosses the grade boundary.
+fn enforce_gradeable_step(lesson: &Lesson, step: usize) {
+    let actual = lesson.steps.get(step).and_then(|s| s.exercise.as_ref());
+    let kind = match actual {
+        None => "no-exercise",
+        Some(rusty_curriculum::Exercise::Worked { .. }) => "Worked",
+        Some(rusty_curriculum::Exercise::Faded { .. }) => "Faded",
+        Some(rusty_curriculum::Exercise::Open { .. }) => "Open",
+        Some(rusty_curriculum::Exercise::PredictThenRun { .. }) => "PredictThenRun",
+    };
+    assert!(
+        matches!(
+            actual,
+            Some(rusty_curriculum::Exercise::Faded { .. })
+                | Some(rusty_curriculum::Exercise::Open { .. })
+        ),
+        "start_grade boundary: step {step} is not gradeable (got {kind})"
+    );
+}
+
 /// In-memory learner progress through the current lesson's steps (one slot per step).
 /// Persistence across launches is deferred (the old Phase 5); this resets each run.
 #[derive(Default)]
@@ -216,6 +240,10 @@ impl RustyApp {
         let Some(rx) = &self.grade_job else { return };
         match rx.try_recv() {
             Ok(received) => {
+                eprintln!(
+                    "[rusty-trace] poll_grade.ok pending_step={:?} verdict={received:?}",
+                    self.pending_step
+                );
                 // Update the graded step's progress (a `Pass` reveals the next step), then
                 // render the verdict in the annotation pane.
                 if let (Ok(verdict), Some(step)) = (&received, self.pending_step) {
@@ -237,6 +265,7 @@ impl RustyApp {
     /// `cargo test` never freezes the UI; the result is delivered over a channel and
     /// polled each frame (mirrors the PTY's thread + repaint pattern).
     fn start_grade(&mut self, step: usize, criterion: SuccessCriterion, ctx: &egui::Context) {
+        eprintln!("[rusty-trace] start_grade step={step} criterion={criterion:?}");
         if self.grade_job.is_some() {
             return; // one grade at a time
         }
@@ -362,6 +391,12 @@ impl eframe::App for RustyApp {
 
         // 5. Kick off grading for a pressed Check (off the UI thread), targeting its step.
         if let Some((step, criterion)) = action.check {
+            // T-602 panic-guard: the single chokepoint where a UI Check turns into a
+            // grade spawn. If a non-gradeable step somehow reaches here, fail loudly
+            // with the step + variant — directly catching the Sprint-6 mystery bug.
+            if let Some(lesson) = &self.lesson {
+                enforce_gradeable_step(lesson, step);
+            }
             let ctx = ui.ctx().clone();
             self.start_grade(step, criterion, &ctx);
         }
@@ -486,6 +521,76 @@ mod tests {
         assert!(!p.all_complete(), "one of two done is not complete");
         p.apply(1, &Verdict::Pass);
         assert!(p.all_complete(), "all steps done → complete");
+    }
+
+    fn lesson_with_exercise(kind_toml: &str) -> rusty_curriculum::Lesson {
+        let src = format!(
+            r##"
+                id = "t"
+                title = "T"
+                track = "Foundations"
+                estimated_minutes = 1
+                starter_project = "s"
+                solution_project = "sol"
+                [[steps]]
+                [steps.exercise]
+                {kind_toml}
+                [recall_prompt]
+                kind = "short_answer"
+                question = "q"
+                expected = "a"
+                explanation = "e"
+            "##
+        );
+        rusty_curriculum::parse_lesson(&src).expect("test fixture parses")
+    }
+
+    #[test]
+    #[should_panic(expected = "not gradeable")]
+    fn test_enforce_gradeable_step_panics_for_non_gating_worked() {
+        let lesson = lesson_with_exercise(
+            r#"kind = "worked"
+prompt = "p"
+code = "c"
+annotation = "a""#,
+        );
+        enforce_gradeable_step(&lesson, 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "not gradeable")]
+    fn test_enforce_gradeable_step_panics_for_predict_then_run() {
+        let lesson = lesson_with_exercise(
+            r#"kind = "predict_then_run"
+code = "println!(\"3\");"
+question = "?"
+expected_output = "3"
+explanation = "e""#,
+        );
+        enforce_gradeable_step(&lesson, 0);
+    }
+
+    #[test]
+    fn test_enforce_gradeable_step_ok_for_faded() {
+        let lesson = lesson_with_exercise(
+            r#"kind = "faded"
+prompt = "p"
+file_path = "src/main.rs"
+check_command = "cargo test"
+success_criterion = { kind = "cargo_test_passes" }"#,
+        );
+        enforce_gradeable_step(&lesson, 0); // does not panic
+    }
+
+    #[test]
+    fn test_enforce_gradeable_step_ok_for_open() {
+        let lesson = lesson_with_exercise(
+            r#"kind = "open"
+prompt = "p"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "hi" }"#,
+        );
+        enforce_gradeable_step(&lesson, 0); // does not panic
     }
 
     #[test]

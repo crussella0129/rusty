@@ -91,6 +91,18 @@ pub fn render(
                     egui::Frame::group(ui.style()).show(ui, |ui| {
                         let c = exercise_view::render_exercise(ui, i, exercise, ex_state, checking);
                         if let Some(paired) = pair_check(i, c) {
+                            eprintln!(
+                                "[rusty-trace] pair_check step={} criterion={:?} ex={}",
+                                paired.0,
+                                paired.1,
+                                match exercise {
+                                    rusty_curriculum::Exercise::Worked { .. } => "Worked",
+                                    rusty_curriculum::Exercise::Faded { .. } => "Faded",
+                                    rusty_curriculum::Exercise::Open { .. } => "Open",
+                                    rusty_curriculum::Exercise::PredictThenRun { .. } =>
+                                        "PredictThenRun",
+                                }
+                            );
                             step_action.check = Some(paired);
                         }
                         // After the first failed Check, Rusty offers the step's tip.

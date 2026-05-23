@@ -185,3 +185,9 @@
 - **Completed:** 2026-05-23T19:20:00Z
 - **Files modified:** `crates/rusty-app/src/{lesson_view.rs,main.rs}`
 - **Commit:** `60d6fd7`
+
+## T-602 (sprint 6)
+- **Description:** Diagnostic eprintln traces + `enforce_gradeable_step` panic-guard for the Reveal-Pass mystery bug. Added stderr traces (prefix `[rusty-trace]`) at every grade-trigger seam: `start_grade` entry, `poll_grade.ok` (with pending_step + verdict), PredictThenRun Reveal click, Faded/Open Check click in render_exercise, and the `pair_check` site in lesson_view::render (with the exercise variant name). Added a pure free fn `enforce_gradeable_step(&Lesson, step)` in main.rs that panics with the step index + actual variant name if the step's exercise isn't Faded/Open; called at the single chokepoint in `ui()` immediately before `start_grade`. 4 new app tests (panic for Worked/PredictThenRun via `#[should_panic(expected = "not gradeable")]`; ok for Faded/Open). 38 app tests; clippy/fmt clean. Heartbeat next: user reproduces Reveal-Pass in instrumented build and shares `[rusty-trace]` lines.
+- **Completed:** 2026-05-23T19:35:00Z
+- **Files modified:** `crates/rusty-app/src/{main.rs,exercise_view.rs,lesson_view.rs}`
+- **Commit:** `57262c3`
