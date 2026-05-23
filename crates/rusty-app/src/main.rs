@@ -319,7 +319,7 @@ impl eframe::App for RustyApp {
 
         // 4. Lesson pane — lesson 1 prose, its exercises, and the annotation pane, all
         //    in one scroll area. Captures a Check request to grade after the panel.
-        let mut check_request: Option<(usize, SuccessCriterion)> = None;
+        let mut action = lesson_view::LessonAction::default();
         egui::Panel::left("lesson_pane")
             .resizable(true)
             .default_size(380.0)
@@ -328,7 +328,7 @@ impl eframe::App for RustyApp {
                     .auto_shrink([false, false])
                     .show(ui, |ui| {
                         if let Some(lesson) = &self.lesson {
-                            check_request = lesson_view::render(
+                            action = lesson_view::render(
                                 ui,
                                 lesson,
                                 &self.progress,
@@ -361,9 +361,14 @@ impl eframe::App for RustyApp {
             });
 
         // 5. Kick off grading for a pressed Check (off the UI thread), targeting its step.
-        if let Some((step, criterion)) = check_request {
+        if let Some((step, criterion)) = action.check {
             let ctx = ui.ctx().clone();
             self.start_grade(step, criterion, &ctx);
+        }
+        // 5b. Type a clicked ▶ run command into the embedded PTY (followed by Enter).
+        if let Some(cmd) = action.run {
+            let bytes = format!("{cmd}\r").into_bytes();
+            let _ = self.session.write(&bytes);
         }
 
         // 6. Terminal pane (right) and code-editor pane (centre).

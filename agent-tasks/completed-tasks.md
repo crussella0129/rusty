@@ -179,3 +179,9 @@
 - **Completed:** 2026-05-22T16:35:00Z
 - **Files modified:** `crates/rusty-app/src/{lesson_view.rs,voice.rs,main.rs}`, `content/lessons/foundations-01-hello/lesson.toml`, `crates/rusty-host/tests/content.rs`
 - **Commit:** `f88b9fc`
+
+## T-601 (sprint 6)
+- **Description:** ▶ run prompt is now an interactive command. `lesson_view::render` returns a new `pub struct LessonAction { check: Option<(usize, SuccessCriterion)>, run: Option<String> }` (replaces the bare `Option<(usize, criterion)>`); `render_block` returns `Option<String>` (the run command if clicked, else None); the NowRun branch renders as `ui.add(egui::Button::new(text).frame(false))` — `frame(false)` keeps the existing hyperlink-blue monospace strong run-prompt visual while gaining real click+hover affordance. The loop aggregates per-step actions into a single `LessonAction`. `main.rs` ui handler: on `action.check` calls `start_grade` (unchanged); on `action.run` writes `{cmd}\r` into `self.session` (the embedded PTY), so the shell executes the command. Pure `run_request_for_block(&Block) -> Option<String>` extracted for testing. 3 new app tests (run_request_for_block NowRun + non-NowRun, LessonAction::default is no-op); existing render tests still green. 34 app tests; clippy/fmt clean.
+- **Completed:** 2026-05-23T19:20:00Z
+- **Files modified:** `crates/rusty-app/src/{lesson_view.rs,main.rs}`
+- **Commit:** `60d6fd7`

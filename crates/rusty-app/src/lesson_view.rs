@@ -11,6 +11,17 @@ use crate::{markdown, voice, LessonProgress};
 /// Amber used for Rusty's tip (a hint after the learner's first failed Check).
 const TIP_COLOR: egui::Color32 = egui::Color32::from_rgb(0xff, 0xb3, 0x00);
 
+/// What the lesson pane wants `main` to do this frame: grade a pressed Check, run a
+/// command the learner clicked from a `▶ run` prompt, or both. `Default` is the empty
+/// no-op state (`check: None, run: None`).
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct LessonAction {
+    /// `Some((step_index, criterion))` when a Check button was pressed.
+    pub check: Option<(usize, SuccessCriterion)>,
+    /// `Some(command)` when a `▶ run` prompt button was clicked.
+    pub run: Option<String>,
+}
+
 /// Whether to show this step's tip: a gating step with a `hint` whose Check has failed at
 /// least once. Pure, so the tip-gate is unit-testable without egui.
 fn tip_visible(step: &Step, attempts: u32) -> bool {
@@ -26,18 +37,28 @@ fn pair_check(
     criterion.map(|c| (step_idx, c))
 }
 
+/// The command a block represents when "run this" is requested. Pure: `NowRun{command}`
+/// maps to `Some(command)`; every other block kind maps to `None`. This makes the
+/// click→action mapping unit-testable without egui.
+fn run_request_for_block(block: &Block) -> Option<String> {
+    match block {
+        Block::NowRun { command, .. } => Some(command.clone()),
+        _ => None,
+    }
+}
+
 /// Render the lesson's title, then its **visible** steps (progressive disclosure: a
-/// gating step hides everything after it until completed). Returns `Some((step_index,
-/// criterion))` when a step's Check was pressed. When the whole lesson is complete, the
-/// recall prompt + further-reading region is also rendered. The caller owns the scroll
-/// area + the annotation pane.
+/// gating step hides everything after it until completed). Returns a [`LessonAction`]
+/// describing what the learner did this frame (pressed a Check, clicked a ▶ run, or
+/// neither). When the whole lesson is complete, the recall prompt + further-reading
+/// region is also rendered. The caller owns the scroll area + the annotation pane.
 pub fn render(
     ui: &mut egui::Ui,
     lesson: &Lesson,
     progress: &LessonProgress,
     ex_state: &mut ExerciseState,
     checking: bool,
-) -> Option<(usize, SuccessCriterion)> {
+) -> LessonAction {
     // The lesson name is THE title — render it larger than any in-body markdown heading
     // (see `theme`), so lesson prose should not repeat the title as its own `# heading`.
     ui.label(
@@ -48,7 +69,7 @@ pub fn render(
     ui.separator();
 
     let visible = visible_prefix(&lesson.steps, progress.completed());
-    let mut check: Option<(usize, SuccessCriterion)> = None;
+    let mut action = LessonAction::default();
     for (i, step) in lesson.steps.iter().take(visible).enumerate() {
         // Each step fades in the first time it becomes visible: a stable per-step id with
         // a `true` target ramps 0→1 once (already-visible steps sit at 1). This is the
@@ -59,16 +80,18 @@ pub fn render(
         let inner = ui
             .scope(|ui| {
                 ui.multiply_opacity(factor);
-                let mut step_check: Option<(usize, SuccessCriterion)> = None;
+                let mut step_action = LessonAction::default();
                 for block in &step.blocks {
-                    render_block(ui, block);
+                    if let Some(cmd) = render_block(ui, block) {
+                        step_action.run = Some(cmd);
+                    }
                     ui.add_space(8.0);
                 }
                 if let Some(exercise) = &step.exercise {
                     egui::Frame::group(ui.style()).show(ui, |ui| {
                         let c = exercise_view::render_exercise(ui, i, exercise, ex_state, checking);
                         if let Some(paired) = pair_check(i, c) {
-                            step_check = Some(paired);
+                            step_action.check = Some(paired);
                         }
                         // After the first failed Check, Rusty offers the step's tip.
                         if tip_visible(step, progress.attempts(i)) {
@@ -83,11 +106,14 @@ pub fn render(
                     });
                     ui.add_space(6.0);
                 }
-                step_check
+                step_action
             })
             .inner;
-        if inner.is_some() {
-            check = inner;
+        if inner.check.is_some() {
+            action.check = inner.check;
+        }
+        if inner.run.is_some() {
+            action.run = inner.run;
         }
     }
 
@@ -105,7 +131,7 @@ pub fn render(
         render_recall(ui, &lesson.recall_prompt);
         render_further_reading(ui, &lesson.further_reading);
     }
-    check
+    action
 }
 
 /// Render the recall prompt as a read-only review (interactive grading is a later phase).
@@ -136,24 +162,38 @@ fn render_further_reading(ui: &mut egui::Ui, refs: &[Reference]) {
     }
 }
 
-fn render_block(ui: &mut egui::Ui, block: &Block) {
+/// Render one block. Returns `Some(command)` iff a `▶ run` button was clicked this
+/// frame; otherwise `None` (the other variants are non-interactive).
+fn render_block(ui: &mut egui::Ui, block: &Block) -> Option<String> {
     match block {
-        Block::Prose { text } => markdown::render_markdown(ui, text),
+        Block::Prose { text } => {
+            markdown::render_markdown(ui, text);
+            None
+        }
         Block::Code { source, .. } => {
             egui::Frame::group(ui.style()).show(ui, |ui| {
                 ui.label(egui::RichText::new(source.trim_end()).monospace());
             });
+            None
         }
         Block::NowRun { command, note } => {
             let line = format!("{}{}", voice::RUN_PROMPT_PREFIX, command);
-            ui.label(
-                egui::RichText::new(line)
-                    .monospace()
-                    .strong()
-                    .color(ui.visuals().hyperlink_color),
-            );
+            let text = egui::RichText::new(line)
+                .monospace()
+                .strong()
+                .color(ui.visuals().hyperlink_color);
+            // `frame(false)` strips the default button fill/stroke/padding so the visual
+            // stays the same hyperlink-blue monospace run-prompt as before, while
+            // gaining a real click + hover affordance (clicking sends the command to
+            // the embedded PTY via the LessonAction returned from `render`).
+            let clicked = ui.add(egui::Button::new(text).frame(false)).clicked();
             if let Some(note) = note {
                 ui.label(egui::RichText::new(note).weak().small());
+            }
+            if clicked {
+                run_request_for_block(block)
+            } else {
+                None
             }
         }
         Block::Callout { tone, text } => {
@@ -172,6 +212,7 @@ fn render_block(ui: &mut egui::Ui, block: &Block) {
                 ui.label(crate::theme::section_label(label).color(color));
                 markdown::render_markdown(ui, text);
             });
+            None
         }
     }
 }
@@ -361,6 +402,46 @@ mod tests {
         let c = SuccessCriterion::CargoTestPasses;
         assert_eq!(pair_check(2, Some(c.clone())), Some((2, c)));
         assert_eq!(pair_check(2, None), None);
+    }
+
+    #[test]
+    fn test_run_request_for_block_now_run() {
+        let b = Block::NowRun {
+            command: "cargo run".to_string(),
+            note: None,
+        };
+        assert_eq!(run_request_for_block(&b), Some("cargo run".to_string()));
+    }
+
+    #[test]
+    fn test_run_request_for_other_blocks() {
+        assert_eq!(
+            run_request_for_block(&Block::Prose {
+                text: "x".to_string()
+            }),
+            None
+        );
+        assert_eq!(
+            run_request_for_block(&Block::Code {
+                lang: "rust".to_string(),
+                source: "fn main() {}".to_string()
+            }),
+            None
+        );
+        assert_eq!(
+            run_request_for_block(&Block::Callout {
+                tone: rusty_curriculum::CalloutTone::Tip,
+                text: "x".to_string()
+            }),
+            None
+        );
+    }
+
+    #[test]
+    fn test_lesson_action_default_is_no_op() {
+        let a = LessonAction::default();
+        assert!(a.check.is_none());
+        assert!(a.run.is_none());
     }
 
     fn gating_step_with_hint() -> Step {
