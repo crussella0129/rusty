@@ -95,6 +95,39 @@ fn test_grade_nonexistent_sandbox_errors() {
     assert!(grade(&missing, &SuccessCriterion::CargoTestPasses).is_err());
 }
 
+/// T-702 (s7): a sandbox dir that exists but has no `Cargo.toml` must surface a clean
+/// grade `Err` — not the misleading `Verdict::TestsFailed` that cargo's "manifest
+/// missing" exit would otherwise produce, and never the silent `Verdict::Pass` that
+/// the s7 Reveal-Pass bug used to produce when cargo escalated to the outer workspace.
+#[test]
+fn test_grade_fails_when_sandbox_manifest_missing() {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let n = COUNTER.fetch_add(1, Ordering::SeqCst);
+    let dir = std::env::temp_dir().join(format!("rusty_s7_no_manifest_{nanos}_{n}"));
+    std::fs::create_dir_all(&dir).unwrap();
+    // No Cargo.toml — mimics the Sprint-6 corrupt-sandbox state.
+
+    let err = grade(&dir, &SuccessCriterion::CargoTestPasses)
+        .expect_err("missing manifest must be a grade Err, not a silent verdict");
+    assert!(
+        err.to_string().contains("manifest"),
+        "error mentions the missing manifest: {err}"
+    );
+
+    // Same for the cargo-run criterion.
+    let err = grade(
+        &dir,
+        &SuccessCriterion::CargoRunOutputMatches {
+            expected: "x".to_string(),
+        },
+    )
+    .expect_err("missing manifest must Err for cargo-run grading too");
+    assert!(err.to_string().contains("manifest"), "got: {err}");
+}
+
 #[test]
 fn test_grade_run_output_match_and_mismatch() {
     let dir = temp_project(
