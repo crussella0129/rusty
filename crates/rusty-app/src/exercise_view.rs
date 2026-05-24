@@ -90,10 +90,22 @@ pub fn render_exercise(
         } => {
             markdown::render_markdown(ui, question);
             code_block(ui, code);
+            // Call animate_bool_with_time every frame (target = current reveal state) so
+            // the stored animation value tracks the false→true transition on Reveal-click
+            // and ramps 0→1 over ~0.35s. The render scope multiplies widget opacity by the
+            // factor, fading the Output/explanation in instead of snapping. (T-604.)
+            let factor = ui.ctx().animate_bool_with_time(
+                egui::Id::new(("rusty_reveal_fade", i)),
+                state.revealed(i),
+                0.35,
+            );
             if state.revealed(i) {
-                ui.label(crate::theme::section_label("Output:"));
-                code_block(ui, expected_output);
-                markdown::render_markdown(ui, explanation);
+                ui.scope(|ui| {
+                    ui.multiply_opacity(factor);
+                    ui.label(crate::theme::section_label("Output:"));
+                    code_block(ui, expected_output);
+                    markdown::render_markdown(ui, explanation);
+                });
             } else if ui.button(voice::EXERCISE_REVEAL).clicked() {
                 state.toggle_reveal(i);
             }
@@ -179,6 +191,39 @@ mod tests {
         assert!(!s.revealed(0), "answer starts hidden");
         s.toggle_reveal(0);
         assert!(s.revealed(0), "after reveal it shows");
+    }
+
+    /// Render two frames on one `Context` so the reveal-fade `animate_bool_with_time`
+    /// actually tracks the false→true transition; the test fails on panic, and the
+    /// stored animation value (queried with the same id/target the render uses) sits in
+    /// `[0, 1]`. (T-604.)
+    #[test]
+    fn test_predict_reveal_animates_without_panic() {
+        let mut state = ExerciseState::default();
+        let ex = predict();
+        let ctx = egui::Context::default();
+        let input = egui::RawInput {
+            screen_rect: Some(egui::Rect::from_min_size(
+                egui::pos2(0.0, 0.0),
+                egui::vec2(800.0, 600.0),
+            )),
+            ..Default::default()
+        };
+        // Frame 1: revealed=false; animate sees `false` for the first time.
+        let _ = ctx.run_ui(input.clone(), |ui| {
+            let _ = render_exercise(ui, 0, &ex, &mut state, false);
+        });
+        // Flip to revealed; Frame 2: animate sees the false→true transition and ramps.
+        state.toggle_reveal(0);
+        let _ = ctx.run_ui(input, |ui| {
+            let _ = render_exercise(ui, 0, &ex, &mut state, false);
+        });
+        let factor =
+            ctx.animate_bool_with_time(egui::Id::new(("rusty_reveal_fade", 0usize)), true, 0.35);
+        assert!(
+            (0.0..=1.0).contains(&factor),
+            "reveal-fade opacity stays in [0,1]"
+        );
     }
 
     #[test]

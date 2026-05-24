@@ -15,4 +15,4 @@
 <!-- T-601 completed; see completed-tasks.md. -->
 <!-- T-602 completed; see completed-tasks.md. -->
 <!-- T-603 completed (bug not reproducing under instrumentation; T-601's refactor likely shooed it away; instrumentation removed, enforce_gradeable_step retained as permanent guard). -->
-- [ ] T-604: fade-in for the PredictThenRun Output/explanation when revealed. — touches: `crates/rusty-app/src/exercise_view.rs`.
+<!-- T-604 completed; see completed-tasks.md. -->

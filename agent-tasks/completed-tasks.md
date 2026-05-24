@@ -197,3 +197,9 @@
 - **Completed:** 2026-05-23T20:05:00Z
 - **Files modified:** `crates/rusty-app/src/{main.rs,exercise_view.rs,lesson_view.rs}`
 - **Commit:** `979f5c3`
+
+## T-604 (sprint 6)
+- **Description:** Fade-in for the PredictThenRun reveal — Output/explanation no longer "snap" when the learner clicks Reveal. `render_exercise`'s PredictThenRun branch now calls `ui.ctx().animate_bool_with_time(Id::new(("rusty_reveal_fade", i)), state.revealed(i), 0.35)` **every frame** (with target = current reveal state), so the stored animation value tracks the false→true transition on Reveal-click and ramps 0→1 over ~0.35s; when revealed, the Output/explanation render inside `ui.scope` with `multiply_opacity(factor)`. Same pattern as the T-503 step-reveal fade. 1 new app test (`test_predict_reveal_animates_without_panic` — two frames on one `Context` so the animation actually transitions; asserts the stored factor stays in `[0,1]`). 39 app tests; full workspace 125 green; clippy/fmt clean.
+- **Completed:** 2026-05-23T20:15:00Z
+- **Files modified:** `crates/rusty-app/src/exercise_view.rs`
+- **Commit:** `1e88615`
