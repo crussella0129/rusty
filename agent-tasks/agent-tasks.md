@@ -16,3 +16,8 @@
 <!-- T-602 completed; see completed-tasks.md. -->
 <!-- T-603 completed (bug not reproducing under instrumentation; T-601's refactor likely shooed it away; instrumentation removed, enforce_gradeable_step retained as permanent guard). -->
 <!-- T-604 completed; see completed-tasks.md. -->
+
+## Sprint 7 (real fix: sandbox marker + cargo manifest-path lock)
+- [ ] T-701: marker-file idempotency in `prepare_sandbox` (3-part: Cargo.toml + src/main.rs + parsed `[workspace]` key); startup health check; temp-dir fallback. — touches: `crates/rusty-host/src/content.rs`, `crates/rusty-host/Cargo.toml`, `crates/rusty-app/src/main.rs`, `crates/rusty-host/tests/content.rs`.
+- [ ] T-702: `--manifest-path` lock on grader cargo calls. — touches: `crates/rusty-host/src/grade.rs`, `crates/rusty-host/tests/grade.rs`.
+- [ ] T-703: heartbeat-verify reveal fade; tune if needed. — touches: `crates/rusty-app/src/exercise_view.rs`.

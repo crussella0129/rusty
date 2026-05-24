@@ -11,5 +11,8 @@ description = "Rusty's OS boundary: PTY shell, cargo subprocess, rust-analyzer L
 [dependencies]
 portable-pty.workspace = true
 anyhow.workspace = true
+# Used by `content::is_sandbox_healthy` to verify the lesson's Cargo.toml carries the
+# `[workspace]` detach table (the s2 cargo-escalation defence). Workspace dep already.
+toml.workspace = true
 rusty-curriculum = { path = "../rusty-curriculum" }
 rusty-grader = { path = "../rusty-grader" }

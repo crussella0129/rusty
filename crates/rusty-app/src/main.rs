@@ -22,7 +22,10 @@ use eframe::egui;
 use exercise_view::ExerciseState;
 use rusty_curriculum::{Lesson, SuccessCriterion};
 use rusty_grader::{annotate, Annotation, Verdict};
-use rusty_host::{default_shell, load_lesson, prepare_sandbox, resolve_cd, CdOutcome, PtySession};
+use rusty_host::{
+    default_shell, is_sandbox_healthy, load_lesson, prepare_sandbox, resolve_cd, CdOutcome,
+    PtySession,
+};
 use rusty_terminal::{terminal_ui, Terminal};
 
 const INIT_ROWS: usize = 24;
@@ -146,13 +149,15 @@ impl LessonProgress {
     }
 }
 
-/// Fallback sandbox dir if a lesson fails to load.
+/// Fallback sandbox dir when the lesson can't be loaded OR `prepare_sandbox` produced
+/// an unhealthy sandbox. Lives in **OS temp** (s7 ADR — resolves C-005), not
+/// `cwd/workspace/lessons/spike`: the old `spike` path under the repo's workspace was
+/// the *same* path the Sprint-6 inner-Rusty cascade created, and cargo invoked from
+/// there would escalate right back into the parent virtual workspace. The OS temp dir
+/// has no parent `Cargo.toml`, so cargo cleanly errors instead of escalating — the PTY
+/// can spawn here safely even in the error path.
 fn fallback_sandbox() -> PathBuf {
-    let root = std::env::current_dir()
-        .unwrap_or_default()
-        .join("workspace")
-        .join("lessons")
-        .join("spike");
+    let root = std::env::temp_dir().join("rusty-fallback-sandbox");
     let _ = std::fs::create_dir_all(&root);
     root
 }
@@ -195,11 +200,23 @@ impl RustyApp {
         let content_dir = cwd0.join(LESSON_REL);
         let workspace_root = cwd0.join("workspace");
 
-        // Load lesson 1, prepare its sandbox, and pick the PTY's working directory.
-        // No `?` here — `new` is infallible; failures surface in the lesson pane.
+        // Load lesson 1, prepare its sandbox, validate that the result is structurally
+        // healthy (s7 health check — defends against the Sprint-6 bug class even if
+        // `prepare_sandbox` ever silently returns a corrupt dir), and pick the PTY's
+        // working directory. No `?` — `new` is infallible; failures surface in the
+        // lesson pane. The fallback is the OS-temp safe dir (see `fallback_sandbox`).
         let (lesson, load_error, sandbox) = match load_lesson(&content_dir) {
             Ok(lesson) => match prepare_sandbox(&content_dir, &workspace_root, &lesson.id.0) {
-                Ok(sandbox) => (Some(lesson), None, sandbox),
+                Ok(sandbox) if is_sandbox_healthy(&sandbox) => (Some(lesson), None, sandbox),
+                Ok(sandbox) => (
+                    Some(lesson),
+                    Some(format!(
+                        "sandbox at {} is missing Cargo.toml / src/main.rs / [workspace] \
+                         table — try deleting it so Rusty can recopy the starter",
+                        sandbox.display()
+                    )),
+                    fallback_sandbox(),
+                ),
                 Err(err) => (Some(lesson), Some(format!("{err:#}")), fallback_sandbox()),
             },
             Err(err) => (None, Some(format!("{err:#}")), fallback_sandbox()),

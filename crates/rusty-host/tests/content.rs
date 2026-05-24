@@ -7,7 +7,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use rusty_curriculum::Exercise;
-use rusty_host::{load_lesson, prepare_sandbox};
+use rusty_host::{is_sandbox_healthy, load_lesson, prepare_sandbox};
 
 static COUNTER: AtomicU32 = AtomicU32::new(0);
 
@@ -52,11 +52,21 @@ fn test_prepare_sandbox_copies_starter() {
 #[test]
 fn test_prepare_sandbox_idempotent() {
     let content_dir = unique_temp("content");
+    // Starter must satisfy the s7 health marker (Cargo.toml + src/main.rs + [workspace]),
+    // otherwise the second prepare would (correctly) treat it as corrupt and re-copy.
+    write(
+        &content_dir.join("starter").join("Cargo.toml"),
+        "[workspace]\n\n[package]\nname = \"hello\"\nversion = \"0.0.0\"\nedition = \"2021\"\n",
+    );
+    write(
+        &content_dir.join("starter").join("src").join("main.rs"),
+        "fn main() {}",
+    );
     write(&content_dir.join("starter").join("marker.txt"), "original");
     let workspace_root = unique_temp("ws");
 
     let first = prepare_sandbox(&content_dir, &workspace_root, "lid").unwrap();
-    // Simulate a learner edit; a second prepare must NOT clobber it.
+    // Simulate a learner edit; a second prepare must NOT clobber it (s2 promise).
     std::fs::write(first.join("marker.txt"), "edited").unwrap();
     let second = prepare_sandbox(&content_dir, &workspace_root, "lid").unwrap();
 
@@ -115,6 +125,124 @@ fn test_prepare_sandbox_skips_target() {
     let sandbox = prepare_sandbox(&content_dir, &workspace_root, "lid").unwrap();
     assert!(sandbox.join("Cargo.toml").is_file());
     assert!(!sandbox.join("target").exists(), "target/ must be skipped");
+}
+
+/// T-701 (s7): the marker-file idempotency must detect a corrupt sandbox — a dir that
+/// exists but lacks `Cargo.toml` — and repopulate it from `starter/` rather than
+/// short-circuiting (the Sprint-6-class bug).
+#[test]
+fn test_prepare_sandbox_repopulates_corrupt_sandbox() {
+    let content_dir = unique_temp("content");
+    write(
+        &content_dir.join("starter").join("Cargo.toml"),
+        "[workspace]\n\n[package]\nname = \"hello\"\nversion = \"0.0.0\"\nedition = \"2021\"\n",
+    );
+    write(
+        &content_dir.join("starter").join("src").join("main.rs"),
+        "fn main() {}",
+    );
+    let workspace_root = unique_temp("ws");
+    // Reproduce the user's broken-sandbox state: dir exists, no Cargo.toml, but a
+    // stray subdir as if a prior failed run left debris.
+    let sandbox = workspace_root.join("lessons").join("lid");
+    std::fs::create_dir_all(sandbox.join("workspace").join("lessons").join("spike")).unwrap();
+    assert!(sandbox.exists() && !sandbox.join("Cargo.toml").is_file());
+
+    let returned = prepare_sandbox(&content_dir, &workspace_root, "lid").unwrap();
+
+    assert_eq!(returned, sandbox);
+    assert!(returned.join("Cargo.toml").is_file(), "Cargo.toml recopied");
+    assert!(
+        returned.join("src").join("main.rs").is_file(),
+        "src/main.rs recopied"
+    );
+    assert!(
+        !returned.join("workspace").exists(),
+        "stray debris wiped by remove_dir_all"
+    );
+}
+
+/// T-701 (s7): an empty existing sandbox dir also repopulates cleanly.
+#[test]
+fn test_prepare_sandbox_repopulates_empty_sandbox() {
+    let content_dir = unique_temp("content");
+    write(
+        &content_dir.join("starter").join("Cargo.toml"),
+        "[workspace]\n\n[package]\nname = \"hello\"\nversion = \"0.0.0\"\nedition = \"2021\"\n",
+    );
+    write(
+        &content_dir.join("starter").join("src").join("main.rs"),
+        "fn main() {}",
+    );
+    let workspace_root = unique_temp("ws");
+    let sandbox = workspace_root.join("lessons").join("lid");
+    std::fs::create_dir_all(&sandbox).unwrap(); // empty dir
+
+    let returned = prepare_sandbox(&content_dir, &workspace_root, "lid").unwrap();
+    assert!(returned.join("Cargo.toml").is_file());
+    assert!(returned.join("src").join("main.rs").is_file());
+}
+
+/// T-701 (s7, C-006): after a repopulate, the new `Cargo.toml` carries the `[workspace]`
+/// detach table — the s2 lesson-detach promise must survive the new copy path.
+#[test]
+fn test_prepare_sandbox_repopulate_preserves_workspace_table() {
+    let content_dir = unique_temp("content");
+    write(
+        &content_dir.join("starter").join("Cargo.toml"),
+        "[workspace]\n\n[package]\nname = \"hello\"\nversion = \"0.0.0\"\nedition = \"2021\"\n",
+    );
+    write(
+        &content_dir.join("starter").join("src").join("main.rs"),
+        "fn main() {}",
+    );
+    let workspace_root = unique_temp("ws");
+    // Corrupt state.
+    let sandbox = workspace_root.join("lessons").join("lid");
+    std::fs::create_dir_all(&sandbox).unwrap();
+
+    let returned = prepare_sandbox(&content_dir, &workspace_root, "lid").unwrap();
+
+    assert!(
+        is_sandbox_healthy(&returned),
+        "is_sandbox_healthy requires the parsed [workspace] table — pins the s2 promise"
+    );
+}
+
+/// T-701 (s7, C-001 strengthened marker): a sandbox whose `Cargo.toml` exists but
+/// lacks `[workspace]` is still considered corrupt — `prepare_sandbox` repopulates so
+/// the cargo-escalation defence is actually in place.
+#[test]
+fn test_prepare_sandbox_repopulate_when_marker_lacks_workspace_table() {
+    let content_dir = unique_temp("content");
+    write(
+        &content_dir.join("starter").join("Cargo.toml"),
+        "[workspace]\n\n[package]\nname = \"hello\"\nversion = \"0.0.0\"\nedition = \"2021\"\n",
+    );
+    write(
+        &content_dir.join("starter").join("src").join("main.rs"),
+        "fn main() {}",
+    );
+    let workspace_root = unique_temp("ws");
+    let sandbox = workspace_root.join("lessons").join("lid");
+    // Pre-populate with a Cargo.toml that does NOT carry [workspace] (mimics a learner
+    // who edited the file and removed the table).
+    write(
+        &sandbox.join("Cargo.toml"),
+        "[package]\nname = \"oops\"\nversion = \"0.0.0\"\nedition = \"2021\"\n",
+    );
+    write(&sandbox.join("src").join("main.rs"), "fn main() {}");
+
+    let returned = prepare_sandbox(&content_dir, &workspace_root, "lid").unwrap();
+
+    assert!(
+        is_sandbox_healthy(&returned),
+        "marker-lacking-[workspace] is treated as corrupt → repopulated → healthy"
+    );
+    // Confirm the wipe actually swapped 'oops' for 'hello' (learner edit overwritten).
+    let toml_src = std::fs::read_to_string(returned.join("Cargo.toml")).unwrap();
+    assert!(toml_src.contains("name = \"hello\""));
+    assert!(!toml_src.contains("oops"));
 }
 
 #[test]
