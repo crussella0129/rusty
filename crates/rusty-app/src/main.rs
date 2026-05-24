@@ -67,6 +67,14 @@ fn grade_outcome(result: &Result<Verdict, String>) -> (Option<Annotation>, Optio
     }
 }
 
+/// The bytes typed into the embedded PTY when the learner clicks a ▶ run prompt: the
+/// command followed by `\r` (the shell's Enter). Pure so the byte format is unit-tested
+/// without spinning up a real PTY — a regression to `\n` (which `cmd.exe` ignores) or
+/// missing-Enter would be caught directly.
+fn pty_bytes_for_run(cmd: &str) -> Vec<u8> {
+    format!("{cmd}\r").into_bytes()
+}
+
 /// Sprint-6 boundary guard: panic if `step` is not a gradeable (`Faded`/`Open`) step.
 /// Called at the single chokepoint between a UI Check signal and `start_grade` so a
 /// misroute (a Reveal click somehow producing a check_request, etc.) panics loudly with
@@ -397,8 +405,7 @@ impl eframe::App for RustyApp {
         }
         // 5b. Type a clicked ▶ run command into the embedded PTY (followed by Enter).
         if let Some(cmd) = action.run {
-            let bytes = format!("{cmd}\r").into_bytes();
-            let _ = self.session.write(&bytes);
+            let _ = self.session.write(&pty_bytes_for_run(&cmd));
         }
 
         // 6. Terminal pane (right) and code-editor pane (centre).
@@ -541,7 +548,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "not gradeable")]
+    #[should_panic(expected = "step 0 is not gradeable (got Worked)")]
     fn test_enforce_gradeable_step_panics_for_non_gating_worked() {
         let lesson = lesson_with_exercise(
             r#"kind = "worked"
@@ -553,7 +560,7 @@ annotation = "a""#,
     }
 
     #[test]
-    #[should_panic(expected = "not gradeable")]
+    #[should_panic(expected = "step 0 is not gradeable (got PredictThenRun)")]
     fn test_enforce_gradeable_step_panics_for_predict_then_run() {
         let lesson = lesson_with_exercise(
             r#"kind = "predict_then_run"
@@ -563,6 +570,48 @@ expected_output = "3"
 explanation = "e""#,
         );
         enforce_gradeable_step(&lesson, 0);
+    }
+
+    /// C-006: a prose-only step (`exercise: None`) is "no-exercise" — must panic with
+    /// the kind named.
+    #[test]
+    #[should_panic(expected = "step 0 is not gradeable (got no-exercise)")]
+    fn test_enforce_gradeable_step_panics_for_no_exercise() {
+        let src = r##"
+            id = "t"
+            title = "T"
+            track = "Foundations"
+            estimated_minutes = 1
+            starter_project = "s"
+            solution_project = "sol"
+            [[steps]]
+            [[steps.blocks]]
+            kind = "prose"
+            text = "intro"
+            [recall_prompt]
+            kind = "short_answer"
+            question = "q"
+            expected = "a"
+            explanation = "e"
+        "##;
+        let lesson = rusty_curriculum::parse_lesson(src).expect("parses");
+        enforce_gradeable_step(&lesson, 0);
+    }
+
+    /// C-006: an out-of-range step also routes through the "no-exercise" branch and
+    /// panics — pins the chosen behaviour so "silently return on out-of-range" cannot
+    /// regress in.
+    #[test]
+    #[should_panic(expected = "step 99 is not gradeable (got no-exercise)")]
+    fn test_enforce_gradeable_step_panics_for_out_of_range() {
+        let lesson = lesson_with_exercise(
+            r#"kind = "faded"
+prompt = "p"
+file_path = "src/main.rs"
+check_command = "cargo test"
+success_criterion = { kind = "cargo_test_passes" }"#,
+        );
+        enforce_gradeable_step(&lesson, 99);
     }
 
     #[test]
@@ -586,6 +635,17 @@ check_command = "cargo run"
 success_criterion = { kind = "cargo_run_output_matches", expected = "hi" }"#,
         );
         enforce_gradeable_step(&lesson, 0); // does not panic
+    }
+
+    #[test]
+    fn test_pty_bytes_for_run_appends_carriage_return() {
+        // C-002: the exact byte format the embedded PTY needs for a ▶ run click.
+        assert_eq!(pty_bytes_for_run("cargo run"), b"cargo run\r".to_vec());
+        assert_eq!(
+            pty_bytes_for_run(""),
+            b"\r".to_vec(),
+            "empty cmd still presses Enter"
+        );
     }
 
     #[test]

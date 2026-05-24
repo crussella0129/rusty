@@ -437,6 +437,42 @@ mod tests {
         );
     }
 
+    /// C-001: a dedicated headless render of a lesson whose only block is a `NowRun`
+    /// proves the button is laid out (the T-601 `Button::new(text).frame(false)` path
+    /// doesn't panic). Tighter coverage (i.e. proving it's a *button* and not a
+    /// regressed-to-`ui.label`) needs an input-injection harness (`kittest`) and is
+    /// heartbeat-verified; the `run_request_for_block` pure test above verifies the
+    /// click→command mapping.
+    #[test]
+    fn test_lesson_view_renders_now_run_button_no_panic() {
+        const NOW_RUN_ONLY: &str = r##"
+            id = "n"
+            title = "N"
+            track = "Foundations"
+            estimated_minutes = 1
+            starter_project = "s"
+            solution_project = "sol"
+
+            [[steps]]
+            [[steps.blocks]]
+            kind = "now_run"
+            command = "cargo run"
+            note = "go"
+
+            [recall_prompt]
+            kind = "short_answer"
+            question = "q"
+            expected = "a"
+            explanation = "e"
+        "##;
+        let lesson = parse_lesson(NOW_RUN_ONLY).expect("fixture parses");
+        let mut ex_state = ExerciseState::default();
+        let progress = LessonProgress::new(lesson.steps.len());
+        headless(|ui| {
+            let _ = render(ui, &lesson, &progress, &mut ex_state, false);
+        });
+    }
+
     #[test]
     fn test_lesson_action_default_is_no_op() {
         let a = LessonAction::default();
