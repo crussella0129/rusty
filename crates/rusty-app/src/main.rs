@@ -14,7 +14,6 @@ mod markdown;
 mod theme;
 mod voice;
 
-use std::io::Write as _;
 use std::path::PathBuf;
 use std::sync::mpsc::{Receiver, TryRecvError};
 
@@ -29,41 +28,7 @@ use rusty_terminal::{terminal_ui, Terminal};
 const INIT_ROWS: usize = 24;
 const INIT_COLS: usize = 80;
 
-/// Path of the cross-run trace log (`$TEMP/rusty-trace.log`). Used by the Sprint-6
-/// diagnostic instrumentation — Windows GUI-subsystem stderr buffering can swallow
-/// `eprintln!` output before a panic-exit, so traces ALSO go to this file.
-pub(crate) fn trace_log_path() -> PathBuf {
-    std::env::temp_dir().join("rusty-trace.log")
-}
-
-/// Append a diagnostic line to both stderr and the trace log. The log write is
-/// flushed/synced so a panic immediately after still leaves the line on disk.
-pub(crate) fn trace(msg: &str) {
-    let line = format!("[rusty-trace] {msg}\n");
-    let _ = std::io::stderr().write_all(line.as_bytes());
-    if let Ok(mut f) = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(trace_log_path())
-    {
-        let _ = f.write_all(line.as_bytes());
-        let _ = f.sync_all();
-    }
-}
-
 fn main() -> eframe::Result {
-    // T-602 diagnostics: panics in `App::ui` (e.g. enforce_gradeable_step) must leave a
-    // record even when stderr buffers can't flush before the GUI-subsystem hard-exits.
-    // Truncate any prior log and install a chained panic hook that writes the panic
-    // info to the trace log before the default hook unwinds.
-    let _ = std::fs::remove_file(trace_log_path());
-    let default_hook = std::panic::take_hook();
-    std::panic::set_hook(Box::new(move |info| {
-        trace(&format!("PANIC: {info}"));
-        default_hook(info);
-    }));
-    trace(&format!("startup log={}", trace_log_path().display()));
-
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
         voice::WINDOW_TITLE,
@@ -275,10 +240,6 @@ impl RustyApp {
         let Some(rx) = &self.grade_job else { return };
         match rx.try_recv() {
             Ok(received) => {
-                trace(&format!(
-                    "poll_grade.ok pending_step={:?} verdict={received:?}",
-                    self.pending_step
-                ));
                 // Update the graded step's progress (a `Pass` reveals the next step), then
                 // render the verdict in the annotation pane.
                 if let (Ok(verdict), Some(step)) = (&received, self.pending_step) {
@@ -300,7 +261,6 @@ impl RustyApp {
     /// `cargo test` never freezes the UI; the result is delivered over a channel and
     /// polled each frame (mirrors the PTY's thread + repaint pattern).
     fn start_grade(&mut self, step: usize, criterion: SuccessCriterion, ctx: &egui::Context) {
-        trace(&format!("start_grade step={step} criterion={criterion:?}"));
         if self.grade_job.is_some() {
             return; // one grade at a time
         }

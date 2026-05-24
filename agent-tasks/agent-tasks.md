@@ -14,4 +14,5 @@
 ## Sprint 6 (Bug triage: Reveal-Pass + ▶ run UX)
 <!-- T-601 completed; see completed-tasks.md. -->
 <!-- T-602 completed; see completed-tasks.md. -->
-- [ ] T-603: Apply root-cause fix + remove instrumentation (TBD pending T-602 trace). — touches: TBD.
+<!-- T-603 completed (bug not reproducing under instrumentation; T-601's refactor likely shooed it away; instrumentation removed, enforce_gradeable_step retained as permanent guard). -->
+- [ ] T-604: fade-in for the PredictThenRun Output/explanation when revealed. — touches: `crates/rusty-app/src/exercise_view.rs`.
