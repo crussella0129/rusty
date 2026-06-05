@@ -203,3 +203,21 @@
 - **Completed:** 2026-05-23T20:15:00Z
 - **Files modified:** `crates/rusty-app/src/exercise_view.rs`
 - **Commit:** `1e88615`
+
+## T-701 (sprint 7)
+- **Description:** Marker-file idempotency in `prepare_sandbox` (checks `Cargo.toml`, `src/main.rs`, and parsed `[workspace]` key to identify a healthy sandbox and prevent outer workspace escalation). Integrates a startup sandbox health check in `RustyApp::new` and implements a safe `fallback_sandbox()` routing to OS temp dir when sandbox preparation fails.
+- **Completed:** 2026-06-05T04:00:23Z
+- **Files modified:** `crates/rusty-host/src/content.rs`, `crates/rusty-host/Cargo.toml`, `crates/rusty-app/src/main.rs`, `crates/rusty-host/tests/content.rs`
+- **Commit:** `149bde2`
+
+## T-702 (sprint 7)
+- **Description:** Cargo manifest locking for the background grader. Spawns `cargo test` and `cargo run` with `--manifest-path <sandbox>/Cargo.toml`, ensuring workspace resolution is explicitly locked to the sandboxed lesson project folder and cannot silently escalate to the root repo manifest.
+- **Completed:** 2026-06-05T04:00:23Z
+- **Files modified:** `crates/rusty-host/src/grade.rs`, `crates/rusty-host/tests/grade.rs`
+- **Commit:** `db03ca0`
+
+## T-703 (sprint 7)
+- **Description:** Perceptible reveal fade-in animation tuning. Increased the PredictThenRun explanation fade-in duration from 0.35s to 0.6s to make the visual transition smoother and more obvious to learners.
+- **Completed:** 2026-06-05T04:00:56Z
+- **Files modified:** `crates/rusty-app/src/exercise_view.rs`
+- **Commit:** `bfba9d0`
