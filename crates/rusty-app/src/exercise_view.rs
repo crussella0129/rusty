@@ -92,12 +92,15 @@ pub fn render_exercise(
             code_block(ui, code);
             // Call animate_bool_with_time every frame (target = current reveal state) so
             // the stored animation value tracks the false→true transition on Reveal-click
-            // and ramps 0→1 over ~0.35s. The render scope multiplies widget opacity by the
-            // factor, fading the Output/explanation in instead of snapping. (T-604.)
+            // and ramps 0→1 over ~0.6s. The render scope multiplies widget opacity by the
+            // factor, fading the Output/explanation in instead of snapping. (T-604; T-703
+            // bumped 0.35 → 0.6 for a more obviously-perceptible ramp after the user
+            // reported the s6 attempt still felt instant — likely because the outer-Rusty
+            // cascade was interfering with the visual at all.)
             let factor = ui.ctx().animate_bool_with_time(
                 egui::Id::new(("rusty_reveal_fade", i)),
                 state.revealed(i),
-                0.35,
+                0.6,
             );
             if state.revealed(i) {
                 ui.scope(|ui| {
