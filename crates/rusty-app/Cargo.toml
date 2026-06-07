@@ -26,3 +26,6 @@ rusty-curriculum = { path = "../rusty-curriculum" }
 rusty-grader = { path = "../rusty-grader" }
 rusty-host = { path = "../rusty-host" }
 rusty-terminal = { path = "../rusty-terminal" }
+lsp-types.workspace = true
+serde_json.workspace = true
+

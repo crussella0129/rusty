@@ -16,3 +16,6 @@ anyhow.workspace = true
 toml.workspace = true
 rusty-curriculum = { path = "../rusty-curriculum" }
 rusty-grader = { path = "../rusty-grader" }
+lsp-types.workspace = true
+serde_json.workspace = true
+

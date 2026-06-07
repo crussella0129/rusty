@@ -221,3 +221,10 @@
 - **Completed:** 2026-06-05T04:00:56Z
 - **Files modified:** `crates/rusty-app/src/exercise_view.rs`
 - **Commit:** `bfba9d0`
+
+## T-801 (sprint 8)
+- **Description:** Workspace dependencies and crate wiring (add `lsp-types` and `serde_json` to root workspace manifest and to dependencies of `rusty-host` and `rusty-app`).
+- **Completed:** 2026-06-07T05:27:30Z
+- **Files modified:** `Cargo.toml`, `crates/rusty-host/Cargo.toml`, `crates/rusty-app/Cargo.toml`
+- **Commit:** `ce2f54e`
+

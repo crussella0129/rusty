@@ -28,3 +28,7 @@ vte = "0.15"
 pulldown-cmark = "0.13"
 # Phase 3 — grading: parse `cargo --message-format=json` diagnostics.
 cargo_metadata = "0.23"
+# Phase 4 — LSP integration
+lsp-types = "0.97"
+serde_json = "1"
+
