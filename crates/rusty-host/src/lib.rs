@@ -11,8 +11,10 @@
 pub mod content;
 pub mod files;
 pub mod grade;
+pub mod lsp;
 pub mod pty;
 pub mod sandbox;
+
 
 pub use content::{is_sandbox_healthy, load_lesson, prepare_sandbox};
 pub use files::{list_sandbox_rs_files, read_sandbox_file, write_sandbox_file};

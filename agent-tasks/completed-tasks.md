@@ -228,3 +228,10 @@
 - **Files modified:** `Cargo.toml`, `crates/rusty-host/Cargo.toml`, `crates/rusty-app/Cargo.toml`
 - **Commit:** `ce2f54e`
 
+## T-802 (sprint 8)
+- **Description:** JSON-RPC message framing (implemented `write_message` and `read_message` for LSP framing, along with tests, in `rusty-host::lsp`).
+- **Completed:** 2026-06-07T05:30:15Z
+- **Files modified:** `crates/rusty-host/src/lsp.rs`, `crates/rusty-host/src/lib.rs`
+- **Commit:** `f399d86`
+
+

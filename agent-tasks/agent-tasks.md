@@ -23,9 +23,8 @@
 <!-- T-703 completed; see completed-tasks.md. -->
 
 ## Sprint 8 (LSP and rust-analyzer)
-- [ ] T-802: JSON-RPC message framing
-
 - [ ] T-803: Spawn rust-analyzer and initialize handshake
+
 - [ ] T-804: File synchronization and diagnostics reception
 - [ ] T-805: Async request-response matching (hover & completion)
 - [ ] T-806: App integration and session lifecycle
