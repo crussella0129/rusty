@@ -24,7 +24,7 @@ use rusty_curriculum::{Lesson, SuccessCriterion};
 use rusty_grader::{annotate, Annotation, Verdict};
 use rusty_host::{
     default_shell, is_sandbox_healthy, load_lesson, prepare_sandbox, resolve_cd, CdOutcome,
-    PtySession,
+    PtySession, LspSession,
 };
 use rusty_terminal::{terminal_ui, Terminal};
 
@@ -178,6 +178,7 @@ struct RustyApp {
     load_error: Option<String>,
     /// The code editor over the lesson sandbox's `.rs` files.
     editor: Editor,
+    lsp_session: Option<std::sync::Arc<LspSession>>,
     /// Lesson ids that exist (so concept-links to them render as live, not "coming soon").
     known_lessons: Vec<String>,
     /// Per-exercise UI state (predict-then-run reveal toggles).
@@ -232,7 +233,13 @@ impl RustyApp {
         )
         .expect("spawn shell");
 
-        let editor = Editor::new(&sandbox);
+        let lsp_session = if load_error.is_none() {
+            LspSession::new(&sandbox).ok().map(std::sync::Arc::new)
+        } else {
+            None
+        };
+
+        let editor = Editor::new(&sandbox, lsp_session.clone());
         let known_lessons = lesson
             .as_ref()
             .map(|l| vec![l.id.0.clone()])
@@ -249,6 +256,7 @@ impl RustyApp {
             lesson,
             load_error,
             editor,
+            lsp_session,
             known_lessons,
             ex_state: ExerciseState::default(),
             grade_job: None,
