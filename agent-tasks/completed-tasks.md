@@ -246,3 +246,10 @@
 - **Files modified:** \crates/rusty-scheduler/src/lib.rs\, \crates/rusty-app/src/{main.rs, state.rs, lesson_view.rs}\, \crates/rusty-curriculum/src/model.rs\
 - **Commit:** \913437\
 
+
+## T-1001 to T-1004 (sprint 10)
+- **Description:** Implement Phase 6 (Lesson 2 content) and SM-2 progression refactor. Refactored the usty-scheduler logic to use lesson-based intervals instead of real-world days. Added lesson tracking to usty-app state. Authored Lesson 2 (oundations-02-variables) including starter/solution cargo projects, Faded/Open/PredictThenRun exercises on mutability and shadowing, and an interactive RecallPrompt.
+- **Completed:** 2026-06-09T11:15:00-04:00
+- **Files modified:** crates/rusty-scheduler/src/lib.rs, crates/rusty-app/src/{main.rs, state.rs}, content/lessons/foundations-02-variables/*
+- **Commit:** 35b0530
+

@@ -167,6 +167,7 @@ fn fallback_sandbox() -> PathBuf {
 const CURRICULUM: &[&str] = &[
     "content/lessons/foundations-01-hello",
     "content/lessons/foundations-02-variables",
+    "content/lessons/foundations-03-ownership",
 ];
 
 #[derive(PartialEq, Eq)]

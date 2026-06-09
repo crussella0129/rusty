@@ -1,0 +1,100 @@
+id = "foundations-03-ownership"
+title = "Ownership Basics (Move Semantics)"
+track = "Foundations"
+estimated_minutes = 20
+starter_project = "starter"
+solution_project = "solution"
+
+[[concepts]]
+id = "ownership_rules"
+name = "Ownership Rules"
+description = "Each value has one owner. When the owner goes out of scope, the value is dropped."
+
+[[concepts]]
+id = "move_semantics"
+name = "Move Semantics"
+description = "Reassigning complex data (like String) transfers ownership instead of copying it."
+
+[[concepts]]
+id = "copy_trait"
+name = "The Copy Trait"
+description = "Simple types on the stack (like integers) copy their data instead of moving it."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Ownership is Rust's most unique feature. It guarantees memory safety without needing a garbage collector."
+
+[[steps.blocks]]
+kind = "prose"
+text = """
+Here are the three rules of Ownership:
+1. Each value in Rust has a variable that's called its **owner**.
+2. There can only be **one owner** at a time.
+3. When the owner goes out of scope, the value will be dropped (cleaned up).
+"""
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Because there can only be one owner at a time, reassigning a variable that holds complex data (like a `String`) on the heap will **move** the data instead of copying it."
+
+[[steps]]
+[steps.exercise]
+kind = "predict_then_run"
+code = """
+fn main() {
+    let s1 = String::from("hello");
+    let s2 = s1;
+    println!("{}, world!", s1);
+}
+"""
+question = "What will happen when you try to run this code?"
+expected_output = "" # Will fail to compile
+explanation = "This causes a compiler error! `s1` was **moved** into `s2`. Since `s1` is no longer the owner of the string, you can't use `s1` anymore."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "If you actually want to make a deep copy of a `String`, you can use the `.clone()` method."
+
+[[steps]]
+[steps.exercise]
+kind = "faded"
+prompt = "The code in `src/main.rs` has a 'use of moved value' error. Fix it by using `.clone()` when assigning `s2`. Click Check when you're done!"
+file_path = "src/main.rs"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "s1 is hello and s2 is hello" }
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Passing a value into a function also moves it! If a function takes a `String` (and not a reference), it takes ownership of that string."
+
+[[steps]]
+[steps.exercise]
+kind = "open"
+prompt = """
+At the bottom of `src/main.rs`, we have a function `eat_string(s: String)` that consumes the string.
+The main function tries to call it and then print the string afterwards, but the compiler stops it.
+
+Fix the code so that `main` can still print the string after `eat_string` is called.
+(Hint: `.clone()` is your friend here too!)
+"""
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "s1 is hello and s2 is hello\nAte the string: yummy\nStill have my string: yummy" }
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "What happens when you assign a `String` variable to another variable (e.g., `let s2 = s1`)?"
+choices = [
+    "The data is deeply copied, and both variables are valid.",
+    "The ownership of the data moves to `s2`, and `s1` becomes invalid.",
+    "A reference to `s1` is created in `s2`."
+]
+answer_index = 1
+explanation = "Rust moves complex data by default. The `String`'s pointer, length, and capacity are copied to `s2`, but `s1` is invalidated to prevent double-free errors."
+
+[[further_reading]]
+title = "What is Ownership? - The Rust Book"
+url = "https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html"
