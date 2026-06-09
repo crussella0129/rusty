@@ -12,6 +12,8 @@ pub struct PersistentState {
     pub completed_lessons: HashSet<LessonId>,
     /// SM-2 review state for individual concepts.
     pub concept_reviews: HashMap<ConceptId, ReviewState>,
+    /// The number of lessons the user has completed or is currently on.
+    pub current_lesson_index: u64,
 }
 
 impl PersistentState {
@@ -43,8 +45,8 @@ impl PersistentState {
     }
 
     /// Update the state of a concept after a review.
-    pub fn update_review(&mut self, concept: ConceptId, quality: u8, now: u64) {
+    pub fn update_review(&mut self, concept: ConceptId, quality: u8, current_lesson_index: u64) {
         let state = self.concept_reviews.entry(concept).or_default();
-        *state = rusty_scheduler::grade_review(state, quality, now);
+        *state = rusty_scheduler::grade_review(state, quality, current_lesson_index);
     }
 }

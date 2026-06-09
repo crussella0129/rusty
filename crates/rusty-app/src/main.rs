@@ -163,8 +163,11 @@ fn fallback_sandbox() -> PathBuf {
     root
 }
 
-/// The lesson shipped this sprint (multi-lesson selection is a later phase).
-const LESSON_REL: &str = "content/lessons/foundations-01-hello";
+/// The Foundations track curriculum.
+const CURRICULUM: &[&str] = &[
+    "content/lessons/foundations-01-hello",
+    "content/lessons/foundations-02-variables",
+];
 
 #[derive(PartialEq, Eq)]
 enum AppMode {
@@ -218,8 +221,18 @@ struct RustyApp {
 
 impl RustyApp {
     fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        let persistent_state = state::PersistentState::load(&state::PersistentState::default_path());
+
+        let active_lesson_rel = CURRICULUM
+            .iter()
+            .find(|rel| {
+                let id = rel.split('/').last().unwrap();
+                !persistent_state.completed_lessons.contains(&rusty_curriculum::LessonId(id.to_string()))
+            })
+            .unwrap_or(CURRICULUM.last().unwrap());
+
         let cwd0 = std::env::current_dir().unwrap_or_default();
-        let content_dir = cwd0.join(LESSON_REL);
+        let content_dir = cwd0.join(active_lesson_rel);
         let workspace_root = cwd0.join("workspace");
 
         // Load lesson 1, prepare its sandbox, validate that the result is structurally
@@ -267,9 +280,8 @@ impl RustyApp {
             .unwrap_or_default();
         let progress = LessonProgress::new(lesson.as_ref().map(|l| l.steps.len()).unwrap_or(0));
 
-        let persistent_state = state::PersistentState::load(&state::PersistentState::default_path());
-        let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
-        let has_due_reviews = persistent_state.concept_reviews.values().any(|r| r.due_at <= now);
+        let current_lesson_index = persistent_state.current_lesson_index;
+        let has_due_reviews = persistent_state.concept_reviews.values().any(|r| r.due_at_lesson <= current_lesson_index);
         let app_mode = if has_due_reviews { AppMode::DueReviews } else { AppMode::Lesson };
 
         Self {
@@ -474,12 +486,17 @@ impl eframe::App for RustyApp {
         // 6. Handle a successful recall review.
         if action.recall_passed {
             if let Some(lesson) = &self.lesson {
-                let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+                let current_lesson_index = self.persistent_state.current_lesson_index;
                 let quality = if self.recall_state.attempts <= 1 { 5 } else if self.recall_state.attempts == 2 { 3 } else { 1 };
                 for concept in &lesson.concepts {
-                    self.persistent_state.update_review(concept.id.clone(), quality, now);
+                    self.persistent_state.update_review(concept.id.clone(), quality, current_lesson_index);
                 }
-                self.persistent_state.completed_lessons.insert(lesson.id.clone());
+                
+                if !self.persistent_state.completed_lessons.contains(&lesson.id) {
+                    self.persistent_state.completed_lessons.insert(lesson.id.clone());
+                    self.persistent_state.current_lesson_index += 1;
+                }
+                
                 self.persistent_state.save(&state::PersistentState::default_path());
             }
             if self.app_mode == AppMode::DueReviews {

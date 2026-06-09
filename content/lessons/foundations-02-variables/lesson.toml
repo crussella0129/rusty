@@ -1,0 +1,98 @@
+id = "foundations-02-variables"
+title = "Variables, Mutability, and Shadowing"
+track = "Foundations"
+estimated_minutes = 15
+starter_project = "starter"
+solution_project = "solution"
+
+[[concepts]]
+id = "mutability"
+name = "Mutability"
+description = "Using `let mut` to allow variable reassignment."
+
+[[concepts]]
+id = "shadowing"
+name = "Shadowing"
+description = "Declaring a new variable with the same name as a previous one."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Welcome to Lesson 2! In Rust, variables are **immutable by default**. This means once a value is bound to a variable name, you can't change that value."
+
+[[steps.blocks]]
+kind = "code"
+source = """
+let x = 5;
+x = 6; // ERROR: cannot assign twice to immutable variable `x`
+"""
+
+[[steps.blocks]]
+kind = "prose"
+text = "If you need to change a variable's value, you must explicitly declare it as mutable using `let mut`."
+
+[[steps]]
+[steps.exercise]
+kind = "faded"
+prompt = "The code in `src/main.rs` tries to reassign `x`, but it won't compile! Fix the code so that `x` can be reassigned. Run `cargo run` and click Check when you see `x is 6`."
+file_path = "src/main.rs"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "x is 6" }
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Rust also supports **shadowing**. You can declare a *new* variable with the same name as a previous variable using the `let` keyword again. This is different from mutation!"
+
+[[steps.blocks]]
+kind = "prose"
+text = "Shadowing creates a fresh variable, which means it can even have a different *type* than the original."
+
+[[steps]]
+[steps.exercise]
+kind = "predict_then_run"
+code = """
+fn main() {
+    let spaces = "   ";
+    let spaces = spaces.len();
+    println!("There are {} spaces.", spaces);
+}
+"""
+question = "What will this print?"
+expected_output = "There are 3 spaces."
+explanation = "The first `spaces` is a string slice. The second `spaces` is a number (`usize`). Shadowing allowed us to reuse the name `spaces` for a completely different type!"
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Mutation (`let mut`) does NOT allow you to change the type of a variable. If you try to mutate a string into a number, the compiler will stop you."
+
+[[steps]]
+[steps.exercise]
+kind = "open"
+prompt = """
+Let's practice shadowing! At the bottom of your `main` function in `src/main.rs`, add the following logic:
+
+1. Declare a variable `spaces` equal to the string `"   "` (three spaces).
+2. Use shadowing to declare a new variable `spaces` equal to `spaces.len()`.
+3. Print it using `println!("There are {} spaces.", spaces);`
+
+When you're done, running `cargo run` should print two lines. Click Check!
+"""
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "x is 6\nThere are 3 spaces." }
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "What is the primary difference between `mut` and shadowing?"
+choices = [
+    "Shadowing allows changing the type of a variable, while `mut` does not.",
+    "`mut` allows changing the type of a variable, while shadowing does not.",
+    "Shadowing is used for constants, while `mut` is used for variables."
+]
+answer_index = 0
+explanation = "Shadowing creates a brand new variable, so it can have a different type. `mut` only allows changing the *value* of an existing variable, not its type."
+
+[[further_reading]]
+title = "Variables and Mutability - The Rust Book"
+url = "https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html"

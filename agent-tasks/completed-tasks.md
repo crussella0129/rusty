@@ -239,3 +239,10 @@
 - **Completed:** 2026-06-09T10:19:13-04:00
 - **Files modified:** `crates/rusty-app/src/{main.rs, editor.rs}`, `crates/rusty-host/src/lsp.rs`, `crates/rusty-host/tests/lsp_integration.rs`
 - **Commit:** `edb89ab`
+
+## T-901 to T-904 (sprint 9)
+- **Description:** Implement Phase 5 (Recall, scheduling, persistence). Added an OS-portable SM-2 spaced repetition engine in \usty-scheduler\. Added persistent state saving to \.rusty-state/progress.json\ in \usty-app\. Refactored the recall prompt UI to be interactive, accepting selections and short answers, grading them, and applying SM-2 updates. Implemented the "Due Reviews" startup mode to enforce learning retention before advancing to new lessons.
+- **Completed:** 2026-06-09T10:54:15-04:00
+- **Files modified:** \crates/rusty-scheduler/src/lib.rs\, \crates/rusty-app/src/{main.rs, state.rs, lesson_view.rs}\, \crates/rusty-curriculum/src/model.rs\
+- **Commit:** \913437\
+
