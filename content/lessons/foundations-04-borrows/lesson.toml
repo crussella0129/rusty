@@ -20,6 +20,11 @@ id = "borrow_rules"
 name = "The Borrow Rules"
 description = "You can have ONE mutable reference OR ANY NUMBER of immutable references at a time."
 
+[[concepts]]
+id = "lifetime_syntax"
+name = "Lifetime Syntax"
+description = "Explicitly annotating how long references live using `'a`."
+
 [[steps]]
 [[steps.blocks]]
 kind = "prose"
@@ -83,6 +88,30 @@ Fix the code by reordering the lines. Move the `println!` that uses `r1` to happ
 """
 check_command = "cargo run"
 success_criterion = { kind = "cargo_run_output_matches", expected = "The length of 'apple' is 5\nI still have my apple\nr1 sees: mutable\nWe mutated to: mutable and changed" }
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "So far, we've talked about lifetimes informally: references must not outlive the data they point to. But what happens if a function returns a reference?"
+
+[[steps.blocks]]
+kind = "prose"
+text = \"\"\"
+Sometimes the compiler can't figure out how long a reference needs to live. We help the compiler by using **Lifetime Syntax**, which looks like a little tick mark: `<'a>`.
+
+- **What it is**: A label that links the lifetime of input references to output references.
+- **How it's used**: Placed after the function name, and on the references: `fn longest<'a>(x: &'a str, y: &'a str) -> &'a str`.
+- **When to use it**: When your function takes multiple references and returns a reference.
+- **When NOT to use it**: When there's only one input reference, or when returning owned data (`String`), the compiler figures it out automatically!
+\"\"\"
+
+[[steps]]
+[steps.exercise]
+kind = "faded"
+prompt = "The `longest` function in `src/main.rs` takes two references and returns one, but the compiler is confused! Fix it by adding the `<'a>` lifetime annotations to the function signature."
+file_path = "src/main.rs"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "The length of 'apple' is 5\nI still have my apple\nr1 sees: mutable\nWe mutated to: mutable and changed\nThe longest word is: banana" }
 
 [recall_prompt]
 kind = "multiple_choice"

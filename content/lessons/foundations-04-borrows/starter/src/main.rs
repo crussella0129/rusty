@@ -22,4 +22,19 @@ fn main() {
     
     r2.push_str(" and changed");
     println!("We mutated to: {}", r2);
+
+    // (Faded) The compiler doesn't know which reference `longest` returns.
+    // Fix the signature to use the `'a` lifetime: `fn longest<'a>(x: &'a str, y: &'a str) -> &'a str`
+    let word1 = String::from("apple");
+    let word2 = String::from("banana");
+    let longest_word = longest(&word1, &word2);
+    println!("The longest word is: {}", longest_word);
+}
+
+fn longest(x: &str, y: &str) -> &str {
+    if x.len() > y.len() {
+        x
+    } else {
+        y
+    }
 }
