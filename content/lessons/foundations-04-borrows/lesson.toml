@@ -1,0 +1,100 @@
+id = "foundations-04-borrows"
+title = "Borrows and Lifetimes"
+track = "Foundations"
+estimated_minutes = 20
+starter_project = "starter"
+solution_project = "solution"
+
+[[concepts]]
+id = "immutable_borrow"
+name = "Immutable Borrows"
+description = "Passing data using `&T` to allow reading without taking ownership."
+
+[[concepts]]
+id = "mutable_borrow"
+name = "Mutable Borrows"
+description = "Passing data using `&mut T` to allow mutation without taking ownership."
+
+[[concepts]]
+id = "borrow_rules"
+name = "The Borrow Rules"
+description = "You can have ONE mutable reference OR ANY NUMBER of immutable references at a time."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Welcome to Lesson 4! In the last lesson, we learned that passing complex data like `String` to another variable or function **moves** it. Sometimes we just want to let someone else read the data without giving it away."
+
+[[steps.blocks]]
+kind = "prose"
+text = "We can do this using **References** (also called **Borrows**). By adding an `&` symbol, we create an *immutable reference*."
+
+[[steps]]
+[steps.exercise]
+kind = "predict_then_run"
+code = """
+fn main() {
+    let greeting = String::from("hello");
+    let reference = &greeting;
+    
+    // We try to mutate through an immutable reference!
+    reference.push_str(", world");
+    println!("{}", greeting);
+}
+"""
+question = "What happens if we try to change the string using an immutable reference?"
+expected_output = "" # Will fail to compile
+explanation = "This will not compile! An immutable reference `&String` only allows you to read the data, not change it. If we want to change it, we need a mutable reference."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "If we want a function to be able to read our `String` without destroying it, we can pass it an immutable reference: `&String`."
+
+[[steps]]
+[steps.exercise]
+kind = "faded"
+prompt = "The `print_length` function expects a reference `&String`, but we accidentally passed it by value, causing a move. Fix the call in `main` by adding an `&` so we pass a reference instead. Click Check when `cargo run` works!"
+file_path = "src/main.rs"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "The length of 'apple' is 5\nI still have my apple" }
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "To change data without taking ownership, we use a **mutable reference**: `&mut T`. However, there's a catch..."
+
+[[steps.blocks]]
+kind = "prose"
+text = """
+Rust has strict rules to prevent bugs called *data races*:
+- At any given time, you can have **either** one mutable reference **or** any number of immutable references.
+- References must never outlive the data they point to (this is what Lifetimes enforce behind the scenes).
+"""
+
+[[steps]]
+[steps.exercise]
+kind = "open"
+prompt = """
+At the bottom of `src/main.rs`, we try to create an immutable reference (`r1`) and a mutable reference (`r2`) at the same time, and then we try to use `r1`!
+This violates the borrow rules.
+
+Fix the code by reordering the lines. Move the `println!` that uses `r1` to happen **before** `r2` is created. This tells the compiler we are done with the immutable reference before we start mutating.
+"""
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "The length of 'apple' is 5\nI still have my apple\nr1 sees: mutable\nWe mutated to: mutable and changed" }
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "What are the rules for active references to the same data?"
+choices = [
+    "You can have any number of mutable or immutable references at the same time.",
+    "You can have exactly one mutable reference OR any number of immutable references.",
+    "You can have exactly one mutable reference AND one immutable reference."
+]
+answer_index = 1
+explanation = "To prevent data races and memory bugs, Rust strictly enforces the 'One Mutable XOR N Immutable' rule at compile time."
+
+[[further_reading]]
+title = "References and Borrowing - The Rust Book"
+url = "https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html"

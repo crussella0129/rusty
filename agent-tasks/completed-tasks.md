@@ -253,3 +253,10 @@
 - **Files modified:** crates/rusty-scheduler/src/lib.rs, crates/rusty-app/src/{main.rs, state.rs}, content/lessons/foundations-02-variables/*
 - **Commit:** 35b0530
 
+
+## T-1101 to T-1106 (sprint 11)
+- **Description:** Implement Phase 6 (Lesson 3 content). Authored Lesson 3 (\oundations-03-ownership\) focusing on Move Semantics and the Copy Trait. Built starter/solution projects with exercises for fixing 'use of moved value' errors using \.clone()\.
+- **Completed:** 2026-06-09T12:35:00-04:00
+- **Files modified:** \crates/rusty-app/src/main.rs\, \content/lessons/foundations-03-ownership/*\
+- **Commit:** \4c06df3\
+

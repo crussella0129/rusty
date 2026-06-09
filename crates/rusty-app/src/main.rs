@@ -168,6 +168,7 @@ const CURRICULUM: &[&str] = &[
     "content/lessons/foundations-01-hello",
     "content/lessons/foundations-02-variables",
     "content/lessons/foundations-03-ownership",
+    "content/lessons/foundations-04-borrows",
 ];
 
 #[derive(PartialEq, Eq)]
