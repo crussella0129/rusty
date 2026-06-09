@@ -23,12 +23,10 @@
 <!-- T-703 completed; see completed-tasks.md. -->
 
 ## Sprint 8 (LSP and rust-analyzer)
-- [ ] T-803: Spawn rust-analyzer and initialize handshake
+<!-- Sprint 8 build tasks T-801..T-809 all completed — see completed-tasks.md. -->
 
-- [ ] T-804: File synchronization and diagnostics reception
-- [ ] T-805: Async request-response matching (hover & completion)
-- [ ] T-806: App integration and session lifecycle
-- [ ] T-807: Editor Diagnostics rendering (underlines + gutter)
-- [ ] T-808: Editor Hover hit-testing and tooltip
-- [ ] T-809: Autocomplete popup and keyboard event interception
-
+## Sprint 9 (Phase 5: Recall, scheduling, persistence)
+- [ ] T-901: Implement `RecallPrompt` rendering and grading in the UI.
+- [ ] T-902: Implement `rusty-scheduler` with SM-2-lite (`ease`, `interval_days`, `due_at`).
+- [ ] T-903: Persist progress to `<rusty-repo>/.rusty-state/progress.json`.
+- [ ] T-904: Add a "Due Reviews" landing screen that appears before new lessons when reviews are due.

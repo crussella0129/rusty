@@ -11,6 +11,7 @@ mod editor;
 mod exercise_view;
 mod lesson_view;
 mod markdown;
+mod state;
 mod theme;
 mod voice;
 
@@ -165,6 +166,20 @@ fn fallback_sandbox() -> PathBuf {
 /// The lesson shipped this sprint (multi-lesson selection is a later phase).
 const LESSON_REL: &str = "content/lessons/foundations-01-hello";
 
+#[derive(PartialEq, Eq)]
+enum AppMode {
+    DueReviews,
+    Lesson,
+}
+
+#[derive(Default, Clone, Debug)]
+pub struct AppRecallState {
+    pub selected_index: Option<usize>,
+    pub typed_answer: String,
+    pub attempts: u32,
+    pub passed: bool,
+}
+
 struct RustyApp {
     term: Terminal,
     session: PtySession,
@@ -193,6 +208,12 @@ struct RustyApp {
     progress: LessonProgress,
     /// Which step the in-flight grade is for (so its result updates that step).
     pending_step: Option<usize>,
+    /// Persistent app state containing completed lessons and SM-2 schedules.
+    persistent_state: state::PersistentState,
+    /// Mode the app is in: due reviews vs normal lesson viewing.
+    app_mode: AppMode,
+    /// State for the currently displayed recall prompt.
+    recall_state: AppRecallState,
 }
 
 impl RustyApp {
@@ -246,6 +267,11 @@ impl RustyApp {
             .unwrap_or_default();
         let progress = LessonProgress::new(lesson.as_ref().map(|l| l.steps.len()).unwrap_or(0));
 
+        let persistent_state = state::PersistentState::load(&state::PersistentState::default_path());
+        let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+        let has_due_reviews = persistent_state.concept_reviews.values().any(|r| r.due_at <= now);
+        let app_mode = if has_due_reviews { AppMode::DueReviews } else { AppMode::Lesson };
+
         Self {
             term: Terminal::new(INIT_ROWS, INIT_COLS),
             session,
@@ -264,6 +290,9 @@ impl RustyApp {
             grade_error: None,
             progress,
             pending_step: None,
+            persistent_state,
+            app_mode,
+            recall_state: AppRecallState::default(),
         }
     }
 
@@ -384,35 +413,48 @@ impl eframe::App for RustyApp {
                 egui::ScrollArea::vertical()
                     .auto_shrink([false, false])
                     .show(ui, |ui| {
-                        if let Some(lesson) = &self.lesson {
-                            action = lesson_view::render(
-                                ui,
-                                lesson,
-                                &self.progress,
-                                &mut self.ex_state,
-                                checking,
-                            );
-                        } else {
-                            ui.heading(voice::LESSON_PANE_TITLE);
+                        if self.app_mode == AppMode::DueReviews {
+                            ui.heading("Due Reviews");
                             ui.separator();
-                            ui.colored_label(egui::Color32::LIGHT_RED, voice::LESSON_LOAD_ERROR);
-                            if let Some(err) = &self.load_error {
-                                ui.label(egui::RichText::new(err).small().weak());
+                            ui.label("You have concepts due for review before continuing.");
+                            ui.add_space(8.0);
+                            if let Some(lesson) = &self.lesson {
+                                if lesson_view::render_recall(ui, &lesson.recall_prompt, &mut self.recall_state) {
+                                    action.recall_passed = true;
+                                }
                             }
-                        }
+                        } else {
+                            if let Some(lesson) = &self.lesson {
+                                action = lesson_view::render(
+                                    ui,
+                                    lesson,
+                                    &self.progress,
+                                    &mut self.ex_state,
+                                    &mut self.recall_state,
+                                    checking,
+                                );
+                            } else {
+                                ui.heading(voice::LESSON_PANE_TITLE);
+                                ui.separator();
+                                ui.colored_label(egui::Color32::LIGHT_RED, voice::LESSON_LOAD_ERROR);
+                                if let Some(err) = &self.load_error {
+                                    ui.label(egui::RichText::new(err).small().weak());
+                                }
+                            }
 
-                        // The annotation pane: the last graded result, or a host error.
-                        if checking {
-                            ui.separator();
-                            ui.label(egui::RichText::new(voice::EXERCISE_CHECKING).weak());
-                        }
-                        if let Some(ann) = &self.annotation {
-                            ui.separator();
-                            annotation::render(ui, ann, &self.known_lessons);
-                        }
-                        if let Some(err) = &self.grade_error {
-                            ui.separator();
-                            ui.colored_label(egui::Color32::LIGHT_RED, err);
+                            // The annotation pane: the last graded result, or a host error.
+                            if checking {
+                                ui.separator();
+                                ui.label(egui::RichText::new(voice::EXERCISE_CHECKING).weak());
+                            }
+                            if let Some(ann) = &self.annotation {
+                                ui.separator();
+                                annotation::render(ui, ann, &self.known_lessons);
+                            }
+                            if let Some(err) = &self.grade_error {
+                                ui.separator();
+                                ui.colored_label(egui::Color32::LIGHT_RED, err);
+                            }
                         }
                     });
             });
@@ -427,6 +469,23 @@ impl eframe::App for RustyApp {
             }
             let ctx = ui.ctx().clone();
             self.start_grade(step, criterion, &ctx);
+        }
+
+        // 6. Handle a successful recall review.
+        if action.recall_passed {
+            if let Some(lesson) = &self.lesson {
+                let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+                let quality = if self.recall_state.attempts <= 1 { 5 } else if self.recall_state.attempts == 2 { 3 } else { 1 };
+                for concept in &lesson.concepts {
+                    self.persistent_state.update_review(concept.id.clone(), quality, now);
+                }
+                self.persistent_state.completed_lessons.insert(lesson.id.clone());
+                self.persistent_state.save(&state::PersistentState::default_path());
+            }
+            if self.app_mode == AppMode::DueReviews {
+                self.app_mode = AppMode::Lesson;
+                self.recall_state = AppRecallState::default();
+            }
         }
         // 5b. Type a clicked ▶ run command into the embedded PTY (followed by Enter).
         if let Some(cmd) = action.run {

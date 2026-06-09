@@ -9,12 +9,12 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 
 /// Stable lesson identifier, e.g. `"foundations-01-hello"`.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct LessonId(pub String);
 
 /// Stable concept identifier (tracked individually for spaced repetition).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct ConceptId(pub String);
 

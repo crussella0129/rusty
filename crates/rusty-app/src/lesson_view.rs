@@ -20,6 +20,8 @@ pub struct LessonAction {
     pub check: Option<(usize, SuccessCriterion)>,
     /// `Some(command)` when a `▶ run` prompt button was clicked.
     pub run: Option<String>,
+    /// `true` if the recall prompt was successfully answered this frame.
+    pub recall_passed: bool,
 }
 
 /// Whether to show this step's tip: a gating step with a `hint` whose Check has failed at
@@ -57,6 +59,7 @@ pub fn render(
     lesson: &Lesson,
     progress: &LessonProgress,
     ex_state: &mut ExerciseState,
+    recall_state: &mut crate::AppRecallState,
     checking: bool,
 ) -> LessonAction {
     // The lesson name is THE title — render it larger than any in-body markdown heading
@@ -128,26 +131,63 @@ pub fn render(
                 .color(egui::Color32::from_rgb(0x4c, 0xaf, 0x50)),
         );
         ui.add_space(6.0);
-        render_recall(ui, &lesson.recall_prompt);
+        if render_recall(ui, &lesson.recall_prompt, recall_state) {
+            action.recall_passed = true;
+        }
         render_further_reading(ui, &lesson.further_reading);
     }
     action
 }
 
-/// Render the recall prompt as a read-only review (interactive grading is a later phase).
-fn render_recall(ui: &mut egui::Ui, recall: &RecallPrompt) {
+/// Render the recall prompt as an interactive review.
+pub fn render_recall(ui: &mut egui::Ui, recall: &RecallPrompt, state: &mut crate::AppRecallState) -> bool {
     ui.label(crate::theme::section_label(voice::RECALL_HEADING));
+    let mut just_passed = false;
     match recall {
         RecallPrompt::MultipleChoice {
-            question, choices, ..
+            question, choices, answer_index, explanation
         } => {
             markdown::render_markdown(ui, question);
-            for choice in choices {
-                ui.label(format!("• {choice}"));
+            for (i, choice) in choices.iter().enumerate() {
+                ui.radio_value(&mut state.selected_index, Some(i), choice);
+            }
+            if !state.passed && ui.button("Submit").clicked() {
+                state.attempts += 1;
+                if state.selected_index == Some(*answer_index) {
+                    state.passed = true;
+                    just_passed = true;
+                }
+            }
+            if state.attempts > 0 {
+                if state.passed {
+                    ui.label(egui::RichText::new("Correct!").color(egui::Color32::from_rgb(0x4c, 0xaf, 0x50)));
+                    markdown::render_markdown(ui, explanation);
+                } else {
+                    ui.label(egui::RichText::new("Not quite right, try again.").color(egui::Color32::from_rgb(0xf4, 0x43, 0x36)));
+                }
             }
         }
-        RecallPrompt::ShortAnswer { question, .. } => markdown::render_markdown(ui, question),
+        RecallPrompt::ShortAnswer { question, expected, explanation } => {
+            markdown::render_markdown(ui, question);
+            ui.text_edit_singleline(&mut state.typed_answer);
+            if !state.passed && ui.button("Submit").clicked() {
+                state.attempts += 1;
+                if state.typed_answer.trim().eq_ignore_ascii_case(expected.trim()) {
+                    state.passed = true;
+                    just_passed = true;
+                }
+            }
+            if state.attempts > 0 {
+                if state.passed {
+                    ui.label(egui::RichText::new("Correct!").color(egui::Color32::from_rgb(0x4c, 0xaf, 0x50)));
+                    markdown::render_markdown(ui, explanation);
+                } else {
+                    ui.label(egui::RichText::new("Not quite right, try again.").color(egui::Color32::from_rgb(0xf4, 0x43, 0x36)));
+                }
+            }
+        }
     }
+    just_passed
 }
 
 /// Render further-reading links.

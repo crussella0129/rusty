@@ -7,3 +7,6 @@ repository.workspace = true
 rust-version.workspace = true
 publish = false
 description = "SM-2-lite spaced-repetition scheduler for Rusty (portable; no OS deps)."
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }

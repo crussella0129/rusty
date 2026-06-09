@@ -234,4 +234,8 @@
 - **Files modified:** `crates/rusty-host/src/lsp.rs`, `crates/rusty-host/src/lib.rs`
 - **Commit:** `f399d86`
 
-
+## T-803 to T-809 (sprint 8)
+- **Description:** Implement LSP integration (`rust-analyzer`). Spawns `rust-analyzer` and initializes the handshake (T-803), synchronizes files and receives diagnostics (T-804), maps asynchronous request/responses for hover and completion (T-805), integrates into `rusty-app` lifecycle and `Editor` (T-806), renders live error underlines and gutter diagnostics (T-807), maps UI pointer hit-testing to LSP coordinates for hover tooltips (T-808), and intercepts keyboard triggers to render an autocomplete popup (T-809).
+- **Completed:** 2026-06-09T10:19:13-04:00
+- **Files modified:** `crates/rusty-app/src/{main.rs, editor.rs}`, `crates/rusty-host/src/lsp.rs`, `crates/rusty-host/tests/lsp_integration.rs`
+- **Commit:** `edb89ab`
