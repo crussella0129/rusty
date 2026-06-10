@@ -1,0 +1,109 @@
+id = "foundations-05-structs"
+title = "Structs and Methods"
+track = "Foundations"
+estimated_minutes = 20
+starter_project = "starter"
+solution_project = "solution"
+
+[[concepts]]
+id = "structs"
+name = "Structs"
+description = "Grouping related data fields together into a custom type."
+
+[[concepts]]
+id = "impl_blocks"
+name = "Impl Blocks"
+description = "Defining methods associated with a specific struct."
+
+[[concepts]]
+id = "self_references"
+name = "&self vs &mut self"
+description = "Methods can read data with `&self` or modify it with `&mut self`."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Welcome to Lesson 5! We've learned about basic types like `String` and numbers. Now it's time to build our own custom types using **Structs**."
+
+[[steps.blocks]]
+kind = "prose"
+text = "A `struct` lets you group multiple related values together and name them, like creating an object in other languages."
+
+[[steps]]
+[steps.exercise]
+kind = "predict_then_run"
+code = """
+struct User {
+    username: String,
+    active: bool,
+}
+
+fn main() {
+    let u = User {
+        username: String::from("rusty_fan"),
+        active: true,
+    };
+    
+    println!("User {} is active: {}", u.username, u.active);
+}
+"""
+question = "What will this print?"
+expected_output = "User rusty_fan is active: true"
+explanation = "We created a `User` struct and accessed its fields using dot notation (`u.username`)."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Data is great, but behavior is better! We can attach methods to our structs using an `impl` block."
+
+[[steps.blocks]]
+kind = "prose"
+text = "When we write a method, the first parameter is usually `&self`. This means the method takes an immutable borrow of the struct, allowing it to read the fields without taking ownership."
+
+[[steps]]
+[steps.exercise]
+kind = "faded"
+prompt = "In `src/main.rs`, the `User` struct has an `impl` block, but the `full_name` method is missing its signature. Add `&self` so the method can read the `first_name` and `last_name` fields. Run `cargo run` and click Check when the output looks right!"
+file_path = "src/main.rs"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "User's full name is: Charles Russella" }
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "What if a method needs to change the struct's data? It can't use `&self` because that's an immutable borrow."
+
+[[steps.blocks]]
+kind = "prose"
+text = "Instead, we use `&mut self`! This gives the method a mutable borrow of the struct. (Remember, the variable holding the struct must also be declared with `let mut`!)"
+
+[[steps]]
+[steps.exercise]
+kind = "open"
+prompt = """
+At the bottom of `src/main.rs`, our `User` needs a way to update their email address.
+
+Write a method in the `impl User` block called `change_email`.
+- It should take `&mut self` and a new `String`.
+- It should update `self.email` to the new string.
+
+Then, uncomment the code in `main` that calls this method. Click Check when you're done!
+"""
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "User's full name is: Charles Russella\nEmail updated to: charles.new@example.com" }
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "When defining a method, when should you use `&mut self` instead of `&self`?"
+choices = [
+    "Always. Methods should always use `&mut self`.",
+    "When the method only needs to read the struct's fields.",
+    "When the method needs to modify the struct's fields.",
+    "When the method is creating a brand new instance of the struct."
+]
+answer_index = 2
+explanation = "`&mut self` provides a mutable reference, which is strictly required if you intend to change the values stored inside the struct."
+
+[[further_reading]]
+title = "Defining and Instantiating Structs - The Rust Book"
+url = "https://doc.rust-lang.org/book/ch05-01-defining-structs.html"

@@ -260,3 +260,10 @@
 - **Files modified:** \crates/rusty-app/src/main.rs\, \content/lessons/foundations-03-ownership/*\
 - **Commit:** \4c06df3\
 
+
+## T-1201 to T-1206 (sprint 12)
+- **Description:** Implement Phase 6 (Lesson 4 content). Authored Lesson 4 (\oundations-04-borrows\) focusing on Borrowing rules (1 mutable XOR N immutable) and Lifetime syntax (\<'a>\). Built starter/solution projects with exercises for fixing simultaneous mut/immut borrows and missing lifetime annotations.
+- **Completed:** 2026-06-09T21:28:00-04:00
+- **Files modified:** \crates/rusty-app/src/main.rs\, \content/lessons/foundations-04-borrows/*\
+- **Commit:** \aa27eb\ and \27e6d17\
+
