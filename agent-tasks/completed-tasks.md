@@ -267,3 +267,10 @@
 - **Files modified:** \crates/rusty-app/src/main.rs\, \content/lessons/foundations-04-borrows/*\
 - **Commit:** \aa27eb\ and \27e6d17\
 
+
+## T-1301 to T-1306 (sprint 13)
+- **Description:** Implement Phase 6 (Lesson 5 content). Authored Lesson 5 (\oundations-05-structs\) focusing on custom data types, \impl\ blocks, and the difference between \&self\ and \&mut self\. Built starter/solution projects with exercises for reading and mutating struct state.
+- **Completed:** 2026-06-10T00:05:00-04:00
+- **Files modified:** \crates/rusty-app/src/main.rs\, \content/lessons/foundations-05-structs/*\
+- **Commit:** \d733833\
+
