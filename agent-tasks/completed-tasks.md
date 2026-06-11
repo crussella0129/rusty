@@ -328,6 +328,37 @@
 - **Files modified:** `.github/workflows/ci.yml`, `README.md`, `docs/INSTALL.md`, `docs/ARCHITECTURE.md`
 - **Commit:** `2b18a84`
 
+## T-1801 (sprint 18)
+- **Description:** Add Step 4 (Faded - Full Diffing) and Step 5 (Open - Positional Diffing) to `lesson.toml` in foundations-08-collections.
+- **Completed:** 2026-06-11T20:20:00Z
+- **Files modified:** `content/lessons/foundations-08-collections/lesson.toml`
+- **Commit:** `93687ae`
+
+## T-1802 (sprint 18)
+- **Description:** Add TODOs, stubs, and validation blocks to starter `main.rs` in foundations-08-collections.
+- **Completed:** 2026-06-11T20:21:00Z
+- **Files modified:** `content/lessons/foundations-08-collections/starter/src/main.rs`
+- **Commit:** `93687ae`
+
+## T-1803 (sprint 18)
+- **Description:** Implement full and positional-aware diffing in solution `main.rs` in foundations-08-collections.
+- **Completed:** 2026-06-11T20:22:00Z
+- **Files modified:** `content/lessons/foundations-08-collections/solution/src/main.rs`
+- **Commit:** `93687ae`
+
+## T-1804 (sprint 18)
+- **Description:** Update integration test suite `lesson8_grade.rs` to grade all 5 steps sequentially.
+- **Completed:** 2026-06-11T20:23:00Z
+- **Files modified:** `crates/rusty-host/tests/lesson8_grade.rs`
+- **Commit:** `93687ae`
+
+## T-1805 (sprint 18)
+- **Description:** Verify all workspace tests compile and pass green.
+- **Completed:** 2026-06-11T20:24:00Z
+- **Files modified:** none (verification run)
+- **Commit:** `93687ae`
+
+
 
 
 
