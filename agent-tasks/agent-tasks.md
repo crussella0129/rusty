@@ -53,10 +53,7 @@
 <!-- Sprint 17 build tasks T-1701..T-1706 all completed — see completed-tasks.md. -->
 
 ## Sprint 18 (Advanced Diffing & File I/O in Lesson 8)
-- [ ] T-1801: Add Step 4 (Faded - Full Diffing) and Step 5 (Open - Positional Diffing) to `lesson.toml`
-- [ ] T-1802: Add TODOs, stubs, and validation blocks to starter `main.rs`
-- [ ] T-1803: Implement full and positional-aware diffing in solution `main.rs`
-- [ ] T-1804: Update integration test suite `lesson8_grade.rs`
-- [ ] T-1805: Verify all workspace tests compile and pass green
+<!-- Sprint 18 build tasks T-1801..T-1805 all completed — see completed-tasks.md. -->
+
 
 
