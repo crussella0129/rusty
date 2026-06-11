@@ -286,4 +286,11 @@
 - **Files modified:** `crates/rusty-app/src/{main.rs, lesson_view.rs}`, `crates/rusty-host/tests/lesson7_grade.rs`, `content/lessons/foundations-07-errors/*`
 - **Commit:** `b5fe246`
 
+## T-1601 to T-1606 (sprint 16)
+- **Description:** Implement Phase 6 (Lesson 8 content). Authored Lesson 8 (`foundations-08-collections`) focusing on Collections (`Vec`, `String`, `HashSet`) and filesystem utility operations (`std::fs`). Built starter/solution projects with exercises for string split/join operations, forward diffing, and set unique consolidation and sorting.
+- **Completed:** 2026-06-11T13:40:00Z
+- **Files modified:** `crates/rusty-app/src/main.rs`, `crates/rusty-host/tests/lesson8_grade.rs`, `content/lessons/foundations-08-collections/*`
+- **Commit:** `eb128c5`
+
+
 

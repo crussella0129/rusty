@@ -1,0 +1,106 @@
+id = "foundations-08-collections"
+title = "Collections and File I/O"
+track = "Foundations"
+estimated_minutes = 20
+starter_project = "starter"
+solution_project = "solution"
+
+[[concepts]]
+id = "vectors_and_strings"
+name = "Vectors and Strings"
+description = "Using `Vec<T>` for dynamic lists, and splitting/joining strings with delimiters."
+
+[[concepts]]
+id = "sets_and_uniques"
+name = "Sets and Uniques"
+description = "Using collections like `HashSet` to consolidate unique values and sorting them."
+
+[[concepts]]
+id = "file_io"
+name = "File System Access"
+description = "Using `std::fs` to read and write dataset files from the filesystem."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Welcome to the final lesson of the Foundations track! Today we're bringing together strings, vectors, and the filesystem. In real applications, datasets are often stored as delimited text files (e.g. using `~` as a separator). We can load these files, manipulate them as vectors, and format them back."
+
+[[steps.blocks]]
+kind = "prose"
+text = "To turn a string into a list of items, we use `.split(delimiter)`. To join a vector of strings back into one, we use `.join(delimiter)`."
+
+[[steps]]
+[steps.exercise]
+kind = "predict_then_run"
+code = """fn main() {
+    let raw = "Red~Orange~Yellow";
+    let mut colors: Vec<String> = raw.split('~').map(|s| s.to_string()).collect();
+    colors.push(String::from("Green"));
+    let joined = colors.join("~");
+    println!("Colors: {}", joined);
+}"""
+question = "What will this program print?"
+expected_output = "Colors: Red~Orange~Yellow~Green"
+explanation = "The string splits into a vector of three elements, we push 'Green' to the end, and then we join them back with the tilde `~` delimiter."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "We can compose complex pipelines by reading files from disk, comparing datasets, and finding differences. The `std::fs` module provides utility functions like `fs::read_to_string` and `fs::write` to make filesystem operations extremely straightforward."
+
+[[steps.blocks]]
+kind = "prose"
+text = "Let's build a 'forward difference' operator that compares a previous dataset file with a current one, extracting only the newly added items."
+
+[[steps]]
+[steps.exercise]
+kind = "faded"
+prompt = "In `src/main.rs`, complete `get_forward_difference` (using `.contains`) and `process_diff_files` (using `fs::read_to_string` with error propagation `?`). Run the code and Check when ready!"
+file_path = "src/main.rs"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "New items: Purple" }
+hint = "Use `!prev_items.contains(&item)` to check if the item is new. Call `fs::read_to_string(prev_file)?` to load the file contents safely."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Sometimes we want to merge multiple datasets while ensuring there are no duplicates. In Rust, a `HashSet` stores only unique values, rejecting duplicates automatically."
+
+[[steps.blocks]]
+kind = "prose"
+text = "However, `HashSet` stores items in an arbitrary, non-deterministic order. Before writing the output to a file, we should collect the items into a `Vec`, sort them alphabetically using `.sort()`, and write the joined string back to disk."
+
+[[steps]]
+[steps.exercise]
+kind = "open"
+prompt = """Implement the `compile_unique_dataset` function at the bottom of `src/main.rs`.
+
+Requirements:
+1. It should take a slice of file paths: `files: &[&str]` and an `output_file: &str`, and return `Result<(), std::io::Error>`.
+2. Initialize a `HashSet<String>` (import `HashSet` from `std::collections`).
+3. For each file path, read the file contents using `fs::read_to_string`.
+4. Split the contents by `~`. For each item, if it is not empty (`!item.is_empty()`), insert it into the set.
+5. Collect the unique items from the set into a `Vec<String>`.
+6. Sort the vector alphabetically using `.sort()`.
+7. Join the sorted vector with `~` and write it to `output_file` using `fs::write`.
+8. Return `Ok(())`.
+
+Once written, uncomment the second validation section in `main` and run Check!"""
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "New items: Purple\nCombined uniques: Blue~Green~Orange~Purple~Red~Yellow" }
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "Why is it important to sort the items from a `HashSet` before writing them to a file for comparison?"
+choices = [
+    "Because `HashSet` values are stored in a random, non-deterministic order, making exact output comparisons unreliable.",
+    "Because the file system requires sorted data to save files properly.",
+    "Because sorting compresses the data and reduces file size.",
+    "Because sorting automatically converts the data to a valid string format."
+]
+answer_index = 0
+explanation = "`HashSet` does not guarantee any specific order of its elements. If you write them directly to a file, the output will change randomly between runs. Sorting the elements first ensures a stable, deterministic output."
+
+[[further_reading]]
+title = "Storing Lists of Values with Vectors - The Rust Book"
+url = "https://doc.rust-lang.org/book/ch08-01-vectors.html"

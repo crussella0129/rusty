@@ -45,3 +45,6 @@
 
 ## Sprint 15 (Phase 6: Lesson 7 content - Errors)
 <!-- Sprint 15 build tasks T-1501..T-1506 all completed — see completed-tasks.md. -->
+
+## Sprint 16 (Phase 6: Lesson 8 content - Collections & File I/O)
+<!-- Sprint 16 build tasks T-1601..T-1606 all completed — see completed-tasks.md. -->
