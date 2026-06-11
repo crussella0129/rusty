@@ -89,6 +89,52 @@ Once written, uncomment the second validation section in `main` and run Check!""
 check_command = "cargo run"
 success_criterion = { kind = "cargo_run_output_matches", expected = "New items: Purple\nCombined uniques: Blue~Green~Orange~Purple~Red~Yellow" }
 
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Now let's implement a **Full +/- Diffing** operator. Unlike the forward difference, a full diff identifies both added items (prefixed with `+`) and removed items (prefixed with `-`)."
+
+[[steps.blocks]]
+kind = "prose"
+text = "To make comparison deterministic, we collect the diff operations (e.g. `+Purple`, `-Orange`), sort them alphabetically, and join them with `~`."
+
+[[steps]]
+[steps.exercise]
+kind = "faded"
+prompt = "In `src/main.rs`, complete `get_full_difference` (using `.contains`) and `process_full_diff_files` (reading both files and passing content). Once written, uncomment the third validation section in `main` and run Check!"
+file_path = "src/main.rs"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "New items: Purple\nCombined uniques: Blue~Green~Orange~Purple~Red~Yellow\nFull diff: +Purple~-Orange" }
+hint = "Identify additions: elements in `curr` but not `prev`, formatting as `+item`. Identify removals: elements in `prev` but not `curr`, formatting as `-item`. Collect, sort alphabetically using `.sort()`, and join with `~`."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Finally, let's add **Positional Change Awareness**. Often, datasets are ordered sequences, and shifting the position of an element matters. We want to identify additions (`+item@curr_idx`), removals (`-item@prev_idx`), and moves (`>item@prev_idx->curr_idx`)."
+
+[[steps.blocks]]
+kind = "prose"
+text = "We will collect these positional descriptors, sort them alphabetically, and join them with `~`."
+
+[[steps]]
+[steps.exercise]
+kind = "open"
+prompt = """Implement `get_positional_difference` and `process_positional_diff_files` at the bottom of `src/main.rs`.
+
+Requirements:
+1. `get_positional_difference(prev_data: &str, curr_data: &str) -> String` should split both inputs by `~` (ignoring empty strings).
+2. For each item in `curr`:
+   - If not present in `prev`, it is added: `+item@curr_idx`.
+   - If present in `prev` at `prev_idx` but `prev_idx != curr_idx`, it is moved: `>item@prev_idx->curr_idx`.
+3. For each item in `prev`:
+   - If not present in `curr`, it is removed: `-item@prev_idx`.
+4. Collect all descriptors into a `Vec<String>`, sort them alphabetically, and join them with `~`.
+5. Implement `process_positional_diff_files(prev_file: &str, curr_file: &str) -> Result<String, std::io::Error>` to read files and call the difference function.
+
+Once written, uncomment the fourth validation section in `main` and run Check!"""
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "New items: Purple\nCombined uniques: Blue~Green~Orange~Purple~Red~Yellow\nFull diff: +Purple~-Orange\nPositional diff: +Purple@3~-Orange@1~>Green@3->2~>Yellow@2->1" }
+
 [recall_prompt]
 kind = "multiple_choice"
 question = "Why is it important to sort the items from a `HashSet` before writing them to a file for comparison?"

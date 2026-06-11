@@ -19,8 +19,74 @@ fn process_diff_files(prev_file: &str, curr_file: &str) -> Result<String, std::i
     // (Faded)
     let prev_content = fs::read_to_string(prev_file)?;
     let curr_content = fs::read_to_string(curr_file)?;
-    
     Ok(get_forward_difference(&prev_content, &curr_content))
+}
+
+fn get_full_difference(prev_data: &str, curr_data: &str) -> String {
+    let prev_items: Vec<&str> = prev_data.split('~').filter(|s| !s.is_empty()).collect();
+    let curr_items: Vec<&str> = curr_data.split('~').filter(|s| !s.is_empty()).collect();
+    
+    let mut diff = Vec::new();
+    
+    // Identify added items
+    for item in &curr_items {
+        if !prev_items.contains(item) {
+            diff.push(format!("+{}", item));
+        }
+    }
+    
+    // Identify removed items
+    for item in &prev_items {
+        if !curr_items.contains(item) {
+            diff.push(format!("-{}", item));
+        }
+    }
+    
+    diff.sort();
+    diff.join("~")
+}
+
+fn process_full_diff_files(prev_file: &str, curr_file: &str) -> Result<String, std::io::Error> {
+    let prev_content = fs::read_to_string(prev_file)?;
+    let curr_content = fs::read_to_string(curr_file)?;
+    Ok(get_full_difference(&prev_content, &curr_content))
+}
+
+fn get_positional_difference(prev_data: &str, curr_data: &str) -> String {
+    let prev_items: Vec<&str> = prev_data.split('~').filter(|s| !s.is_empty()).collect();
+    let curr_items: Vec<&str> = curr_data.split('~').filter(|s| !s.is_empty()).collect();
+    
+    let mut diff = Vec::new();
+    
+    // Additions and moves
+    for (curr_idx, item) in curr_items.iter().enumerate() {
+        match prev_items.iter().position(|&x| x == *item) {
+            None => {
+                diff.push(format!("+{}@{}", item, curr_idx));
+            }
+            Some(prev_idx) => {
+                if prev_idx != curr_idx {
+                    diff.push(format!(">{}@{}->{}", item, prev_idx, curr_idx));
+                }
+            }
+        }
+    }
+    
+    // Removals
+    for (prev_idx, item) in prev_items.iter().enumerate() {
+        if !curr_items.contains(item) {
+            diff.push(format!("-{}@{}", item, prev_idx));
+        }
+    }
+    
+    diff.sort();
+    diff.join("~")
+}
+
+fn process_positional_diff_files(prev_file: &str, curr_file: &str) -> Result<String, std::io::Error> {
+    let prev_content = fs::read_to_string(prev_file)?;
+    let curr_content = fs::read_to_string(curr_file)?;
+    Ok(get_positional_difference(&prev_content, &curr_content))
 }
 
 // (Open)
@@ -56,7 +122,7 @@ fn main() {
     let _ = fs::remove_file("prev.txt");
     let _ = fs::remove_file("curr.txt");
 
-    // (Open)
+    // (Open - Step 3)
     fs::write("dataset1.txt", "Red~Orange~Yellow").unwrap();
     fs::write("dataset2.txt", "Yellow~Green~Blue").unwrap();
     fs::write("dataset3.txt", "Green~Blue~Purple").unwrap();
@@ -73,4 +139,22 @@ fn main() {
     let _ = fs::remove_file("dataset2.txt");
     let _ = fs::remove_file("dataset3.txt");
     let _ = fs::remove_file("combined.txt");
+
+    // (Faded - Step 4)
+    fs::write("prev_diff.txt", "Red~Orange~Yellow~Green").unwrap();
+    fs::write("curr_diff.txt", "Red~Yellow~Green~Purple").unwrap();
+    
+    match process_full_diff_files("prev_diff.txt", "curr_diff.txt") {
+        Ok(diff) => println!("Full diff: {}", diff),
+        Err(e) => println!("Error: {}", e),
+    }
+    
+    // (Open - Step 5)
+    match process_positional_diff_files("prev_diff.txt", "curr_diff.txt") {
+        Ok(diff) => println!("Positional diff: {}", diff),
+        Err(e) => println!("Error: {}", e),
+    }
+    
+    let _ = fs::remove_file("prev_diff.txt");
+    let _ = fs::remove_file("curr_diff.txt");
 }

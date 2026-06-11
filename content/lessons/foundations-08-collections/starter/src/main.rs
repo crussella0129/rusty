@@ -24,9 +24,50 @@ fn process_diff_files(prev_file: &str, curr_file: &str) -> Result<String, std::i
     Ok(get_forward_difference(&prev_content, &curr_content))
 }
 
-// (Open) Implement `compile_unique_dataset` here!
+fn get_full_difference(prev_data: &str, curr_data: &str) -> String {
+    let prev_items: Vec<&str> = prev_data.split('~').collect();
+    let curr_items: Vec<&str> = curr_data.split('~').collect();
+    
+    let mut diff = Vec::new();
+    
+    // (Faded - Step 4) Identify added items (in curr_items but not prev_items) and prefix with "+"
+    for item in &curr_items {
+        if !item.is_empty() && /* TODO: check if prev_items does not contain item */ false {
+            diff.push(format!("+{}", item));
+        }
+    }
+    
+    // (Faded - Step 4) Identify removed items (in prev_items but not curr_items) and prefix with "-"
+    for item in &prev_items {
+        if !item.is_empty() && /* TODO: check if curr_items does not contain item */ false {
+            diff.push(format!("-{}", item));
+        }
+    }
+    
+    // Sort alphabetically to be deterministic
+    diff.sort();
+    diff.join("~")
+}
+
+fn process_full_diff_files(prev_file: &str, curr_file: &str) -> Result<String, std::io::Error> {
+    // (Faded - Step 4) Read the contents of the files and calculate the full difference
+    // Replace the empty strings below with actual fs reads!
+    let prev_content = /* TODO: read prev_file */ String::new();
+    let curr_content = /* TODO: read curr_file */ String::new();
+    
+    Ok(get_full_difference(&prev_content, &curr_content))
+}
+
+// (Open - Step 3) Implement `compile_unique_dataset` here!
 // It should take files: &[&str], output_file: &str, and return Result<(), std::io::Error>.
 // Remember to import std::collections::HashSet;
+
+// (Open - Step 5) Implement `get_positional_difference` and `process_positional_diff_files` here!
+// Requirements:
+// 1. get_positional_difference(prev_data: &str, curr_data: &str) -> String
+//    Identify additions (+item@curr_idx), removals (-item@prev_idx), and moves (>item@prev_idx->curr_idx).
+//    Sort descriptors alphabetically and join with '~'.
+// 2. process_positional_diff_files(prev_file: &str, curr_file: &str) -> Result<String, std::io::Error>
 
 fn main() {
     // Faded setup
@@ -41,7 +82,7 @@ fn main() {
     let _ = fs::remove_file("prev.txt");
     let _ = fs::remove_file("curr.txt");
 
-    // (Open) Uncomment the lines below once you've implemented `compile_unique_dataset`:
+    // (Open - Step 3) Uncomment the lines below once you've implemented `compile_unique_dataset`:
     /*
     fs::write("dataset1.txt", "Red~Orange~Yellow").unwrap();
     fs::write("dataset2.txt", "Yellow~Green~Blue").unwrap();
@@ -59,5 +100,33 @@ fn main() {
     let _ = fs::remove_file("dataset2.txt");
     let _ = fs::remove_file("dataset3.txt");
     let _ = fs::remove_file("combined.txt");
+    */
+
+    // (Faded - Step 4) Uncomment the lines below once you've implemented full diffing:
+    /*
+    fs::write("prev_diff.txt", "Red~Orange~Yellow~Green").unwrap();
+    fs::write("curr_diff.txt", "Red~Yellow~Green~Purple").unwrap();
+    
+    match process_full_diff_files("prev_diff.txt", "curr_diff.txt") {
+        Ok(diff) => println!("Full diff: {}", diff),
+        Err(e) => println!("Error: {}", e),
+    }
+    
+    let _ = fs::remove_file("prev_diff.txt");
+    let _ = fs::remove_file("curr_diff.txt");
+    */
+
+    // (Open - Step 5) Uncomment the lines below once you've implemented positional diffing:
+    /*
+    fs::write("prev_diff.txt", "Red~Orange~Yellow~Green").unwrap();
+    fs::write("curr_diff.txt", "Red~Yellow~Green~Purple").unwrap();
+    
+    match process_positional_diff_files("prev_diff.txt", "curr_diff.txt") {
+        Ok(diff) => println!("Positional diff: {}", diff),
+        Err(e) => println!("Error: {}", e),
+    }
+    
+    let _ = fs::remove_file("prev_diff.txt");
+    let _ = fs::remove_file("curr_diff.txt");
     */
 }
