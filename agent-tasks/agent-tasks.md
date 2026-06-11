@@ -26,7 +26,22 @@
 <!-- Sprint 8 build tasks T-801..T-809 all completed — see completed-tasks.md. -->
 
 ## Sprint 9 (Phase 5: Recall, scheduling, persistence)
-- [ ] T-901: Implement `RecallPrompt` rendering and grading in the UI.
-- [ ] T-902: Implement `rusty-scheduler` with SM-2-lite (`ease`, `interval_days`, `due_at`).
-- [ ] T-903: Persist progress to `<rusty-repo>/.rusty-state/progress.json`.
-- [ ] T-904: Add a "Due Reviews" landing screen that appears before new lessons when reviews are due.
+<!-- Sprint 9 build tasks T-901..T-904 all completed — see completed-tasks.md. -->
+
+## Sprint 10 (Phase 6: Lesson 2 content & SM-2 progression refactor)
+<!-- Sprint 10 build tasks T-1001..T-1004 all completed — see completed-tasks.md. -->
+
+## Sprint 11 (Phase 6: Lesson 3 content - Ownership)
+<!-- Sprint 11 build tasks T-1101..T-1106 all completed — see completed-tasks.md. -->
+
+## Sprint 12 (Phase 6: Lesson 4 content - Borrows)
+<!-- Sprint 12 build tasks T-1201..T-1206 all completed — see completed-tasks.md. -->
+
+## Sprint 13 (Phase 6: Lesson 5 content - Structs)
+<!-- Sprint 13 build tasks T-1301..T-1306 all completed — see completed-tasks.md. -->
+
+## Sprint 14 (Phase 6: Lesson 6 content - Enums)
+<!-- Sprint 14 build tasks T-1401..T-1406 all completed — see completed-tasks.md. -->
+
+## Sprint 15 (Phase 6: Lesson 7 content - Errors)
+<!-- Sprint 15 build tasks T-1501..T-1506 all completed — see completed-tasks.md. -->

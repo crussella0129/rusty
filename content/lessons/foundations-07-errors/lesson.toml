@@ -1,0 +1,109 @@
+id = "foundations-07-errors"
+title = "Error Handling with Result and ?"
+track = "Foundations"
+estimated_minutes = 20
+starter_project = "starter"
+solution_project = "solution"
+
+[[concepts]]
+id = "result_type"
+name = "The Result Enum"
+description = "Using `Result<T, E>` with `Ok` and `Err` for functions that might fail."
+
+[[concepts]]
+id = "propagating_errors"
+name = "Propagating Errors with ?"
+description = "Using the `?` operator to return early from a function on error."
+
+[[concepts]]
+id = "unwrap_vs_expect"
+name = "Unwrap and Expect"
+description = "Explicitly panicking on failure, and why they should be used sparingly."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Unlike many languages that use exceptions, Rust handles expected failures using an enum called `Result<T, E>`. It has two variants: `Ok(T)` for success, and `Err(E)` for failure."
+
+[[steps.blocks]]
+kind = "prose"
+text = "Functions that can fail (like parsing a string or opening a file) return a `Result`. We can use `match` to handle both cases explicitly."
+
+[[steps]]
+[steps.exercise]
+kind = "predict_then_run"
+code = """fn divide(numerator: f64, denominator: f64) -> Result<f64, String> {
+    if denominator == 0.0 {
+        Err(String::from("Cannot divide by zero"))
+    } else {
+        Ok(numerator / denominator)
+    }
+}
+
+fn main() {
+    match divide(10.0, 0.0) {
+        Ok(val) => println!("Result: {}", val),
+        Err(err) => println!("Error: {}", err),
+    }
+}"""
+question = "What will this match expression print?"
+expected_output = "Error: Cannot divide by zero"
+explanation = "Since the denominator is 0.0, the `divide` function returns `Err(String::from(\"Cannot divide by zero\"))`. The match matches the `Err` variant and prints the error message."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Writing `match` for every single operation that can fail can make code very verbose. To solve this, Rust provides the `?` operator."
+
+[[steps.blocks]]
+kind = "prose"
+text = "When placed after a `Result` value, `?` acts as a shortcut: if the result is `Ok`, it extracts the inner value. If the result is `Err`, it returns the error early from the current function!"
+
+[[steps]]
+[steps.exercise]
+kind = "faded"
+prompt = "In `src/main.rs`, the `multiply_strings` function parses two strings into integers. Fill in the missing `?` operators to propagate parsing errors early. Click Check!"
+file_path = "src/main.rs"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "Result: 50\nFailed to parse: invalid digit found in string" }
+hint = "Place `?` directly after the `.parse::<i32>()` call, e.g. `s1.parse::<i32>()?`."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Sometimes you just want to get the success value and panic if anything goes wrong. You can call `.unwrap()` or `.expect(\"message\")` on a `Result`."
+
+[[steps.blocks]]
+kind = "prose"
+text = "Be careful! If the result is an `Err`, `.unwrap()` and `.expect()` will crash (panic) your program immediately. Only use them in tests, prototyping, or when failure is a programming bug."
+
+[[steps]]
+[steps.exercise]
+kind = "open"
+prompt = """Write the function `process_transaction(amount_str: &str, balance: i32) -> Result<i32, String>` at the bottom of `src/main.rs`.
+
+Requirements:
+1. Parse `amount_str` to an `i32` using `amount_str.parse::<i32>()`. If parsing fails, return an `Err` containing `String::from("Invalid amount format")`. (Tip: use a `match` on the parse result to convert the error).
+2. If the amount is less than or equal to 0, return `Err(String::from("Amount must be positive"))`.
+3. If the amount is greater than the balance, return `Err(String::from("Insufficient funds"))`.
+4. Otherwise, return `Ok` containing the new balance (`balance - amount`).
+
+Then, uncomment the validation code blocks in `main`. Click Check!"""
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "Result: 50\nFailed to parse: invalid digit found in string\nNew balance: 50\nTransaction failed: Invalid amount format\nTransaction failed: Amount must be positive\nTransaction failed: Insufficient funds" }
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "What does the `?` operator do when it encounters an `Err` variant?"
+choices = [
+    "It prints the error to the console and continues execution.",
+    "It immediately panics and crashes the program.",
+    "It returns the error from the current function early so the caller can handle it.",
+    "It ignores the error and returns a default value."
+]
+answer_index = 2
+explanation = "The `?` operator is syntactic sugar for returning an error early from the current function. It allows you to chain operations cleanly while propagating errors up to the caller."
+
+[[further_reading]]
+title = "Recoverable Errors with Result - The Rust Book"
+url = "https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html"

@@ -348,10 +348,12 @@ mod tests {
             complete.apply(i, &rusty_grader::Verdict::Pass);
         }
         headless(|ui| {
-            let _ = render(ui, &lesson, &fresh, &mut ex_state, false);
+            let mut recall_state = crate::AppRecallState::default();
+            let _ = render(ui, &lesson, &fresh, &mut ex_state, &mut recall_state, false);
         });
         headless(|ui| {
-            let _ = render(ui, &lesson, &complete, &mut ex_state, false);
+            let mut recall_state = crate::AppRecallState::default();
+            let _ = render(ui, &lesson, &complete, &mut ex_state, &mut recall_state, false);
         });
     }
 
@@ -402,7 +404,8 @@ mod tests {
             "the Open step is gated behind the incomplete Faded"
         );
         headless(|ui| {
-            let _ = render(ui, &lesson, &fresh, &mut ex_state, false);
+            let mut recall_state = crate::AppRecallState::default();
+            let _ = render(ui, &lesson, &fresh, &mut ex_state, &mut recall_state, false);
         });
     }
 
@@ -425,7 +428,8 @@ mod tests {
         };
         for _ in 0..2 {
             let _ = ctx.run_ui(input.clone(), |ui| {
-                let _ = render(ui, &lesson, &progress, &mut ex_state, false);
+                let mut recall_state = crate::AppRecallState::default();
+                let _ = render(ui, &lesson, &progress, &mut ex_state, &mut recall_state, false);
             });
         }
         // The same id/target the render uses → the opacity factor it applied is in [0,1].
@@ -509,7 +513,8 @@ mod tests {
         let mut ex_state = ExerciseState::default();
         let progress = LessonProgress::new(lesson.steps.len());
         headless(|ui| {
-            let _ = render(ui, &lesson, &progress, &mut ex_state, false);
+            let mut recall_state = crate::AppRecallState::default();
+            let _ = render(ui, &lesson, &progress, &mut ex_state, &mut recall_state, false);
         });
     }
 
@@ -583,11 +588,13 @@ mod tests {
         let mut ex_state = ExerciseState::default();
         let mut progress = LessonProgress::new(lesson.steps.len());
         headless(|ui| {
-            let _ = render(ui, &lesson, &progress, &mut ex_state, false); // attempts 0: hidden
+            let mut recall_state = crate::AppRecallState::default();
+            let _ = render(ui, &lesson, &progress, &mut ex_state, &mut recall_state, false); // attempts 0: hidden
         });
         progress.apply(0, &rusty_grader::Verdict::TestsFailed); // attempts[0] = 1
         headless(|ui| {
-            let _ = render(ui, &lesson, &progress, &mut ex_state, false); // tip now shown
+            let mut recall_state = crate::AppRecallState::default();
+            let _ = render(ui, &lesson, &progress, &mut ex_state, &mut recall_state, false); // tip now shown
         });
     }
 }

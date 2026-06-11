@@ -274,3 +274,16 @@
 - **Files modified:** \crates/rusty-app/src/main.rs\, \content/lessons/foundations-05-structs/*\
 - **Commit:** \d733833\
 
+## T-1401 to T-1406 (sprint 14)
+- **Description:** Implement Phase 6 (Lesson 6 content). Authored Lesson 6 (`foundations-06-enums`) focusing on Enums, pattern matching, and the built-in `Option` type. Built starter/solution projects with exercises for matching Options and implementing non-exhaustive enum matching.
+- **Completed:** 2026-06-11T03:00:00Z
+- **Files modified:** `crates/rusty-app/src/main.rs`, `content/lessons/foundations-06-enums/*`
+- **Commit:** `b93b14f`
+
+## T-1501 to T-1506 (sprint 15)
+- **Description:** Implement Phase 6 (Lesson 7 content). Authored Lesson 7 (`foundations-07-errors`) focusing on recoverable error handling using the `Result` enum and propagating errors using the `?` operator. Built starter/solution projects with exercises for error handling and validation returning a custom `Result`. Fixed unit test compilation failures in `lesson_view.rs` by correctly passing `AppRecallState`.
+- **Completed:** 2026-06-11T04:12:00Z
+- **Files modified:** `crates/rusty-app/src/{main.rs, lesson_view.rs}`, `crates/rusty-host/tests/lesson7_grade.rs`, `content/lessons/foundations-07-errors/*`
+- **Commit:** `b5fe246`
+
+
