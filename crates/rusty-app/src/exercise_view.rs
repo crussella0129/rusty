@@ -52,6 +52,7 @@ pub fn render_exercise(
     ex: &Exercise,
     state: &mut ExerciseState,
     checking: bool,
+    request_focus: bool,
 ) -> Option<SuccessCriterion> {
     // Draw the variant-specific content.
     match ex {
@@ -117,7 +118,7 @@ pub fn render_exercise(
 
     // Gradeable variants (Faded/Open — see `criterion_for_exercise`) get a Check button.
     let criterion = criterion_for_exercise(ex)?;
-    let clicked = check_button(ui, checking);
+    let clicked = check_button(ui, checking, request_focus);
     clicked.then(|| criterion.clone())
 }
 
@@ -129,10 +130,13 @@ fn code_block(ui: &mut egui::Ui, code: &str) {
 }
 
 /// A Check button (disabled while a grade is in flight). Returns whether it was clicked.
-fn check_button(ui: &mut egui::Ui, checking: bool) -> bool {
-    let clicked = ui
-        .add_enabled(!checking, egui::Button::new(voice::EXERCISE_CHECK))
-        .clicked();
+fn check_button(ui: &mut egui::Ui, checking: bool, request_focus: bool) -> bool {
+    let button = egui::Button::new(voice::EXERCISE_CHECK);
+    let response = ui.add_enabled(!checking, button);
+    if request_focus {
+        response.request_focus();
+    }
+    let clicked = response.clicked();
     if checking {
         ui.label(egui::RichText::new(voice::EXERCISE_CHECKING).weak());
     }
@@ -214,12 +218,12 @@ mod tests {
         };
         // Frame 1: revealed=false; animate sees `false` for the first time.
         let _ = ctx.run_ui(input.clone(), |ui| {
-            let _ = render_exercise(ui, 0, &ex, &mut state, false);
+            let _ = render_exercise(ui, 0, &ex, &mut state, false, false);
         });
         // Flip to revealed; Frame 2: animate sees the false→true transition and ramps.
         state.toggle_reveal(0);
         let _ = ctx.run_ui(input, |ui| {
-            let _ = render_exercise(ui, 0, &ex, &mut state, false);
+            let _ = render_exercise(ui, 0, &ex, &mut state, false, false);
         });
         let factor =
             ctx.animate_bool_with_time(egui::Id::new(("rusty_reveal_fade", 0usize)), true, 0.35);
@@ -245,10 +249,10 @@ mod tests {
             // Render each variant (predict at index 3); then reveal it and render again so
             // the revealed branch (expected_output + explanation) also executes.
             for (i, ex) in exercises.iter().enumerate() {
-                let _ = render_exercise(ui, i, ex, &mut state, false);
+                let _ = render_exercise(ui, i, ex, &mut state, false, false);
             }
             state.toggle_reveal(3);
-            let _ = render_exercise(ui, 3, &exercises[3], &mut state, false);
+            let _ = render_exercise(ui, 3, &exercises[3], &mut state, false, false);
         });
     }
 }

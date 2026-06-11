@@ -16,7 +16,7 @@ rust-version = "1.93"
 [workspace.dependencies]
 eframe = "0.34"
 egui = "0.34"
-egui_extras = "0.34"
+egui_extras = { version = "0.34", features = ["svg", "all_loaders"] }
 serde = { version = "1", features = ["derive"] }
 toml = "1"
 anyhow = "1"

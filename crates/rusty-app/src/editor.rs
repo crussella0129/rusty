@@ -220,7 +220,7 @@ impl Editor {
     }
 
     /// Render the editor: file picker, Save control, and the highlighted buffer.
-    pub fn ui(&mut self, ui: &mut egui::Ui) {
+    pub fn ui(&mut self, ui: &mut egui::Ui, focus_request: Option<crate::FocusTarget>) {
         if let Some(lsp) = &self.lsp_session {
             while let Some(diags) = lsp.poll_diagnostics() {
                 self.diagnostics = diags.diagnostics;
@@ -322,9 +322,10 @@ impl Editor {
             }
         }
 
-        let mut text_edit = egui::TextEdit::multiline(&mut self.buffer)
+        let text_edit = egui::TextEdit::multiline(&mut self.buffer)
             .code_editor()
             .desired_width(f32::INFINITY)
+            .id_source("editor_text_edit")
             .layouter(&mut layouter);
 
         let output = egui::ScrollArea::vertical()
@@ -333,6 +334,10 @@ impl Editor {
             .inner;
         
         let resp = output.response;
+
+        if focus_request == Some(crate::FocusTarget::Editor) {
+            resp.request_focus();
+        }
 
         if let Some(comp) = apply_completion {
             let insert_text = comp.insert_text.as_deref().unwrap_or(&comp.label);
@@ -550,7 +555,7 @@ mod tests {
         let mut ed = Editor::new(&dir, None);
         assert!(ed.selected.is_some(), "the first file is auto-opened");
         // A full headless layout pass exercises the highlight layouter without a GPU.
-        headless(|ui| ed.ui(ui));
+        headless(|ui| ed.ui(ui, None));
         std::fs::remove_dir_all(&dir).ok();
     }
 
@@ -565,7 +570,7 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let mut ed = Editor::new(&dir, None);
         assert!(ed.selected.is_none());
-        headless(|ui| ed.ui(ui));
+        headless(|ui| ed.ui(ui, None));
         std::fs::remove_dir_all(&dir).ok();
     }
 

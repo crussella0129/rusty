@@ -44,9 +44,12 @@ pub fn grid_dims(avail: Vec2, char_w: f32, row_h: f32) -> (usize, usize) {
     (rows, cols)
 }
 
-/// Paint the grid into the available space and forward input to `writer`. Returns the
-/// (rows, cols) that fit, so the caller can resize the PTY to match.
-pub fn terminal_ui(ui: &mut egui::Ui, grid: &Grid, writer: &mut dyn Write) -> (usize, usize) {
+pub fn terminal_ui(
+    ui: &mut egui::Ui,
+    grid: &Grid,
+    writer: &mut dyn Write,
+    request_focus: bool,
+) -> (usize, usize) {
     let font = FontId::monospace(14.0);
     // egui 0.34: `FontsView` metrics methods take `&mut`, so use `fonts_mut`.
     let (char_w, row_h) = ui.fonts_mut(|f| (f.glyph_width(&font, 'M'), f.row_height(&font)));
@@ -55,12 +58,17 @@ pub fn terminal_ui(ui: &mut egui::Ui, grid: &Grid, writer: &mut dyn Write) -> (u
     let dims = grid_dims(avail, char_w, row_h);
 
     let (rect, response) = ui.allocate_exact_size(avail, Sense::click());
-    if response.clicked() {
+    if response.clicked() || request_focus {
         response.request_focus();
     }
 
     let painter = ui.painter_at(rect);
     painter.rect_filled(rect, 0.0, DEFAULT_BG);
+
+    if response.has_focus() {
+        let border_color = ui.visuals().hyperlink_color;
+        painter.rect_stroke(rect.shrink(1.0), 0.0, egui::Stroke::new(1.5, border_color), egui::StrokeKind::Inside);
+    }
 
     for r in 0..grid.rows {
         let y = rect.min.y + r as f32 * row_h;

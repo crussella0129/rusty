@@ -181,6 +181,13 @@ enum AppMode {
     Lesson,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FocusTarget {
+    Lesson,
+    Editor,
+    Terminal,
+}
+
 #[derive(Default, Clone, Debug)]
 pub struct AppRecallState {
     pub selected_index: Option<usize>,
@@ -223,10 +230,15 @@ struct RustyApp {
     app_mode: AppMode,
     /// State for the currently displayed recall prompt.
     recall_state: AppRecallState,
+    /// The mascot illustration manager.
+    mascot: voice::Mascot,
+    /// Programmatic focus target context.
+    focus_request: Option<FocusTarget>,
 }
 
 impl RustyApp {
     fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        egui_extras::install_image_loaders(&cc.egui_ctx);
         let persistent_state = state::PersistentState::load(&state::PersistentState::default_path());
 
         let active_lesson_rel = CURRICULUM
@@ -311,6 +323,8 @@ impl RustyApp {
             persistent_state,
             app_mode,
             recall_state: AppRecallState::default(),
+            mascot: voice::Mascot::new(),
+            focus_request: None,
         }
     }
 
@@ -324,6 +338,7 @@ impl RustyApp {
                 // render the verdict in the annotation pane.
                 if let (Ok(verdict), Some(step)) = (&received, self.pending_step) {
                     self.progress.apply(step, verdict);
+                    self.mascot.handle_verdict(verdict);
                 }
                 (self.annotation, self.grade_error) = grade_outcome(&received);
                 self.grade_job = None;
@@ -344,6 +359,7 @@ impl RustyApp {
         if self.grade_job.is_some() {
             return; // one grade at a time
         }
+        self.mascot.handle_grade_start();
         let sandbox = self.root.clone();
         let ctx = ctx.clone();
         let (tx, rx) = std::sync::mpsc::channel();
@@ -407,6 +423,18 @@ impl eframe::App for RustyApp {
     // `show_inside` (the `Context`-level `.show()` is deprecated). This keeps the
     // Phase-0 `App::ui` decision intact.
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        // 0. Process keyboard shortcuts for focus navigation
+        self.focus_request = None;
+        ui.input_mut(|i| {
+            if i.consume_key(egui::Modifiers::ALT, egui::Key::L) || i.key_pressed(egui::Key::F1) {
+                self.focus_request = Some(FocusTarget::Lesson);
+            } else if i.consume_key(egui::Modifiers::ALT, egui::Key::E) || i.key_pressed(egui::Key::F2) {
+                self.focus_request = Some(FocusTarget::Editor);
+            } else if i.consume_key(egui::Modifiers::ALT, egui::Key::T) || i.key_pressed(egui::Key::F3) {
+                self.focus_request = Some(FocusTarget::Terminal);
+            }
+        });
+
         // 1. Drain shell output into the terminal grid.
         while let Some(chunk) = self.session.try_recv() {
             self.term.feed(&chunk);
@@ -428,53 +456,73 @@ impl eframe::App for RustyApp {
             .resizable(true)
             .default_size(380.0)
             .show_inside(ui, |ui| {
-                egui::ScrollArea::vertical()
-                    .auto_shrink([false, false])
-                    .show(ui, |ui| {
-                        if self.app_mode == AppMode::DueReviews {
-                            ui.heading("Due Reviews");
-                            ui.separator();
-                            ui.label("You have concepts due for review before continuing.");
-                            ui.add_space(8.0);
-                            if let Some(lesson) = &self.lesson {
-                                if lesson_view::render_recall(ui, &lesson.recall_prompt, &mut self.recall_state) {
-                                    action.recall_passed = true;
-                                }
-                            }
-                        } else {
-                            if let Some(lesson) = &self.lesson {
-                                action = lesson_view::render(
-                                    ui,
-                                    lesson,
-                                    &self.progress,
-                                    &mut self.ex_state,
-                                    &mut self.recall_state,
-                                    checking,
-                                );
-                            } else {
-                                ui.heading(voice::LESSON_PANE_TITLE);
-                                ui.separator();
-                                ui.colored_label(egui::Color32::LIGHT_RED, voice::LESSON_LOAD_ERROR);
-                                if let Some(err) = &self.load_error {
-                                    ui.label(egui::RichText::new(err).small().weak());
-                                }
-                            }
-
-                            // The annotation pane: the last graded result, or a host error.
-                            if checking {
-                                ui.separator();
-                                ui.label(egui::RichText::new(voice::EXERCISE_CHECKING).weak());
-                            }
-                            if let Some(ann) = &self.annotation {
-                                ui.separator();
-                                annotation::render(ui, ann, &self.known_lessons);
-                            }
-                            if let Some(err) = &self.grade_error {
-                                ui.separator();
-                                ui.colored_label(egui::Color32::LIGHT_RED, err);
-                            }
-                        }
+                // Pin the mascot to the bottom of the left pane
+                egui::Panel::bottom("mascot_panel")
+                    .show_separator_line(false)
+                    .frame(egui::Frame::NONE)
+                    .show_inside(ui, |ui| {
+                        ui.add_space(8.0);
+                        ui.horizontal(|ui| {
+                            ui.add_space((ui.available_width() - 88.0).max(0.0)); // align right
+                            let img = egui::Image::new(self.mascot.image())
+                                .max_width(80.0)
+                                .max_height(80.0);
+                            ui.add(img).on_hover_text("Rusty — your faithful companion");
+                        });
+                        ui.add_space(4.0);
                     });
+
+                egui::CentralPanel::default().show_inside(ui, |ui| {
+                    egui::ScrollArea::vertical()
+                        .auto_shrink([false, false])
+                        .show(ui, |ui| {
+                            let req_focus = self.focus_request == Some(FocusTarget::Lesson);
+                            if self.app_mode == AppMode::DueReviews {
+                                ui.heading("Due Reviews");
+                                ui.separator();
+                                ui.label("You have concepts due for review before continuing.");
+                                ui.add_space(8.0);
+                                if let Some(lesson) = &self.lesson {
+                                    if lesson_view::render_recall(ui, &lesson.recall_prompt, &mut self.recall_state, req_focus) {
+                                        action.recall_passed = true;
+                                    }
+                                }
+                            } else {
+                                if let Some(lesson) = &self.lesson {
+                                    action = lesson_view::render(
+                                        ui,
+                                        lesson,
+                                        &self.progress,
+                                        &mut self.ex_state,
+                                        &mut self.recall_state,
+                                        checking,
+                                        req_focus,
+                                    );
+                                } else {
+                                    ui.heading(voice::LESSON_PANE_TITLE);
+                                    ui.separator();
+                                    ui.colored_label(egui::Color32::LIGHT_RED, voice::LESSON_LOAD_ERROR);
+                                    if let Some(err) = &self.load_error {
+                                        ui.label(egui::RichText::new(err).small().weak());
+                                    }
+                                }
+
+                                // The annotation pane: the last graded result, or a host error.
+                                if checking {
+                                    ui.separator();
+                                    ui.label(egui::RichText::new(voice::EXERCISE_CHECKING).weak());
+                                }
+                                if let Some(ann) = &self.annotation {
+                                    ui.separator();
+                                    annotation::render(ui, ann, &self.known_lessons);
+                                }
+                                if let Some(err) = &self.grade_error {
+                                    ui.separator();
+                                    ui.colored_label(egui::Color32::LIGHT_RED, err);
+                                }
+                            }
+                        });
+                });
             });
 
         // 5. Kick off grading for a pressed Check (off the UI thread), targeting its step.
@@ -491,6 +539,7 @@ impl eframe::App for RustyApp {
 
         // 6. Handle a successful recall review.
         if action.recall_passed {
+            self.mascot.handle_recall_passed();
             if let Some(lesson) = &self.lesson {
                 let current_lesson_index = self.persistent_state.current_lesson_index;
                 let quality = if self.recall_state.attempts <= 1 { 5 } else if self.recall_state.attempts == 2 { 3 } else { 1 };
@@ -518,18 +567,19 @@ impl eframe::App for RustyApp {
         // 6. Terminal pane (right) and code-editor pane (centre).
         let mut typed: Vec<u8> = Vec::new();
         let mut fit = self.dims;
+        let req_term_focus = self.focus_request == Some(FocusTarget::Terminal);
         egui::Panel::right("terminal_pane")
             .resizable(true)
             .default_size(440.0)
             .show_inside(ui, |ui| {
                 ui.label(voice::TERMINAL_PANE_LABEL);
                 ui.separator();
-                fit = terminal_ui(ui, &self.term.grid, &mut typed);
+                fit = terminal_ui(ui, &self.term.grid, &mut typed, req_term_focus);
             });
         egui::CentralPanel::default().show_inside(ui, |ui| {
             ui.label(voice::EDITOR_PANE_LABEL);
             ui.separator();
-            self.editor.ui(ui);
+            self.editor.ui(ui, self.focus_request);
         });
 
         // 7. Resize the grid + PTY to the space the terminal pane actually got.

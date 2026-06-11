@@ -292,5 +292,42 @@
 - **Files modified:** `crates/rusty-app/src/main.rs`, `crates/rusty-host/tests/lesson8_grade.rs`, `content/lessons/foundations-08-collections/*`
 - **Commit:** `eb128c5`
 
+## T-1701 (sprint 17)
+- **Description:** Configure root workspace dependencies to add the `svg` and `all_loaders` features on `egui_extras`, enabling SVG loading in `rusty-app`.
+- **Completed:** 2026-06-11T16:00:00Z
+- **Files modified:** `Cargo.toml`
+- **Commit:** `pending`
+
+## T-1702 (sprint 17)
+- **Description:** Create SVG vector drawings for the mascot Rusty in `assets/` (`mascot_idle.svg`, `mascot_happy.svg`, `mascot_thinking.svg`). Write a dependency-free python generator script (`generate_favicon.py`) to output a 16x16 pixel art `favicon.png`.
+- **Completed:** 2026-06-11T16:05:00Z
+- **Files modified:** `assets/mascot_idle.svg`, `assets/mascot_happy.svg`, `assets/mascot_thinking.svg`, `assets/generate_favicon.py`, `assets/favicon.png`
+- **Commit:** `pending`
+
+## T-1703 (sprint 17)
+- **Description:** Implement the `Mascot` state machine and transitions in `rusty-app::voice` and hook it into the main application UI lifecycle in `main.rs`. Hook `handle_grade_start()`, `handle_verdict()`, and `handle_recall_passed()` to grading and SM-2 scheduler events, rendering the mascot pinned at the bottom of the left pane.
+- **Completed:** 2026-06-11T16:15:00Z
+- **Files modified:** `crates/rusty-app/src/{voice.rs, main.rs}`
+- **Commit:** `pending`
+
+## T-1704 (sprint 17)
+- **Description:** Implement global keyboard shortcuts for focus navigation (`F1`/`Alt+L` for Lesson, `F2`/`Alt+E` for Editor, `F3`/`Alt+T` for Terminal) using `ui.input_mut()` in `main.rs`. Wire focus request routing inside `editor.rs` (using stable ID `editor_text_edit`), `lesson_view.rs` (using stable ID `recall_short_answer` and active button queries), and `rusty-terminal::widget` (drawing a 1.5px visual border outline when focused).
+- **Completed:** 2026-06-11T16:25:00Z
+- **Files modified:** `crates/rusty-app/src/{main.rs, editor.rs, lesson_view.rs, exercise_view.rs}`, `crates/rusty-terminal/src/widget.rs`
+- **Commit:** `pending`
+
+## T-1705 (sprint 17)
+- **Description:** Create the Unix shell script (`install.sh`) and Windows PowerShell script (`install.ps1`) to check for the Rust toolchain, prompt user for interactive installation if absent, compile Rusty in release mode, and run it.
+- **Completed:** 2026-06-11T16:35:00Z
+- **Files modified:** `install.sh`, `install.ps1`
+- **Commit:** `pending`
+
+## T-1706 (sprint 17)
+- **Description:** Add GitHub Actions CI workflow in `.github/workflows/ci.yml` and update project documentation (`README.md`, `docs/INSTALL.md`, `docs/ARCHITECTURE.md`).
+- **Completed:** 2026-06-11T16:40:00Z
+- **Files modified:** `.github/workflows/ci.yml`, `README.md`, `docs/INSTALL.md`, `docs/ARCHITECTURE.md`
+- **Commit:** `pending`
+
+
 
 

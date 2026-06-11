@@ -61,6 +61,7 @@ pub fn render(
     ex_state: &mut ExerciseState,
     recall_state: &mut crate::AppRecallState,
     checking: bool,
+    request_focus: bool,
 ) -> LessonAction {
     // The lesson name is THE title — render it larger than any in-body markdown heading
     // (see `theme`), so lesson prose should not repeat the title as its own `# heading`.
@@ -92,7 +93,8 @@ pub fn render(
                 }
                 if let Some(exercise) = &step.exercise {
                     egui::Frame::group(ui.style()).show(ui, |ui| {
-                        let c = exercise_view::render_exercise(ui, i, exercise, ex_state, checking);
+                        let focus_this_ex = request_focus && i == visible - 1;
+                        let c = exercise_view::render_exercise(ui, i, exercise, ex_state, checking, focus_this_ex);
                         if let Some(paired) = pair_check(i, c) {
                             step_action.check = Some(paired);
                         }
@@ -131,7 +133,7 @@ pub fn render(
                 .color(egui::Color32::from_rgb(0x4c, 0xaf, 0x50)),
         );
         ui.add_space(6.0);
-        if render_recall(ui, &lesson.recall_prompt, recall_state) {
+        if render_recall(ui, &lesson.recall_prompt, recall_state, request_focus) {
             action.recall_passed = true;
         }
         render_further_reading(ui, &lesson.further_reading);
@@ -140,7 +142,7 @@ pub fn render(
 }
 
 /// Render the recall prompt as an interactive review.
-pub fn render_recall(ui: &mut egui::Ui, recall: &RecallPrompt, state: &mut crate::AppRecallState) -> bool {
+pub fn render_recall(ui: &mut egui::Ui, recall: &RecallPrompt, state: &mut crate::AppRecallState, request_focus: bool) -> bool {
     ui.label(crate::theme::section_label(voice::RECALL_HEADING));
     let mut just_passed = false;
     match recall {
@@ -149,7 +151,10 @@ pub fn render_recall(ui: &mut egui::Ui, recall: &RecallPrompt, state: &mut crate
         } => {
             markdown::render_markdown(ui, question);
             for (i, choice) in choices.iter().enumerate() {
-                ui.radio_value(&mut state.selected_index, Some(i), choice);
+                let response = ui.radio_value(&mut state.selected_index, Some(i), choice);
+                if i == 0 && request_focus {
+                    response.request_focus();
+                }
             }
             if !state.passed && ui.button("Submit").clicked() {
                 state.attempts += 1;
@@ -169,7 +174,13 @@ pub fn render_recall(ui: &mut egui::Ui, recall: &RecallPrompt, state: &mut crate
         }
         RecallPrompt::ShortAnswer { question, expected, explanation } => {
             markdown::render_markdown(ui, question);
-            ui.text_edit_singleline(&mut state.typed_answer);
+            let response = ui.add(
+                egui::TextEdit::singleline(&mut state.typed_answer)
+                    .id_source("recall_short_answer")
+            );
+            if request_focus {
+                response.request_focus();
+            }
             if !state.passed && ui.button("Submit").clicked() {
                 state.attempts += 1;
                 if state.typed_answer.trim().eq_ignore_ascii_case(expected.trim()) {
@@ -349,11 +360,11 @@ mod tests {
         }
         headless(|ui| {
             let mut recall_state = crate::AppRecallState::default();
-            let _ = render(ui, &lesson, &fresh, &mut ex_state, &mut recall_state, false);
+            let _ = render(ui, &lesson, &fresh, &mut ex_state, &mut recall_state, false, false);
         });
         headless(|ui| {
             let mut recall_state = crate::AppRecallState::default();
-            let _ = render(ui, &lesson, &complete, &mut ex_state, &mut recall_state, false);
+            let _ = render(ui, &lesson, &complete, &mut ex_state, &mut recall_state, false, false);
         });
     }
 
@@ -405,7 +416,7 @@ mod tests {
         );
         headless(|ui| {
             let mut recall_state = crate::AppRecallState::default();
-            let _ = render(ui, &lesson, &fresh, &mut ex_state, &mut recall_state, false);
+            let _ = render(ui, &lesson, &fresh, &mut ex_state, &mut recall_state, false, false);
         });
     }
 
@@ -429,7 +440,7 @@ mod tests {
         for _ in 0..2 {
             let _ = ctx.run_ui(input.clone(), |ui| {
                 let mut recall_state = crate::AppRecallState::default();
-                let _ = render(ui, &lesson, &progress, &mut ex_state, &mut recall_state, false);
+                let _ = render(ui, &lesson, &progress, &mut ex_state, &mut recall_state, false, false);
             });
         }
         // The same id/target the render uses → the opacity factor it applied is in [0,1].
@@ -514,7 +525,7 @@ mod tests {
         let progress = LessonProgress::new(lesson.steps.len());
         headless(|ui| {
             let mut recall_state = crate::AppRecallState::default();
-            let _ = render(ui, &lesson, &progress, &mut ex_state, &mut recall_state, false);
+            let _ = render(ui, &lesson, &progress, &mut ex_state, &mut recall_state, false, false);
         });
     }
 
@@ -589,12 +600,12 @@ mod tests {
         let mut progress = LessonProgress::new(lesson.steps.len());
         headless(|ui| {
             let mut recall_state = crate::AppRecallState::default();
-            let _ = render(ui, &lesson, &progress, &mut ex_state, &mut recall_state, false); // attempts 0: hidden
+            let _ = render(ui, &lesson, &progress, &mut ex_state, &mut recall_state, false, false); // attempts 0: hidden
         });
         progress.apply(0, &rusty_grader::Verdict::TestsFailed); // attempts[0] = 1
         headless(|ui| {
             let mut recall_state = crate::AppRecallState::default();
-            let _ = render(ui, &lesson, &progress, &mut ex_state, &mut recall_state, false); // tip now shown
+            let _ = render(ui, &lesson, &progress, &mut ex_state, &mut recall_state, false, false); // tip now shown
         });
     }
 }

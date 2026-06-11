@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <!-- Body/Chest -->
+  <path d="M 35,100 C 35,80 85,80 85,100 Z" fill="#FF9F1C" />
+  <!-- Red Collar -->
+  <path d="M 40,88 C 40,84 80,84 80,88 Z" fill="#E71D36" />
+  <!-- Gold Tag -->
+  <circle cx="60" cy="94" r="6" fill="#FFD700" />
+  
+  <!-- Left Ear (floppy, down) -->
+  <path d="M 25,40 C 10,40 10,75 25,75 C 32,75 32,55 30,40 Z" fill="#E58E1A" />
+  <!-- Right Ear (floppy, down) -->
+  <path d="M 95,40 C 110,40 110,75 95,75 C 88,75 88,55 90,40 Z" fill="#E58E1A" />
+  
+  <!-- Head Base -->
+  <circle cx="60" cy="55" r="30" fill="#FF9F1C" />
+  
+  <!-- Snout -->
+  <path d="M 45,62 C 45,55 75,55 75,62 C 75,70 45,70 45,62 Z" fill="#FFBF69" />
+  <!-- Nose -->
+  <path d="M 55,60 C 55,57 65,57 65,60 C 65,64 55,64 55,60 Z" fill="#1E2022" />
+  
+  <!-- Eyes -->
+  <circle cx="48" cy="48" r="4" fill="#1E2022" />
+  <circle cx="72" cy="48" r="4" fill="#1E2022" />
+  <!-- Eye Highlights -->
+  <circle cx="47" cy="47" r="1.5" fill="#FFFFFF" />
+  <circle cx="71" cy="47" r="1.5" fill="#FFFFFF" />
+</svg>

@@ -48,3 +48,7 @@
 
 ## Sprint 16 (Phase 6: Lesson 8 content - Collections & File I/O)
 <!-- Sprint 16 build tasks T-1601..T-1606 all completed — see completed-tasks.md. -->
+
+## Sprint 17 (Phase 7: Bootstrap + Polish + Ship)
+<!-- Sprint 17 build tasks T-1701..T-1706 all completed — see completed-tasks.md. -->
+

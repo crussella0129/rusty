@@ -101,6 +101,82 @@ pub const LESSON_LOAD_ERROR: &str = "Rusty couldn't load this lesson.";
 pub const CD_REFUSED: &str =
     "Rusty's terminal stays inside the lesson directory. Try `cd .` to see where you are.";
 
+// --- Mascot representation and state (prompt §12). ---
+
+/// The three states the mascot "Rusty" (large orange dog) can be in.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MascotState {
+    /// Normal sitting/waiting pose.
+    Idle,
+    /// Tail up, ears forward, celebrating success.
+    Happy,
+    /// Head tilted, quizzical eyes, thinking or showing an error.
+    Thinking,
+}
+
+/// Managing the mascot state and duration timeouts.
+pub struct Mascot {
+    state: MascotState,
+    state_expires_at: Option<std::time::Instant>,
+}
+
+impl Mascot {
+    /// Create a new Mascot instance starting in the Idle state.
+    pub fn new() -> Self {
+        Self {
+            state: MascotState::Idle,
+            state_expires_at: None,
+        }
+    }
+
+    /// Retrieve the current mascot state, reverting to `Idle` if a temporary state has expired.
+    pub fn state(&self) -> MascotState {
+        if let Some(expires) = self.state_expires_at {
+            if std::time::Instant::now() >= expires {
+                return MascotState::Idle;
+            }
+        }
+        self.state
+    }
+
+    /// Return the image source for the current state.
+    pub fn image(&self) -> egui::ImageSource<'static> {
+        match self.state() {
+            MascotState::Idle => egui::include_image!("../../../assets/mascot_idle.svg"),
+            MascotState::Happy => egui::include_image!("../../../assets/mascot_happy.svg"),
+            MascotState::Thinking => egui::include_image!("../../../assets/mascot_thinking.svg"),
+        }
+    }
+
+    /// Triggered when grading starts. Transition to `Thinking` indefinitely (clearing any expiration).
+    pub fn handle_grade_start(&mut self) {
+        self.state = MascotState::Thinking;
+        self.state_expires_at = None;
+    }
+
+    /// Triggered when a grading result is obtained.
+    pub fn handle_verdict(&mut self, verdict: &rusty_grader::Verdict) {
+        match verdict {
+            rusty_grader::Verdict::Pass => {
+                self.state = MascotState::Happy;
+                // Celebrate for 4 seconds, then return to idle
+                self.state_expires_at = Some(std::time::Instant::now() + std::time::Duration::from_secs(4));
+            }
+            _ => {
+                // Tilt head on error for 4 seconds, then return to idle
+                self.state = MascotState::Thinking;
+                self.state_expires_at = Some(std::time::Instant::now() + std::time::Duration::from_secs(4));
+            }
+        }
+    }
+
+    /// Triggered when a scheduled recall prompt is successfully completed.
+    pub fn handle_recall_passed(&mut self) {
+        self.state = MascotState::Happy;
+        self.state_expires_at = Some(std::time::Instant::now() + std::time::Duration::from_secs(4));
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
