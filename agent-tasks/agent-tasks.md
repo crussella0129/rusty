@@ -55,5 +55,23 @@
 ## Sprint 18 (Advanced Diffing & File I/O in Lesson 8)
 <!-- Sprint 18 build tasks T-1801..T-1805 all completed — see completed-tasks.md. -->
 
+## Sprint 19 (Intermediate Lesson 1 - Traits & Generics)
+- [x] T-1901: Create `intermediate-01-traits` lesson directory structure (`lesson.toml`, `starter`, `solution`).
+- [x] T-1902: Author `lesson.toml` with concepts, prose, and exercises focusing on an `Operator` trait.
+- [x] T-1903: Write the `starter` project with `// TODO` markers for faded exercises.
+- [x] T-1904: Write the complete `solution` project.
 
+## Sprint 20 (Intermediate Lesson 2 - Iterators & Closures)
+- [ ] T-2001: Implement `intermediate-02-iterators` leveraging functional parsing of datasets.
 
+## Sprint 21 (Intermediate Lesson 3 - Lifetimes & References)
+- [ ] T-2101: Implement `intermediate-03-lifetimes` building zero-copy Parsers.
+
+## Sprint 22 (Intermediate Lesson 4 - Smart Pointers & Shared State)
+- [ ] T-2201: Implement `intermediate-04-smart-pointers` building recursive AST nodes.
+
+## Sprint 23 (Intermediate Lesson 5 - Serialization & Parsing)
+- [ ] T-2301: Implement `intermediate-05-parsing` using serde and toml for prompt element headers.
+
+## Sprint 24 (Intermediate Lesson 6 - Advanced Diffing Climax)
+- [ ] T-2401: Implement `intermediate-06-diffing` (full +/- diffing with positional change awareness).

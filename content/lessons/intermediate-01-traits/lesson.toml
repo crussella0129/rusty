@@ -1,0 +1,87 @@
+id = "intermediate-01-traits"
+title = "Traits & Generics"
+track = "Intermediate"
+estimated_minutes = 25
+starter_project = "starter"
+solution_project = "solution"
+prereqs = ["foundations-08-collections"]
+
+[[concepts]]
+id = "traits"
+name = "Traits"
+description = "Defining shared behavior across different types."
+
+[[concepts]]
+id = "generics"
+name = "Generics"
+description = "Writing functions that can accept any type that implements a specific trait."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Welcome to the Intermediate track! We'll be building concepts used in real-world tools like `oovra` (a prompt composition tool). Often, we have multiple strategies for transforming strings—like a simple forward diff, a full diff, or appending data. We can unify these operations using **Traits**."
+
+[[steps.blocks]]
+kind = "prose"
+text = "A trait defines a required set of methods that a type must implement. It's similar to an interface in other languages."
+
+[[steps]]
+[steps.exercise]
+kind = "predict_then_run"
+code = """trait Operator {
+    fn apply(&self, input: &str) -> String;
+}
+
+struct UppercaseOp;
+
+impl Operator for UppercaseOp {
+    fn apply(&self, input: &str) -> String {
+        input.to_uppercase()
+    }
+}
+
+fn main() {
+    let op = UppercaseOp;
+    println!("{}", op.apply("hello"));
+}"""
+question = "What will this program print?"
+expected_output = "HELLO"
+explanation = "The `UppercaseOp` struct implements the `Operator` trait, meaning it provides its own version of the `apply` method."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Now it's your turn. Let's define the `Operator` trait and implement it for a `ForwardDiff` struct that takes two strings and finds items in the second that aren't in the first."
+
+[[steps]]
+[steps.exercise]
+kind = "faded"
+prompt = "In `src/main.rs`, complete the `Operator` trait definition and implement it for `ForwardDiff`. Use `input` and `self.prev_data` to return the new items. Run Check when ready!"
+file_path = "src/main.rs"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "New: Orange" }
+hint = "The trait method signature is `fn apply(&self, input: &str) -> String;`. Inside `apply` for `ForwardDiff`, check if `self.prev_data` contains the item."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Traits are powerful because they allow us to write **Generic** functions. Instead of writing a function that specifically takes a `ForwardDiff`, we can write a function that takes *any* type `T` that implements `Operator`."
+
+[[steps]]
+[steps.exercise]
+kind = "open"
+prompt = "At the bottom of `src/main.rs`, uncomment and implement the generic function `fn process<T: Operator>(op: T, input: &str) -> String`. It should call `op.apply(input)` and return the result. Once written, uncomment the validation block in `main` and run Check!"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "New: Orange\nProcessed: New: Orange" }
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "What does `<T: Operator>` mean in a function signature?"
+choices = [
+    "It means T is a variable named Operator.",
+    "It restricts the generic type T to only types that implement the Operator trait.",
+    "It automatically implements the Operator trait for type T.",
+    "It means the function returns an Operator."
+]
+answer_index = 1
+explanation = "This is a trait bound. It ensures that whatever type is passed as T has implemented the methods defined in the Operator trait, making it safe to call them."
