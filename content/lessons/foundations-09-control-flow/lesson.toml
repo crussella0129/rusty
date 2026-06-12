@@ -1,0 +1,84 @@
+id = "foundations-09-control-flow"
+title = "Control Flow & Functions"
+track = "Foundations"
+estimated_minutes = 20
+starter_project = "starter"
+solution_project = "solution"
+prereqs = ["foundations-08-collections"]
+
+[[concepts]]
+id = "expressions"
+name = "Expressions vs Statements"
+description = "Rust is an expression-based language. Most things evaluate to a value."
+
+[[concepts]]
+id = "loops"
+name = "Loops"
+description = "Using `loop`, `while`, and `for` to repeat code."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Welcome to Lesson 9! Before we jump into more advanced Rust, let's cover a fundamental concept: **Expressions vs Statements**. In Rust, most things are *expressions*, meaning they evaluate to a value."
+
+[[steps.blocks]]
+kind = "prose"
+text = "Even an `if` block is an expression. You can assign the result of an `if` directly to a variable. Notice there is no semicolon after the `5` or `10` because they are expressions returning a value."
+
+[[steps]]
+[steps.exercise]
+kind = "predict_then_run"
+code = """fn main() {
+    let condition = true;
+    let number = if condition { 5 } else { 10 };
+    println!("The number is: {}", number);
+}"""
+question = "What will this program print?"
+expected_output = "The number is: 5"
+explanation = "Because `if` is an expression, it returns the value of the block that was executed."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Rust has three kinds of loops: `loop`, `while`, and `for`."
+
+[[steps.blocks]]
+kind = "prose"
+text = "`loop` repeats forever until you explicitly `break`. You can even return a value from a `loop` using `break my_value;`."
+
+[[steps]]
+[steps.exercise]
+kind = "faded"
+prompt = "In `src/main.rs`, complete the `loop` to counter until it hits 3, then `break` returning `counter * 2`. Run Check when ready!"
+file_path = "src/main.rs"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "The result is 6" }
+hint = "Inside the `if counter == 3` block, write `break counter * 2;`."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "A `while` loop runs as long as a condition is true. A `for` loop is the safest and most common way to iterate over a collection or a range."
+
+[[steps.blocks]]
+kind = "prose"
+text = "You can use `for i in 0..5` to loop from 0 to 4. To include 5, use `0..=5`."
+
+[[steps]]
+[steps.exercise]
+kind = "open"
+prompt = "At the bottom of `src/main.rs`, uncomment and implement the `print_countdown` function using a `for` loop and a reverse range `(1..=3).rev()`. Once written, uncomment the validation block in `main` and run Check!"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "The result is 6\n3\n2\n1\nLiftoff!" }
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "Why does `let x = (let y = 6);` fail to compile in Rust?"
+choices = [
+    "`let y = 6` is a statement, not an expression, so it doesn't return a value.",
+    "Parentheses cannot be used around variable declarations.",
+    "You cannot declare a variable named `x` and `y` on the same line.",
+    "The compiler expects `y` to be mutable."
+]
+answer_index = 0
+explanation = "In Rust, `let` variable declarations are statements, meaning they do not evaluate to a value. Therefore, you cannot assign the 'result' of a `let` statement to another variable."

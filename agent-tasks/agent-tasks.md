@@ -61,17 +61,26 @@
 - [x] T-1903: Write the `starter` project with `// TODO` markers for faded exercises.
 - [x] T-1904: Write the complete `solution` project.
 
-## Sprint 20 (Intermediate Lesson 2 - Iterators & Closures)
-- [ ] T-2001: Implement `intermediate-02-iterators` leveraging functional parsing of datasets.
+## Sprint 20 (Foundations Lesson 9 - Control Flow & Functions)
+- [x] T-2001: Implement `foundations-09-control-flow`.
 
-## Sprint 21 (Intermediate Lesson 3 - Lifetimes & References)
-- [ ] T-2101: Implement `intermediate-03-lifetimes` building zero-copy Parsers.
+## Sprint 21 (Foundations Lesson 10 - Project Organization)
+- [ ] T-2101: Implement `foundations-10-modules`.
 
-## Sprint 22 (Intermediate Lesson 4 - Smart Pointers & Shared State)
-- [ ] T-2201: Implement `intermediate-04-smart-pointers` building recursive AST nodes.
+## Sprint 22 (Foundations Lesson 11 - Automated Testing)
+- [ ] T-2201: Implement `foundations-11-testing`.
 
-## Sprint 23 (Intermediate Lesson 5 - Serialization & Parsing)
-- [ ] T-2301: Implement `intermediate-05-parsing` using serde and toml for prompt element headers.
+## Sprint 23 (Intermediate Lesson 2 - Iterators & Closures)
+- [ ] T-2301: Implement `intermediate-02-iterators` leveraging functional parsing of datasets.
 
-## Sprint 24 (Intermediate Lesson 6 - Advanced Diffing Climax)
-- [ ] T-2401: Implement `intermediate-06-diffing` (full +/- diffing with positional change awareness).
+## Sprint 24 (Intermediate Lesson 3 - Lifetimes & References)
+- [ ] T-2401: Implement `intermediate-03-lifetimes` building zero-copy Parsers.
+
+## Sprint 25 (Intermediate Lesson 4 - Smart Pointers & Shared State)
+- [ ] T-2501: Implement `intermediate-04-smart-pointers` building recursive AST nodes.
+
+## Sprint 26 (Intermediate Lesson 5 - Serialization & Parsing)
+- [ ] T-2601: Implement `intermediate-05-parsing` using serde and toml for prompt element headers.
+
+## Sprint 27 (Intermediate Lesson 6 - Advanced Diffing Climax)
+- [ ] T-2701: Implement `intermediate-06-diffing` (full +/- diffing with positional change awareness).
