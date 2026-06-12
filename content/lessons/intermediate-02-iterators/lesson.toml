@@ -1,0 +1,91 @@
+id = "intermediate-02-iterators"
+title = "Iterators & Closures"
+track = "Intermediate"
+estimated_minutes = 25
+starter_project = "starter"
+solution_project = "solution"
+prereqs = ["intermediate-01-traits"]
+
+[[concepts]]
+id = "iterators"
+name = "Iterators"
+description = "Using the `Iterator` trait to process sequences functionally without explicit loops."
+
+[[concepts]]
+id = "closures"
+name = "Closures"
+description = "Anonymous functions that can capture their environment, often used with iterators like `map` and `filter`."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Welcome to Iterators! In Rust, the `Iterator` trait provides a powerful way to process sequences of elements functionally. Instead of writing a `for` loop and pushing items to a new vector manually, we can chain methods like `.map()`, `.filter()`, and `.collect()`."
+
+[[steps.blocks]]
+kind = "prose"
+text = "These methods take **closures** as arguments. A closure is an anonymous function, defined with pipes like `|x| x * 2`."
+
+[[steps]]
+[steps.exercise]
+kind = "predict_then_run"
+code = """fn main() {
+    let numbers = vec![1, 2, 3, 4, 5];
+    let evens: Vec<i32> = numbers.into_iter()
+        .filter(|&n| n % 2 == 0)
+        .map(|n| n * 10)
+        .collect();
+    println!("{:?}", evens);
+}"""
+question = "What will this program print?"
+expected_output = "[20, 40]"
+explanation = "The `filter` closure keeps only even numbers (2, 4), and the `map` closure multiplies them by 10 (20, 40). Finally, `collect` gathers them into a `Vec`."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Let's apply this to dataset parsing. Suppose we have a string representing rows of data, separated by newlines (`\\n`), and columns separated by commas (`,`)."
+
+[[steps.blocks]]
+kind = "prose"
+text = "We can use `.lines()` to get an iterator over the rows, `.skip(1)` to skip the header, and then `.filter_map()` to extract and transform valid data simultaneously."
+
+[[steps]]
+[steps.exercise]
+kind = "faded"
+prompt = "In `src/main.rs`, complete the `parse_scores` function. Use `.lines()`, `.skip(1)`, and a `filter_map` closure to parse the scores and keep only those greater than 90. Run Check when ready!"
+file_path = "src/main.rs"
+check_command = "cargo test parse_scores"
+success_criterion = { kind = "cargo_test_passes" }
+hint = "Inside `filter_map`, split the line by `,`, get the second part, parse it to `u32` with `.parse().ok()`, and filter `> 90`."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Iterators aren't just for transforming elements into a new list. You can also reduce an entire sequence down to a single value using `.fold()` or `.reduce()`."
+
+[[steps.blocks]]
+kind = "prose"
+text = "Let's say we want to compute the total score of all students. We can chain our iterator into a `.fold(0, |acc, score| acc + score)`."
+
+[[steps]]
+[steps.exercise]
+kind = "open"
+prompt = "At the bottom of `src/main.rs`, implement `total_high_scores`. It should call `parse_scores` to get the list of scores, then use `.into_iter().fold(...)` to calculate the sum. Uncomment the second validation block in `main` and run Check!"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "High scores: [92, 95]\nTotal of high scores: 187" }
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "What does the `.collect()` method do at the end of an iterator chain?"
+choices = [
+    "It prints all the items in the iterator to the console.",
+    "It consumes the iterator and collects the resulting items into a data structure like a `Vec`.",
+    "It automatically sorts the items in the iterator.",
+    "It restarts the iterator from the beginning."
+]
+answer_index = 1
+explanation = "Iterators are lazy and do nothing until consumed. The `collect()` method consumes the iterator and gathers the yielded items into a concrete collection, such as a `Vec<T>` or `HashSet<T>`."
+
+[[further_reading]]
+title = "Processing a Series of Items with Iterators - The Rust Book"
+url = "https://doc.rust-lang.org/book/ch13-02-iterators.html"

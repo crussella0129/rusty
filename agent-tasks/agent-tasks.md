@@ -71,7 +71,11 @@
 - [x] T-2201: Implement `foundations-11-testing`.
 
 ## Sprint 23 (Intermediate Lesson 2 - Iterators & Closures)
-- [ ] T-2301: Implement `intermediate-02-iterators` leveraging functional parsing of datasets.
+- [ ] T-2301: Create `intermediate-02-iterators` lesson directory structure (`lesson.toml`, `starter`, `solution`).
+- [ ] T-2302: Author `lesson.toml` with concepts, prose, and exercises focusing on Iterator trait and closures.
+- [ ] T-2303: Write the `starter` project.
+- [ ] T-2304: Write the complete `solution` project.
+- [ ] T-2305: Create integration test `lesson_intermediate2_grade.rs`.
 
 ## Sprint 24 (Intermediate Lesson 3 - Lifetimes & References)
 - [ ] T-2401: Implement `intermediate-03-lifetimes` building zero-copy Parsers.
