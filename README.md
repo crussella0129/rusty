@@ -4,7 +4,7 @@
 
 **Rusty** is a 100% Rust native desktop application that teaches Rust by guiding learners through real `cargo` invocations inside an embedded terminal, against a sandboxed workspace of real cargo projects.
 
-It is named after the author's dog, **Rusty** (a large, friendly, orange dog), who acts as the application's mascot.
+It is named after the author's dog, **Rusty** (a large, mostly friendly, orange dog), who acts as the application's mascot.
 
 ---
 
