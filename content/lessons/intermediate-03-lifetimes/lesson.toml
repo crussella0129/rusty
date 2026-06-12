@@ -1,0 +1,92 @@
+id = "intermediate-03-lifetimes"
+title = "Lifetimes & References"
+track = "Intermediate"
+estimated_minutes = 30
+starter_project = "starter"
+solution_project = "solution"
+prereqs = ["intermediate-02-iterators"]
+
+[[concepts]]
+id = "references"
+name = "References"
+description = "Borrowing data without taking ownership, denoted by `&`."
+
+[[concepts]]
+id = "lifetimes"
+name = "Lifetimes"
+description = "Annotations like `<'a>` that tell the compiler how long a reference is valid."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Welcome to Lifetimes! In Rust, every reference `&T` has a **lifetime**, which is the scope for which that reference is valid. Most of the time, lifetimes are implicit and inferred, but sometimes we must annotate them explicitly."
+
+[[steps.blocks]]
+kind = "prose"
+text = "For example, if a function takes a string slice `&str` and returns a part of it as another `&str`, Rust assumes the returned reference lives as long as the input reference. This is called **lifetime elision**."
+
+[[steps]]
+[steps.exercise]
+kind = "predict_then_run"
+code = """fn first_word(s: &str) -> &str {
+    s.split_whitespace().next().unwrap_or("")
+}
+
+fn main() {
+    let text = String::from("Hello world");
+    let word = first_word(&text);
+    println!("First word: {}", word);
+}"""
+question = "What will this program print?"
+expected_output = "First word: Hello"
+explanation = "The function returns a `&str` that references a portion of the original `String`. Because there is exactly one input reference `&str`, Rust automatically infers that the output `&str` has the same lifetime."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "When we store references in a `struct`, the compiler can no longer infer lifetimes. We must explicitly annotate the struct with a generic lifetime parameter, typically `<'a>` (pronounced 'tick A')."
+
+[[steps.blocks]]
+kind = "prose"
+text = "This enables **zero-copy parsing**. Instead of allocating new `String` objects for every piece of parsed data, we can store references (`&'a str`) that point directly into the original input string, making our code incredibly fast and memory-efficient."
+
+[[steps]]
+[steps.exercise]
+kind = "faded"
+prompt = "In `src/main.rs`, update `LogEntry` to use `<'a>` and `&'a str` for its fields. Then update the signature of `parse_log` to `fn parse_log<'a>(line: &'a str) -> Option<LogEntry<'a>>` and implement the parsing logic. Run Check when ready!"
+file_path = "src/main.rs"
+check_command = "cargo test parse_log"
+success_criterion = { kind = "cargo_test_passes" }
+hint = "Change `String` to `&'a str` in the struct. Inside `parse_log`, use `line.splitn(2, ':')`, call `.next()?`, trim the results, and return `Some(LogEntry { level, message })`."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Now that we have our `LogEntry<'a>` parser working, let's write a function that iterates over a list of parsed entries to find specific data."
+
+[[steps.blocks]]
+kind = "prose"
+text = "Notice how the lifetime `'a` flows from the original input string, through the `LogEntry<'a>` struct, and finally into the returned `&'a str`."
+
+[[steps]]
+[steps.exercise]
+kind = "open"
+prompt = "At the bottom of `src/main.rs`, implement `find_error_message<'a>(entries: &[LogEntry<'a>]) -> Option<&'a str>`. It should find the first entry where `level == \"ERROR\"` and return its `message`. Uncomment the validation blocks in `main` and run Check!"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "Parsed 3 entries.\nFound error: Disk failure" }
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "Why do we use explicit lifetime annotations like `<'a>` in structs that hold references?"
+choices = [
+    "To tell the compiler to allocate the data on the heap.",
+    "Because Rust needs to ensure the struct does not outlive the data it references.",
+    "To convert a `&str` into an owned `String`.",
+    "Because the compiler requires all structs to have generic parameters."
+]
+answer_index = 1
+explanation = "Lifetime annotations tie the lifespan of the struct to the lifespan of the referenced data, guaranteeing that the struct will never contain dangling pointers."
+
+[[further_reading]]
+title = "Validating References with Lifetimes - The Rust Book"
+url = "https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html"

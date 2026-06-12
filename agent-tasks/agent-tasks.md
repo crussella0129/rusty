@@ -70,15 +70,14 @@
 ## Sprint 22 (Foundations Lesson 11 - Automated Testing)
 - [x] T-2201: Implement `foundations-11-testing`.
 
-## Sprint 23 (Intermediate Lesson 2 - Iterators & Closures)
-- [ ] T-2301: Create `intermediate-02-iterators` lesson directory structure (`lesson.toml`, `starter`, `solution`).
-- [ ] T-2302: Author `lesson.toml` with concepts, prose, and exercises focusing on Iterator trait and closures.
-- [ ] T-2303: Write the `starter` project.
-- [ ] T-2304: Write the complete `solution` project.
-- [ ] T-2305: Create integration test `lesson_intermediate2_grade.rs`.
+
 
 ## Sprint 24 (Intermediate Lesson 3 - Lifetimes & References)
-- [ ] T-2401: Implement `intermediate-03-lifetimes` building zero-copy Parsers.
+- [ ] T-2401: Create `intermediate-03-lifetimes` lesson directory structure (`lesson.toml`, `starter`, `solution`).
+- [ ] T-2402: Author `lesson.toml` with concepts, prose, and exercises focusing on References and Lifetimes.
+- [ ] T-2403: Write the `starter` project.
+- [ ] T-2404: Write the complete `solution` project.
+- [ ] T-2405: Create integration test `lesson_intermediate3_grade.rs`.
 
 ## Sprint 25 (Intermediate Lesson 4 - Smart Pointers & Shared State)
 - [ ] T-2501: Implement `intermediate-04-smart-pointers` building recursive AST nodes.
