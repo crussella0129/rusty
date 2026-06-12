@@ -10,17 +10,17 @@ use anyhow::{anyhow, Context, Result};
 
 use crate::sandbox::contain;
 
-/// List the relative paths of every `.rs` file under `sandbox`, skipping `target/`.
+/// List the relative paths of editable files under `sandbox`, skipping `target/`.
 /// Paths are returned sorted, relative to `sandbox`.
-pub fn list_sandbox_rs_files(sandbox: &Path) -> Result<Vec<PathBuf>> {
+pub fn list_sandbox_files(sandbox: &Path) -> Result<Vec<PathBuf>> {
     let mut out = Vec::new();
-    collect_rs(sandbox, sandbox, &mut out)
-        .with_context(|| format!("listing .rs files under {}", sandbox.display()))?;
+    collect_files(sandbox, sandbox, &mut out)
+        .with_context(|| format!("listing files under {}", sandbox.display()))?;
     out.sort();
     Ok(out)
 }
 
-fn collect_rs(root: &Path, dir: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
+fn collect_files(root: &Path, dir: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
     for entry in std::fs::read_dir(dir)? {
         let entry = entry?;
         // Never surface build artifacts to the editor.
@@ -29,10 +29,12 @@ fn collect_rs(root: &Path, dir: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
         }
         let path = entry.path();
         if path.is_dir() {
-            collect_rs(root, &path, out)?;
-        } else if path.extension().and_then(|e| e.to_str()) == Some("rs") {
-            if let Ok(rel) = path.strip_prefix(root) {
-                out.push(rel.to_path_buf());
+            collect_files(root, &path, out)?;
+        } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+            if matches!(ext, "rs" | "toml" | "txt" | "csv" | "md" | "json") {
+                if let Ok(rel) = path.strip_prefix(root) {
+                    out.push(rel.to_path_buf());
+                }
             }
         }
     }

@@ -4,7 +4,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use rusty_host::{list_sandbox_rs_files, read_sandbox_file, write_sandbox_file};
+use rusty_host::{list_sandbox_files, read_sandbox_file, write_sandbox_file};
 
 static COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -28,22 +28,23 @@ fn touch(path: &Path) {
 }
 
 #[test]
-fn test_list_rs_files_skips_target() {
+fn test_list_files_skips_target() {
     let sandbox = unique_sandbox("list");
     touch(&sandbox.join("src").join("main.rs"));
     touch(&sandbox.join("tests").join("t.rs"));
     touch(&sandbox.join("target").join("debug").join("x.rs"));
-    touch(&sandbox.join("Cargo.toml")); // non-.rs, must be ignored
+    touch(&sandbox.join("Cargo.toml")); // .toml is now allowed
 
-    let files = list_sandbox_rs_files(&sandbox).unwrap();
+    let files = list_sandbox_files(&sandbox).unwrap();
 
     assert_eq!(
         files.len(),
-        2,
-        "exactly the two source .rs files: {files:?}"
+        3,
+        "exactly the three source files: {files:?}"
     );
     assert!(files.iter().any(|p| p.ends_with("main.rs")));
     assert!(files.iter().any(|p| p.ends_with("t.rs")));
+    assert!(files.iter().any(|p| p.ends_with("Cargo.toml")));
     assert!(
         !files
             .iter()

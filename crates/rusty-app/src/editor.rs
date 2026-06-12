@@ -3,14 +3,54 @@
 //! The egui UI lives here; every filesystem touch goes through `rusty_host`'s
 //! sandbox-guarded file I/O (the OS boundary, §11).
 
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
 use std::sync::mpsc::Receiver;
+use std::collections::BTreeMap;
 
-use rusty_host::{list_sandbox_rs_files, read_sandbox_file, write_sandbox_file, LspSession};
+use rusty_host::{list_sandbox_files, read_sandbox_file, write_sandbox_file, LspSession};
 use lsp_types::{Diagnostic, Hover, CompletionItem};
 
 use crate::voice;
+
+#[derive(Default)]
+struct DirNode {
+    files: Vec<PathBuf>,
+    dirs: BTreeMap<String, DirNode>,
+}
+
+impl DirNode {
+    fn insert(&mut self, path: PathBuf, components: &[Component]) {
+        match components {
+            [] => {}
+            [Component::Normal(_name)] => {
+                self.files.push(path);
+            }
+            [Component::Normal(dir), rest @ ..] => {
+                let dir_str = dir.to_string_lossy().to_string();
+                self.dirs.entry(dir_str).or_default().insert(path, rest);
+            }
+            [_, rest @ ..] => self.insert(path, rest),
+        }
+    }
+}
+
+fn render_tree(ui: &mut egui::Ui, node: &DirNode, selected: Option<&Path>, on_select: &mut impl FnMut(PathBuf)) {
+    for (dir_name, sub_node) in &node.dirs {
+        egui::CollapsingHeader::new(dir_name)
+            .default_open(true)
+            .show(ui, |ui| {
+                render_tree(ui, sub_node, selected, on_select);
+            });
+    }
+    for file_path in &node.files {
+        let file_name = file_path.file_name().unwrap_or_default().to_string_lossy();
+        let is_sel = selected == Some(file_path.as_path());
+        if ui.selectable_label(is_sel, file_name).clicked() {
+            on_select(file_path.clone());
+        }
+    }
+}
 
 /// Outcome of the most recent save, surfaced beside the Save button.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -154,7 +194,7 @@ impl Editor {
     }
 
     fn refresh_files(&mut self) {
-        match list_sandbox_rs_files(&self.sandbox) {
+        match list_sandbox_files(&self.sandbox) {
             Ok(files) => {
                 self.files = files;
                 self.list_error = None;
@@ -240,14 +280,21 @@ impl Editor {
             }
         }
 
-        ui.horizontal_wrapped(|ui| {
+        ui.vertical(|ui| {
             ui.label(voice::EDITOR_FILES_LABEL);
-            // Clone the list so the click handler can borrow `self` mutably.
-            for rel in self.files.clone() {
-                let is_sel = self.selected.as_deref() == Some(rel.as_path());
-                if ui.selectable_label(is_sel, rel.to_string_lossy()).clicked() {
-                    self.open(&rel);
-                }
+            let mut root = DirNode::default();
+            for rel in &self.files {
+                let comps: Vec<_> = rel.components().collect();
+                root.insert(rel.clone(), &comps);
+            }
+            
+            let mut selected_to_open = None;
+            render_tree(ui, &root, self.selected.as_deref(), &mut |p| {
+                selected_to_open = Some(p);
+            });
+            
+            if let Some(p) = selected_to_open {
+                self.open(&p);
             }
         });
 
@@ -282,6 +329,13 @@ impl Editor {
         let diagnostics = self.diagnostics.clone();
         let buffer_text = self.buffer.clone();
 
+        let language = self.selected
+            .as_ref()
+            .and_then(|p| p.extension())
+            .and_then(|e| e.to_str())
+            .unwrap_or("rs")
+            .to_string();
+
         let mut layouter = |ui: &egui::Ui, buf: &dyn egui::TextBuffer, wrap_width: f32| {
             let theme = egui_extras::syntax_highlighting::CodeTheme::from_style(ui.style());
             let mut job = egui_extras::syntax_highlighting::highlight(
@@ -289,7 +343,7 @@ impl Editor {
                 ui.style(),
                 &theme,
                 buf.as_str(),
-                "rs",
+                &language,
             );
             
             split_layout_sections_by_diagnostic(&mut job, buf.as_str(), &diagnostics);
