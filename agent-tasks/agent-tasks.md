@@ -65,7 +65,7 @@
 - [x] T-2001: Implement `foundations-09-control-flow`.
 
 ## Sprint 21 (Foundations Lesson 10 - Project Organization)
-- [ ] T-2101: Implement `foundations-10-modules`.
+- [x] T-2101: Implement `foundations-10-modules`.
 
 ## Sprint 22 (Foundations Lesson 11 - Automated Testing)
 - [ ] T-2201: Implement `foundations-11-testing`.

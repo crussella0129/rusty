@@ -1,0 +1,87 @@
+id = "foundations-10-modules"
+title = "Project Organization & Modules"
+track = "Foundations"
+estimated_minutes = 20
+starter_project = "starter"
+solution_project = "solution"
+prereqs = ["foundations-09-control-flow"]
+
+[[concepts]]
+id = "modules"
+name = "Modules (`mod`)"
+description = "Using `mod` to split code into multiple files."
+
+[[concepts]]
+id = "visibility"
+name = "Visibility (`pub`)"
+description = "Making items public so other modules can use them."
+
+[[concepts]]
+id = "paths"
+name = "Paths (`use`)"
+description = "Bringing paths into scope with the `use` keyword."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Welcome to Lesson 10! As your Rust projects grow, you'll want to split them across multiple files. Rust uses a module system to manage this organization and visibility."
+
+[[steps.blocks]]
+kind = "prose"
+text = "If you create a file named `helper.rs`, you must tell Rust to include it in the module tree. You do this by declaring `mod helper;` in your `main.rs` or `lib.rs`."
+
+[[steps]]
+[steps.exercise]
+kind = "predict_then_run"
+code = """// In main.rs
+mod math;
+
+fn main() {
+    println!("2 + 2 = {}", math::add(2, 2));
+}
+
+// In math.rs
+pub fn add(a: i32, b: i32) -> i32 {
+    a + b
+}"""
+question = "What happens if we remove the `pub` keyword from the `add` function in `math.rs`?"
+expected_output = "It fails to compile."
+explanation = "In Rust, everything is private by default. Without `pub`, the `main` module cannot access the `add` function inside the `math` module."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Typing `math::add` repeatedly can get tedious. You can use the `use` keyword to bring items into scope: `use math::add;`."
+
+[[steps]]
+[steps.exercise]
+kind = "faded"
+prompt = "Look at the workspace. I've created `src/parser.rs` for you. In `src/main.rs`, declare the `parser` module, bring `parser::parse_data` into scope, and run the program."
+file_path = "src/main.rs"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "Data parsed successfully!" }
+hint = "At the top of `main.rs`, write `mod parser;` and `use parser::parse_data;`. Make sure `parse_data` in `parser.rs` is `pub`!"
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "You can also nest modules inside files. For example, you can write `pub mod inner { pub fn do_thing() {} }`."
+
+[[steps]]
+[steps.exercise]
+kind = "open"
+prompt = "In `src/parser.rs`, there is a private inner module called `utils` containing a function `clean()`. Make `utils` and `clean` public, then bring `clean` into scope in `src/main.rs` and call it before `parse_data()`. Run Check when done!"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "Cleaned!\nData parsed successfully!" }
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "How does Rust know to include `utils.rs` in the compilation process?"
+choices = [
+    "Rust automatically compiles all `.rs` files in the `src/` directory.",
+    "You must declare `mod utils;` in `main.rs` or `lib.rs`.",
+    "You use the `include!` macro.",
+    "You specify it in `Cargo.toml`."
+]
+answer_index = 1
+explanation = "Rust does NOT automatically compile all files in the directory. You must explicitly build the module tree using the `mod` keyword."
