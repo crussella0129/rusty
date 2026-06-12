@@ -68,7 +68,7 @@
 - [x] T-2101: Implement `foundations-10-modules`.
 
 ## Sprint 22 (Foundations Lesson 11 - Automated Testing)
-- [ ] T-2201: Implement `foundations-11-testing`.
+- [x] T-2201: Implement `foundations-11-testing`.
 
 ## Sprint 23 (Intermediate Lesson 2 - Iterators & Closures)
 - [ ] T-2301: Implement `intermediate-02-iterators` leveraging functional parsing of datasets.

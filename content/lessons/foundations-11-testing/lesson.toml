@@ -1,0 +1,80 @@
+id = "foundations-11-testing"
+title = "Automated Testing"
+track = "Foundations"
+estimated_minutes = 20
+starter_project = "starter"
+solution_project = "solution"
+prereqs = ["foundations-10-modules"]
+
+[[concepts]]
+id = "test-attribute"
+name = "`#[test]`"
+description = "An attribute that tells the Rust compiler a function is a test."
+
+[[concepts]]
+id = "assert"
+name = "`assert_eq!`"
+description = "A macro to verify that two values are equal during testing."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Welcome to Lesson 11! Testing is a first-class citizen in Rust. You don't need a third-party framework to write tests—it's all built into the standard library and Cargo."
+
+[[steps.blocks]]
+kind = "prose"
+text = "To write a test, simply write a function and annotate it with the `#[test]` attribute. Then, use macros like `assert!`, `assert_eq!`, or `assert_ne!` to verify your code behaves correctly."
+
+[[steps]]
+[steps.exercise]
+kind = "predict_then_run"
+code = """pub fn add(a: i32, b: i32) -> i32 {
+    a + b
+}
+
+#[test]
+fn test_add() {
+    assert_eq!(add(2, 2), 4);
+    assert_eq!(add(0, 0), 0);
+}"""
+question = "What happens if a test function panics (e.g., if `assert_eq!` fails)?"
+expected_output = "The test is marked as failed."
+explanation = "If the code inside `#[test]` panics, the test fails. If it completes without panicking, the test passes!"
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "It's common to group tests in a dedicated nested module to keep them organized. We conventionally name this module `tests` and annotate it with `#[cfg(test)]`. This tells Cargo to *only* compile this module when you run `cargo test`."
+
+[[steps]]
+[steps.exercise]
+kind = "faded"
+prompt = "Look at `src/lib.rs`. The `test_greeting` function is missing its attribute. Add `#[test]` above it, and fill in the `assert_eq!` macro to ensure it equals `\"Hello, Rusty\"`. Run Check when done!"
+file_path = "src/lib.rs"
+check_command = "cargo test"
+success_criterion = { kind = "cargo_test_passes" }
+hint = "Place `#[test]` directly above `fn test_greeting()`. Inside the function, use `assert_eq!(greeting(\"Rusty\"), \"Hello, Rusty\");`."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Notice that inside the `tests` module, we use `use super::*;` to bring everything from the parent module (like the `greeting` function) into scope."
+
+[[steps]]
+[steps.exercise]
+kind = "open"
+prompt = "In `src/lib.rs`, add a new function `pub fn is_even(n: i32) -> bool` that returns true if a number is even. Then, inside the `tests` module, write a new test named `test_is_even` that asserts `is_even(4)` is true and `is_even(5)` is false using the `assert!` macro. Run Check to test your tests!"
+check_command = "cargo test"
+success_criterion = { kind = "cargo_test_passes" }
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "What is the purpose of `#[cfg(test)]` on a module?"
+choices = [
+    "It automatically writes tests for you.",
+    "It ensures the module is only compiled when running `cargo test`, saving compile time and binary size.",
+    "It makes the module public.",
+    "It tells the compiler to ignore panics in that module."
+]
+answer_index = 1
+explanation = "The `cfg` attribute conditionally compiles code. `#[cfg(test)]` prevents your test code from being included in the final release binary."
