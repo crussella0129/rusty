@@ -72,12 +72,6 @@
 
 
 
-## Sprint 24 (Intermediate Lesson 3 - Lifetimes & References)
-- [ ] T-2401: Create `intermediate-03-lifetimes` lesson directory structure (`lesson.toml`, `starter`, `solution`).
-- [ ] T-2402: Author `lesson.toml` with concepts, prose, and exercises focusing on References and Lifetimes.
-- [ ] T-2403: Write the `starter` project.
-- [ ] T-2404: Write the complete `solution` project.
-- [ ] T-2405: Create integration test `lesson_intermediate3_grade.rs`.
 
 ## Sprint 25 (Intermediate Lesson 4 - Smart Pointers & Shared State)
 - [ ] T-2501: Implement `intermediate-04-smart-pointers` building recursive AST nodes.

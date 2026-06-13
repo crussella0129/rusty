@@ -209,6 +209,7 @@ struct RustyApp {
     load_error: Option<String>,
     /// The code editor over the lesson sandbox's `.rs` files.
     editor: Editor,
+    #[allow(dead_code)]
     lsp_session: Option<std::sync::Arc<LspSession>>,
     /// Lesson ids that exist (so concept-links to them render as live, not "coming soon").
     known_lessons: Vec<String>,
@@ -244,7 +245,7 @@ impl RustyApp {
         let active_lesson_rel = CURRICULUM
             .iter()
             .find(|rel| {
-                let id = rel.split('/').last().unwrap();
+                let id = rel.split('/').next_back().unwrap();
                 !persistent_state.completed_lessons.contains(&rusty_curriculum::LessonId(id.to_string()))
             })
             .unwrap_or(CURRICULUM.last().unwrap());

@@ -62,7 +62,7 @@ pub fn grade_review(state: &ReviewState, quality: u8, current_lesson_index: u64)
 
     // Update ease factor
     let q = quality as f32;
-    ease = ease + (0.1 - (5.0 - q) * (0.08 + (5.0 - q) * 0.02));
+    ease += 0.1 - (5.0 - q) * (0.08 + (5.0 - q) * 0.02);
     if ease < 1.3 {
         ease = 1.3;
     }

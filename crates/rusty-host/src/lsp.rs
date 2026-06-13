@@ -68,13 +68,11 @@ pub fn path_to_uri(path: &Path) -> Result<lsp_types::Uri, String> {
 
     let uri_str = if path_str.starts_with('/') {
         format!("file://{}", path_str)
+    } else if path_str.len() > 2 && &path_str[1..3] == ":/" {
+        let drive = path_str.as_bytes()[0].to_ascii_lowercase() as char;
+        format!("file:///{}:{}", drive, &path_str[2..])
     } else {
-        if path_str.len() > 2 && &path_str[1..3] == ":/" {
-            let drive = path_str.as_bytes()[0].to_ascii_lowercase() as char;
-            format!("file:///{}:{}", drive, &path_str[2..])
-        } else {
-            format!("file:///{}", path_str)
-        }
+        format!("file:///{}", path_str)
     };
 
     lsp_types::Uri::from_str(&uri_str)
@@ -92,6 +90,7 @@ pub struct LspSession {
 
 impl LspSession {
     /// Spawn rust-analyzer in `root_path` and perform the initialization handshake.
+    #[allow(clippy::field_reassign_with_default)]
     pub fn new(root_path: &Path) -> Result<Self, String> {
         let mut child = Command::new("rust-analyzer")
             .current_dir(root_path)
@@ -108,16 +107,15 @@ impl LspSession {
         // Spawn stderr printer
         std::thread::spawn(move || {
             let reader = BufReader::new(stderr);
-            for line in reader.lines() {
-                if let Ok(l) = line {
-                    eprintln!("[lsp-stderr] {}", l);
-                }
+            for l in reader.lines().map_while(Result::ok) {
+                eprintln!("[lsp-stderr] {}", l);
             }
         });
 
 
         // Perform initialization handshake synchronously
         let root_uri = path_to_uri(root_path)?;
+        #[allow(clippy::field_reassign_with_default)]
         let mut params = lsp_types::InitializeParams::default();
         #[allow(deprecated)]
         {
@@ -126,25 +124,30 @@ impl LspSession {
 
         let mut text_document = lsp_types::TextDocumentClientCapabilities::default();
 
-        let mut synchronization = lsp_types::TextDocumentSyncClientCapabilities::default();
-        synchronization.dynamic_registration = Some(true);
-        synchronization.will_save = Some(true);
-        synchronization.did_save = Some(true);
-        text_document.synchronization = Some(synchronization);
+        text_document.synchronization = Some(lsp_types::TextDocumentSyncClientCapabilities {
+            dynamic_registration: Some(true),
+            will_save: Some(true),
+            did_save: Some(true),
+            ..Default::default()
+        });
 
-        let mut hover = lsp_types::HoverClientCapabilities::default();
-        hover.content_format = Some(vec![lsp_types::MarkupKind::Markdown, lsp_types::MarkupKind::PlainText]);
-        text_document.hover = Some(hover);
+        text_document.hover = Some(lsp_types::HoverClientCapabilities {
+            content_format: Some(vec![lsp_types::MarkupKind::Markdown, lsp_types::MarkupKind::PlainText]),
+            ..Default::default()
+        });
 
+        #[allow(clippy::field_reassign_with_default)]
         let mut completion = lsp_types::CompletionClientCapabilities::default();
-        let mut completion_item = lsp_types::CompletionItemCapability::default();
-        completion_item.snippet_support = Some(false);
-        completion.completion_item = Some(completion_item);
+        completion.completion_item = Some(lsp_types::CompletionItemCapability {
+            snippet_support: Some(false),
+            ..Default::default()
+        });
         text_document.completion = Some(completion);
 
-        let mut publish_diagnostics = lsp_types::PublishDiagnosticsClientCapabilities::default();
-        publish_diagnostics.version_support = Some(true);
-        text_document.publish_diagnostics = Some(publish_diagnostics);
+        text_document.publish_diagnostics = Some(lsp_types::PublishDiagnosticsClientCapabilities {
+            version_support: Some(true),
+            ..Default::default()
+        });
 
         params.capabilities.text_document = Some(text_document);
 
@@ -405,10 +408,8 @@ impl LspSession {
                                     lsp_types::CompletionResponse::Array(items) => items,
                                     lsp_types::CompletionResponse::List(completion_list) => completion_list.items,
                                 }
-                            } else if let Ok(items) = serde_json::from_value::<Vec<lsp_types::CompletionItem>>(result) {
-                                items
                             } else {
-                                Vec::new()
+                                serde_json::from_value::<Vec<lsp_types::CompletionItem>>(result).unwrap_or_default()
                             };
                             let _ = out_tx.send(Ok(items));
                         }
