@@ -372,3 +372,8 @@
 - **Description:** Implement Phase 6 Intermediate Lesson 3 on Lifetimes and References. Created the lesson directory structure, authored lesson.toml, wrote the starter and solution projects, and implemented the integration tests in rusty-host.
 - **Completed:** 2026-06-12T19:40:00Z
 
+
+## T-2501 to T-2505 (sprint 25)
+- **Description:** Implement Phase 6 Intermediate Lesson 4 on Smart Pointers and Shared State. Created the lesson directory structure, authored lesson.toml, wrote the starter and solution projects, and implemented the integration tests in rusty-host.
+- **Completed:** 2026-06-13T22:15:00Z
+

@@ -1,0 +1,91 @@
+id = "intermediate-04-smart-pointers"
+title = "Smart Pointers & Shared State"
+track = "Intermediate"
+estimated_minutes = 30
+starter_project = "starter"
+solution_project = "solution"
+prereqs = ["intermediate-03-lifetimes"]
+
+[[concepts]]
+id = "box"
+name = "Box<T>"
+description = "A smart pointer that allocates data on the heap instead of the stack."
+
+[[concepts]]
+id = "recursive-types"
+name = "Recursive Types"
+description = "Types that contain values of themselves, requiring indirection like `Box` to have a known size at compile time."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Welcome to Smart Pointers! In Rust, data is usually allocated on the stack. The stack is fast, but its size is limited, and it requires data to have a known, fixed size at compile time."
+
+[[steps.blocks]]
+kind = "prose"
+text = "Sometimes you need to allocate data on the heap. The simplest way to do this in Rust is with `Box<T>`."
+
+[[steps]]
+[steps.exercise]
+kind = "predict_then_run"
+code = """fn main() {
+    let stack_val = 5;
+    let heap_val = Box::new(5);
+    
+    // You can dereference a Box just like a normal reference
+    let sum = stack_val + *heap_val;
+    println!("Sum: {}", sum);
+}"""
+question = "What will this program print?"
+expected_output = "Sum: 10"
+explanation = "`Box::new` moves the value to the heap and returns a pointer to it. You can access the value by dereferencing it with `*`."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "One of the most common uses for `Box` is to create **recursive types**. A recursive type is a type that can have another value of the same type as part of itself."
+
+[[steps.blocks]]
+kind = "prose"
+text = "For example, consider an Abstract Syntax Tree (AST) for math expressions. An `Add` expression contains two sub-expressions. If we try to define `enum Expr { Add(Expr, Expr) }`, Rust will complain that the size is infinite! We solve this by introducing a layer of indirection: `Box<Expr>`."
+
+[[steps]]
+[steps.exercise]
+kind = "faded"
+prompt = "In `src/main.rs`, complete the `Expr` enum by uncommenting the `Add` variant and wrapping its recursive `Expr`s in `Box<Expr>`. Then, uncomment and implement the `eval` function to recursively evaluate the AST. Run Check when ready!"
+file_path = "src/main.rs"
+check_command = "cargo test eval_add"
+success_criterion = { kind = "cargo_test_passes" }
+hint = "The `Add` variant should be `Add(Box<Expr>, Box<Expr>)`. In `eval`, use pattern matching. For `Add(left, right)`, return `eval(left) + eval(right)`."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Great! You've just built a recursive evaluator."
+
+[[steps.blocks]]
+kind = "prose"
+text = "Let's extend our AST to support multiplication. This is as simple as adding another variant to our enum and handling it in our evaluator."
+
+[[steps]]
+[steps.exercise]
+kind = "open"
+prompt = "At the bottom of `src/main.rs`, add a `Multiply` variant to `Expr` (similar to `Add`). Update `eval` to handle `Multiply`. Uncomment the `main` blocks and run Check!"
+check_command = "cargo run"
+success_criterion = { kind = "cargo_run_output_matches", expected = "5 + 10 = 15\n(2 + 3) * 4 = 20" }
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "Why does Rust require us to use `Box` for recursive types?"
+choices = [
+    "Because recursive types are always dynamically typed.",
+    "Because Rust needs to know how much space to allocate for a type at compile time.",
+    "Because recursive types must always be shared across threads.",
+    "To prevent infinite loops during program execution."
+]
+answer_index = 1
+explanation = "Without indirection like `Box`, a recursive type would require infinite space, since it contains itself, which contains itself, and so on. A `Box` is just a pointer, so it has a known, fixed size."
+
+[[further_reading]]
+title = "Using Box<T> to Point to Data on the Heap - The Rust Book"
+url = "https://doc.rust-lang.org/book/ch15-01-box.html"

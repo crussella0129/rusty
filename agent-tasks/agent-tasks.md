@@ -74,7 +74,11 @@
 
 
 ## Sprint 25 (Intermediate Lesson 4 - Smart Pointers & Shared State)
-- [ ] T-2501: Implement `intermediate-04-smart-pointers` building recursive AST nodes.
+- [ ] T-2501: Create `intermediate-04-smart-pointers` lesson directory structure (`lesson.toml`, `starter`, `solution`).
+- [ ] T-2502: Author `lesson.toml` with concepts, prose, and exercises focusing on `Box` and recursive types.
+- [ ] T-2503: Write the `starter` project.
+- [ ] T-2504: Write the complete `solution` project.
+- [ ] T-2505: Create integration test `lesson_intermediate4_grade.rs`.
 
 ## Sprint 26 (Intermediate Lesson 5 - Serialization & Parsing)
 - [ ] T-2601: Implement `intermediate-05-parsing` using serde and toml for prompt element headers.
