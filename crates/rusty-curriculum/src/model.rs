@@ -320,3 +320,10 @@ mod tests {
         assert_eq!(visible_prefix(&steps, &[false, true, false]), 3);
     }
 }
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Manifest {
+    pub tracks: Vec<String>,
+    pub lessons: Vec<String>,
+}
+

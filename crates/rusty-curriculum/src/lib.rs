@@ -8,8 +8,8 @@
 pub mod loader;
 pub mod model;
 
-pub use loader::{parse_lesson, CurriculumError};
+pub use loader::{parse_manifest, parse_lesson, CurriculumError};
 pub use model::{
-    visible_prefix, Block, CalloutTone, Concept, ConceptId, Exercise, Lesson, LessonId,
+    visible_prefix, Block, CalloutTone, Concept, ConceptId, Exercise, Lesson, LessonId, Manifest,
     RecallPrompt, Reference, Step, SuccessCriterion, Track,
 };

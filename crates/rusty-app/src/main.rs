@@ -163,17 +163,7 @@ fn fallback_sandbox() -> PathBuf {
     root
 }
 
-/// The Foundations track curriculum.
-const CURRICULUM: &[&str] = &[
-    "content/lessons/foundations-01-hello",
-    "content/lessons/foundations-02-variables",
-    "content/lessons/foundations-03-ownership",
-    "content/lessons/foundations-04-borrows",
-    "content/lessons/foundations-05-structs",
-    "content/lessons/foundations-06-enums",
-    "content/lessons/foundations-07-errors",
-    "content/lessons/foundations-08-collections",
-];
+
 
 #[derive(PartialEq, Eq)]
 enum AppMode {
@@ -242,16 +232,19 @@ impl RustyApp {
         egui_extras::install_image_loaders(&cc.egui_ctx);
         let persistent_state = state::PersistentState::load(&state::PersistentState::default_path());
 
-        let active_lesson_rel = CURRICULUM
-            .iter()
-            .find(|rel| {
-                let id = rel.split('/').next_back().unwrap();
-                !persistent_state.completed_lessons.contains(&rusty_curriculum::LessonId(id.to_string()))
-            })
-            .unwrap_or(CURRICULUM.last().unwrap());
-
         let cwd0 = std::env::current_dir().unwrap_or_default();
-        let content_dir = cwd0.join(active_lesson_rel);
+        let content_root = cwd0.join("content");
+        
+        let manifest = rusty_host::load_manifest(&content_root)
+            .expect("Failed to load content/manifest.toml");
+
+        let active_lesson_id = manifest.lessons
+            .iter()
+            .find(|id| !persistent_state.completed_lessons.contains(&rusty_curriculum::LessonId(id.to_string())))
+            .unwrap_or(manifest.lessons.last().unwrap());
+
+        let active_lesson_rel = format!("content/lessons/{}", active_lesson_id);
+        let content_dir = cwd0.join(&active_lesson_rel);
         let workspace_root = cwd0.join("workspace");
 
         // Load lesson 1, prepare its sandbox, validate that the result is structurally

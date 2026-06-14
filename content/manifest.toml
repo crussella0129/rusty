@@ -1,0 +1,20 @@
+tracks = ["Foundations", "Intermediate", "Advanced"]
+lessons = [
+    "foundations-01-hello",
+    "foundations-02-variables",
+    "foundations-03-ownership",
+    "foundations-04-borrows",
+    "foundations-05-structs",
+    "foundations-06-enums",
+    "foundations-07-errors",
+    "foundations-08-collections",
+    "foundations-09-control-flow",
+    "foundations-10-modules",
+    "foundations-11-testing",
+    "intermediate-01-traits",
+    "intermediate-02-iterators",
+    "intermediate-03-lifetimes",
+    "intermediate-04-smart-pointers",
+    "intermediate-05-parsing",
+    "intermediate-06-diffing"
+]

@@ -147,3 +147,9 @@ mod tests {
         assert!(matches!(err, CurriculumError::Invalid(_)));
     }
 }
+
+/// Parse a complete curriculum manifest from a TOML string.
+pub fn parse_manifest(src: &str) -> Result<crate::model::Manifest, CurriculumError> {
+    toml::from_str(src).map_err(CurriculumError::Parse)
+}
+

@@ -323,3 +323,16 @@ fn test_lesson1_has_each_exercise_variant() {
         "needs a gating step with a hint"
     );
 }
+
+#[test]
+fn test_load_manifest() {
+    let content_dir = unique_temp("manifest");
+    write(
+        &content_dir.join("manifest.toml"),
+        "tracks = [\"Test\"]\nlessons = [\"test-01\"]",
+    );
+    let manifest = rusty_host::load_manifest(&content_dir).unwrap();
+    assert_eq!(manifest.tracks, vec!["Test"]);
+    assert_eq!(manifest.lessons, vec!["test-01"]);
+}
+

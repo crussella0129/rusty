@@ -387,3 +387,8 @@
 - **Description:** Implement Intermediate Lesson 6 on Advanced Diffing using Longest Common Subsequence (LCS). Created the lesson directory structure, authored lesson.toml, wrote the starter and solution projects, and implemented the integration tests in rusty-host.
 - **Completed:** 2026-06-14T14:55:00Z
 
+
+## T-2801 to T-2802 (sprint 28)
+- **Description:** Planned the Advanced Track curriculum (Concurrency, Async, Macros, Unsafe, Architecture) and refactored rusty-app to dynamically load its curriculum array from content/manifest.toml rather than a hardcoded source, enabling modularity.
+- **Completed:** 2026-06-14T15:10:00Z
+

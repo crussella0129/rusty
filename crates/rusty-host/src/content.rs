@@ -91,3 +91,14 @@ fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<()> {
     }
     Ok(())
 }
+
+/// Read and parse `<content_dir>/manifest.toml` into a `Manifest`.
+pub fn load_manifest(content_dir: &Path) -> Result<rusty_curriculum::Manifest> {
+    let toml_path = content_dir.join("manifest.toml");
+    let src = std::fs::read_to_string(&toml_path)
+        .with_context(|| format!("reading {}", toml_path.display()))?;
+    let manifest = rusty_curriculum::parse_manifest(&src)
+        .with_context(|| format!("parsing {}", toml_path.display()))?;
+    Ok(manifest)
+}
+

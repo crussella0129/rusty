@@ -73,9 +73,6 @@
 
 
 
-## Sprint 27 (Intermediate Lesson 6 - Advanced Diffing Climax)
-- [ ] T-2701: Create `intermediate-06-diffing` lesson directory structure (`lesson.toml`, `starter`, `solution`).
-- [ ] T-2702: Author `lesson.toml` with concepts, prose, and exercises focusing on LCS matrix generation and diff backtracking.
-- [ ] T-2703: Write the `starter` project.
-- [ ] T-2704: Write the complete `solution` project.
-- [ ] T-2705: Create integration test `lesson_intermediate6_grade.rs`.
+## Sprint 28 (Advanced Curriculum Planning & Modularity)
+- [x] T-2801: Research and design the Advanced track lesson trajectory.
+- [x] T-2802: Analyze and refactor `rusty-host` content loading for modularity (allowing easy reordering and drop in/out of lessons).
