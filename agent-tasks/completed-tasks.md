@@ -377,3 +377,8 @@
 - **Description:** Implement Phase 6 Intermediate Lesson 4 on Smart Pointers and Shared State. Created the lesson directory structure, authored lesson.toml, wrote the starter and solution projects, and implemented the integration tests in rusty-host.
 - **Completed:** 2026-06-13T22:15:00Z
 
+
+## T-2601 to T-2605 (sprint 26)
+- **Description:** Implement Intermediate Lesson 5 on Serialization and Parsing using serde and toml. Created the lesson directory structure, authored lesson.toml, wrote the starter and solution projects, and implemented the integration tests in rusty-host.
+- **Completed:** 2026-06-14T00:40:00Z
+

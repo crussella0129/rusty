@@ -1,0 +1,97 @@
+id = "intermediate-05-parsing"
+title = "Serialization & Parsing"
+track = "Intermediate"
+estimated_minutes = 30
+starter_project = "starter"
+solution_project = "solution"
+prereqs = ["intermediate-04-smart-pointers"]
+
+[[concepts]]
+id = "serde"
+name = "Serde"
+description = "A framework for serializing and deserializing Rust data structures efficiently and generically."
+
+[[concepts]]
+id = "derive-deserialize"
+name = "#[derive(Deserialize)]"
+description = "A procedural macro that automatically generates deserialization logic for a struct."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "When building applications like prompt managers or LLM tools, we often need to parse configuration blocks. A common format for this is TOML."
+
+[[steps.blocks]]
+kind = "prose"
+text = "In Rust, the defacto standard for parsing is the `serde` crate, along with format-specific crates like `toml`."
+
+[[steps]]
+[steps.exercise]
+kind = "predict_then_run"
+code = """use serde::Deserialize;
+
+#[derive(Deserialize, Debug)]
+struct PromptHeader {
+    name: String,
+    role: String,
+}
+
+fn main() {
+    let toml_str = r#"
+name = "System Prompt"
+"#;
+    
+    // What happens if we try to parse a TOML string that is missing a required field?
+    let result: Result<PromptHeader, _> = toml::from_str(toml_str);
+    println!("{:?}", result);
+}
+"""
+question = "What will this program output?"
+expected_output = "Err(Error { inner: ErrorInner { kind: MissingField(\"role\"), line: Some(1), col: 0 } })"
+explanation = "Since `role` is not an `Option`, it is a required field. `toml::from_str` correctly returns an error indicating the missing field."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Let's put this into practice! In your `starter` project, you have a `PromptHeader` struct, but it's missing the `#[derive(Deserialize)]` macro. You also need to implement the `parse_header` function."
+
+[[steps]]
+[steps.exercise]
+kind = "faded"
+prompt = "In `src/main.rs`, import `Deserialize` from `serde` and add `#[derive(Deserialize, Debug, PartialEq)]` to the `PromptHeader` struct. Then, implement `parse_header` by calling `toml::from_str`. Run Check when ready!"
+file_path = "src/main.rs"
+check_command = "cargo test parse_header"
+success_criterion = { kind = "cargo_test_passes" }
+hint = "Add `use serde::Deserialize;` at the top. Use `#[derive(Deserialize, Debug, PartialEq)]`. In `parse_header`, just return `toml::from_str(input)`."
+
+[[steps]]
+[[steps.blocks]]
+kind = "prose"
+text = "Great! You successfully parsed the TOML header."
+
+[[steps.blocks]]
+kind = "prose"
+text = "Often, some fields in our configurations are optional. For example, a prompt might specify a `temperature` for the LLM, but if it doesn't, we want to default to `None`."
+
+[[steps]]
+[steps.exercise]
+kind = "open"
+prompt = "In `src/main.rs`, add a `temperature` field of type `Option<f32>` to `PromptHeader`. Then, uncomment the `test_optional_temperature` test and run Check to verify it works!"
+check_command = "cargo test test_optional_temperature"
+success_criterion = { kind = "cargo_test_passes" }
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "What is the primary benefit of using `#[derive(Deserialize)]`?"
+choices = [
+    "It automatically converts Rust structs into JSON format.",
+    "It generates code to automatically map parsed data into our custom struct, saving us from writing manual parsing logic.",
+    "It tells the Rust compiler to ignore the struct during compilation.",
+    "It creates a dynamic parser that can parse any format at runtime."
+]
+answer_index = 1
+explanation = "The `derive` macro analyzes the fields of your struct and automatically writes the boilerplate needed to populate it from a serialized format."
+
+[[further_reading]]
+title = "Serde Documentation"
+url = "https://serde.rs/"
