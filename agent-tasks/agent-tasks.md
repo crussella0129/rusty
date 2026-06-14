@@ -76,3 +76,12 @@
 ## Sprint 28 (Advanced Curriculum Planning & Modularity)
 - [x] T-2801: Research and design the Advanced track lesson trajectory.
 - [x] T-2802: Analyze and refactor `rusty-host` content loading for modularity (allowing easy reordering and drop in/out of lessons).
+
+## Sprint 29 (Advanced Lesson 1 - Concurrency)
+- [x] T-2901: Create `advanced-01-concurrency` directory structure (`lesson.toml`, `starter`, `solution`).
+- [x] T-2902: Author `lesson.toml` teaching Threads, `Arc`, `Mutex`, and Channels.
+- [x] T-2903: Write the `starter` project with faded/open exercises.
+- [x] T-2904: Write the complete `solution` project.
+- [x] T-2905: Add `advanced-01-concurrency` to `content/manifest.toml`.
+- [x] T-2906: Create integration test `lesson_advanced1_grade.rs`.
+

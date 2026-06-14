@@ -1,0 +1,181 @@
+id = "advanced-01-concurrency"
+title = "Fearless Concurrency"
+track = "Advanced"
+estimated_minutes = 25
+prereqs = ["intermediate-06-diffing"]
+starter_project = "starter"
+solution_project = "solution"
+
+[[concepts]]
+id = "threads"
+claim = "You can run code simultaneously using standard OS threads."
+why_it_matters = "Concurrency unlocks multi-core CPU performance."
+common_misconception = "You don't need external crates for basic multi-threading; standard library `std::thread` is powerful."
+
+[[concepts]]
+id = "move_closures"
+claim = "Threads outlive their parents, so they must take ownership of the data they capture."
+why_it_matters = "The `move` keyword prevents data races where a thread tries to access memory that has been freed."
+
+[[concepts]]
+id = "channels"
+claim = "You can pass data safely between threads using `std::sync::mpsc` channels."
+why_it_matters = "Channels embrace the philosophy of 'Do not communicate by sharing memory; instead, share memory by communicating.'"
+
+[[concepts]]
+id = "arc_mutex"
+claim = "You can share memory safely across threads using `Arc<Mutex<T>>`."
+why_it_matters = "`Mutex` provides mutual exclusion so only one thread modifies data at a time, and `Arc` ensures the data lives until the last thread is done."
+
+# ----------------------------------------------------------------------------------
+# STEP 1: Basic Thread Spawning (Worked)
+# ----------------------------------------------------------------------------------
+[[steps]]
+
+[[steps.blocks]]
+kind = "prose"
+text = """
+Welcome to the Advanced track! It's time to unlock the full power of your CPU using **Fearless Concurrency**.
+
+In Rust, you spawn standard OS threads using `std::thread::spawn`. It takes a closure (a block of code to run).
+
+When you call `spawn`, the new thread runs independently. However, if the main thread finishes, the program shuts down immediately, stopping all spawned threads mid-execution! To prevent this, we save the `JoinHandle` returned by `spawn` and call `.join().unwrap()` on it to make the main thread wait for the spawned thread to finish.
+"""
+
+[steps.exercise]
+kind = "worked"
+prompt = "First, try spawning a simple thread."
+code = """
+use std::thread;
+use std::time::Duration;
+
+pub fn step_1() {
+    let handle = thread::spawn(|| {
+        println!("Hello from the spawned thread!");
+        thread::sleep(Duration::from_millis(50));
+    });
+
+    println!("Hello from the main thread!");
+
+    // Wait for the spawned thread to finish
+    handle.join().unwrap();
+}
+"""
+annotation = "Call `handle.join().unwrap()` to block until the thread finishes executing."
+
+# ----------------------------------------------------------------------------------
+# STEP 2: The `move` Keyword (Faded)
+# ----------------------------------------------------------------------------------
+[[steps]]
+hint = "Use the `move` keyword before your closure: `thread::spawn(move || { ... })`."
+
+[[steps.blocks]]
+kind = "prose"
+text = """
+What if you want your thread to use data from the main thread? 
+
+Because a thread might outlive the function that spawns it, Rust won't let a thread *borrow* local variables. The thread must take *ownership* of the data.
+
+You force the closure to take ownership by adding the `move` keyword before the closure's pipes: `move ||`.
+"""
+
+[steps.exercise]
+kind = "faded"
+prompt = "Look at `step_2()` in `src/main.rs`. A string is defined, but the compiler complains because the spawned thread tries to borrow it. Fix the code so the thread takes ownership of the string."
+file_path = "src/main.rs"
+check_command = "cargo test --bin advanced-01-concurrency test_step_2"
+success_criterion = { kind = "cargo_test_passes" }
+
+# ----------------------------------------------------------------------------------
+# STEP 3: Message Passing with Channels (Faded)
+# ----------------------------------------------------------------------------------
+[[steps]]
+hint = "Use `tx.send(message).unwrap()` inside the thread, and `rx.recv().unwrap()` in the main thread."
+
+[[steps.blocks]]
+kind = "prose"
+text = """
+Often, you want a thread to do some work and send the result back. Rust provides **channels** for this in `std::sync::mpsc` (Multi-Producer, Single-Consumer).
+
+```rust
+use std::sync::mpsc;
+
+let (tx, rx) = mpsc::channel();
+```
+
+The `tx` (transmitter) sends data, and the `rx` (receiver) receives it. 
+Since you want the thread to send the data, you `move` the transmitter into the thread, and keep the receiver in the main thread.
+"""
+
+[[steps.blocks]]
+kind = "callout"
+tone = "note"
+text = "`tx.send(...)` and `rx.recv()` can fail (e.g., if the other end of the channel has disconnected), so they return a `Result`. For now, we'll just `.unwrap()` them."
+
+[steps.exercise]
+kind = "faded"
+prompt = "Look at `step_3()`. We've created a channel. Inside the spawned thread, use the transmitter (`tx`) to send a string back to the main thread. In the main thread, use the receiver (`rx`) to get the message and return it."
+file_path = "src/main.rs"
+check_command = "cargo test --bin advanced-01-concurrency test_step_3"
+success_criterion = { kind = "cargo_test_passes" }
+
+# ----------------------------------------------------------------------------------
+# STEP 4: Shared State with Arc and Mutex (Open)
+# ----------------------------------------------------------------------------------
+[[steps]]
+hint = "Wrap the counter in `Arc::new(Mutex::new(0))`. Inside each thread, do `let mut num = counter.lock().unwrap(); *num += 1;`."
+
+[[steps.blocks]]
+kind = "prose"
+text = """
+Channels are great for transferring ownership of data. But what if multiple threads need to modify the exact same piece of data (like a shared counter)?
+
+To share data safely, we combine two powerful wrappers:
+1. `Mutex<T>` (Mutual Exclusion): Ensures only one thread can access the data at a time. You call `.lock().unwrap()` to get mutable access to the inner data.
+2. `Arc<T>` (Atomic Reference Counted): Allows multiple ownership across threads. You call `Arc::clone(&data)` to give a new thread a reference to the same data.
+
+```rust
+let data = Arc::new(Mutex::new(0));
+
+// Give the thread its own reference to the Arc
+let data_clone = Arc::clone(&data);
+thread::spawn(move || {
+    // Lock the mutex to modify the data safely
+    let mut num = data_clone.lock().unwrap();
+    *num += 1;
+});
+```
+"""
+
+[steps.exercise]
+kind = "open"
+prompt = "In `step_4()`, you'll implement a shared counter. Spawn 3 threads. Each thread should increment the shared counter exactly once. Wait for all threads to finish, then return the final value of the counter."
+check_command = "cargo test --bin advanced-01-concurrency test_step_4"
+success_criterion = { kind = "cargo_test_passes" }
+
+# ----------------------------------------------------------------------------------
+# STEP 5: Outro
+# ----------------------------------------------------------------------------------
+[[steps]]
+
+[[steps.blocks]]
+kind = "prose"
+text = """
+Congratulations! You just wrote multi-threaded code without a single data race!
+
+Rust's strict ownership rules naturally extend to concurrency. If your concurrent code compiles, it's generally free of data races. This is why Rust's concurrency is known as **Fearless Concurrency**.
+
+Next up, we'll dive into `async`/`await` and the `tokio` runtime to write high-performance asynchronous servers!
+"""
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "Why do we typically use the `move` keyword when spawning a thread?"
+choices = [
+    "To make the thread run faster.",
+    "To force the thread closure to take ownership of the variables it uses.",
+    "To move the thread to a different CPU core.",
+    "To send a message over a channel."
+]
+answer_index = 1
+explanation = "Threads might outlive their parent, so they cannot safely borrow local variables. `move` forces them to take ownership."

@@ -392,3 +392,8 @@
 - **Description:** Planned the Advanced Track curriculum (Concurrency, Async, Macros, Unsafe, Architecture) and refactored rusty-app to dynamically load its curriculum array from content/manifest.toml rather than a hardcoded source, enabling modularity.
 - **Completed:** 2026-06-14T15:10:00Z
 
+
+## T-2901 to T-2906 (sprint 29)
+- **Description:** Implemented Advanced Lesson 1 (Fearless Concurrency) featuring standard threads, move closures, mpsc channels, and Arc/Mutex for shared state. Added to manifest and verified with grading tests.
+- **Completed:** 2026-06-14T23:00:00Z
+
