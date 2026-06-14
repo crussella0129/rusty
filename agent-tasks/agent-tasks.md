@@ -73,12 +73,9 @@
 
 
 
-## Sprint 26 (Intermediate Lesson 5 - Serialization & Parsing)
-- [ ] T-2601: Create `intermediate-05-parsing` lesson directory structure (`lesson.toml`, `starter`, `solution`).
-- [ ] T-2602: Author `lesson.toml` with concepts, prose, and exercises focusing on `serde` and `toml`.
-- [ ] T-2603: Write the `starter` project.
-- [ ] T-2604: Write the complete `solution` project.
-- [ ] T-2605: Create integration test `lesson_intermediate5_grade.rs`.
-
 ## Sprint 27 (Intermediate Lesson 6 - Advanced Diffing Climax)
-- [ ] T-2701: Implement `intermediate-06-diffing` (full +/- diffing with positional change awareness).
+- [ ] T-2701: Create `intermediate-06-diffing` lesson directory structure (`lesson.toml`, `starter`, `solution`).
+- [ ] T-2702: Author `lesson.toml` with concepts, prose, and exercises focusing on LCS matrix generation and diff backtracking.
+- [ ] T-2703: Write the `starter` project.
+- [ ] T-2704: Write the complete `solution` project.
+- [ ] T-2705: Create integration test `lesson_intermediate6_grade.rs`.

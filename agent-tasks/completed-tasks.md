@@ -382,3 +382,8 @@
 - **Description:** Implement Intermediate Lesson 5 on Serialization and Parsing using serde and toml. Created the lesson directory structure, authored lesson.toml, wrote the starter and solution projects, and implemented the integration tests in rusty-host.
 - **Completed:** 2026-06-14T00:40:00Z
 
+
+## T-2701 to T-2705 (sprint 27)
+- **Description:** Implement Intermediate Lesson 6 on Advanced Diffing using Longest Common Subsequence (LCS). Created the lesson directory structure, authored lesson.toml, wrote the starter and solution projects, and implemented the integration tests in rusty-host.
+- **Completed:** 2026-06-14T14:55:00Z
+
