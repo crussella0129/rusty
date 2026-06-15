@@ -1,0 +1,169 @@
+id = "advanced-02-async"
+title = "Async Rust"
+track = "Advanced"
+estimated_minutes = 25
+prereqs = ["advanced-01-concurrency"]
+starter_project = "starter"
+solution_project = "solution"
+
+[[concepts]]
+id = "futures"
+claim = "Rust's async operations return a `Future`, which does nothing until polled."
+why_it_matters = "Unlike other languages, Rust futures are *lazy*. If you don't await them, the code never executes!"
+common_misconception = "You can't just call an async function and expect it to run in the background; you must `await` it or spawn it."
+
+[[concepts]]
+id = "await"
+claim = "You use the `.await` keyword to yield execution back to the runtime while waiting."
+why_it_matters = "While one task is waiting on I/O, `.await` allows the runtime to run another task on the same CPU thread."
+
+[[concepts]]
+id = "tokio"
+claim = "Rust doesn't include an async runtime in its standard library; we use `tokio`."
+why_it_matters = "`tokio` provides the event loop, thread pool, and asynchronous I/O operations (like networking and sleep) that make `async` work."
+
+# ----------------------------------------------------------------------------------
+# STEP 1: Basic async fn and #[tokio::main] (Worked)
+# ----------------------------------------------------------------------------------
+[[steps]]
+
+[[steps.blocks]]
+kind = "prose"
+text = """
+Welcome to Async Rust! Standard threads (`std::thread`) are great for CPU-heavy work, but they are heavy. A single OS thread uses memory (a stack) and takes time to context switch. If you have 10,000 network connections open, spawning 10,000 OS threads will crash your server!
+
+**Asynchronous programming** solves this. Instead of a full thread, you spawn a lightweight "Task". When a Task hits an I/O operation (like waiting for a database), it yields the CPU back to an **Async Runtime**, allowing another Task to run on the same OS thread.
+
+To use `async`, we need an Async Runtime. We've added **`tokio`** to our `Cargo.toml`. `tokio` is the industry standard runtime for Rust.
+
+To make our `main` function async, we add `async fn` and use the `#[tokio::main]` macro to automatically set up the Tokio runtime for us!
+"""
+
+[steps.exercise]
+kind = "worked"
+prompt = "First, try calling an async function from our async main function."
+code = """
+async fn say_hello() {
+    println!("Hello from an async function!");
+}
+
+#[tokio::main]
+pub async fn step_1() {
+    println!("Starting step 1...");
+    // Calling the function returns a Future. 
+    // We MUST `.await` it for the code inside it to actually run!
+    say_hello().await;
+}
+"""
+annotation = "Always remember to `.await` your async functions."
+
+# ----------------------------------------------------------------------------------
+# STEP 2: The `.await` Keyword (Faded)
+# ----------------------------------------------------------------------------------
+[[steps]]
+hint = "Add `.await` to the end of the `tokio::time::sleep(...)` call."
+
+[[steps.blocks]]
+kind = "prose"
+text = """
+Because Rust's futures are **lazy**, calling an `async fn` doesn't do anything by itself. It just creates a state machine describing what *will* happen.
+
+If you compile code that calls an `async fn` without awaiting it, the Rust compiler will warn you: `warning: unused implementer of Future that must be used`.
+
+To actually run the future and wait for its result, you postfix it with `.await`.
+"""
+
+[steps.exercise]
+kind = "faded"
+prompt = "Look at `step_2()` in `src/main.rs`. We're trying to sleep for 50 milliseconds using `tokio::time::sleep`, which is an async function. But the compiler warns us that the `Future` is unused. Fix it by `.await`ing the sleep!"
+file_path = "src/main.rs"
+check_command = "cargo test --bin advanced-02-async test_step_2"
+success_criterion = { kind = "cargo_test_passes" }
+
+# ----------------------------------------------------------------------------------
+# STEP 3: Spawning Tasks (Faded)
+# ----------------------------------------------------------------------------------
+[[steps]]
+hint = "Use `tokio::spawn(async move { ... })` and save the returned `JoinHandle` to your `handles` vector."
+
+[[steps.blocks]]
+kind = "prose"
+text = """
+`.await` pauses the *current* task. What if we want to run multiple tasks at the exact same time?
+
+Just like `std::thread::spawn`, we can use `tokio::spawn` to spin up a new concurrent task! `tokio::spawn` takes an `async` block instead of a regular closure.
+
+```rust
+let handle = tokio::spawn(async move {
+    // This code runs concurrently in the background!
+    do_work().await;
+});
+
+// Await the handle to ensure it finishes before we move on
+handle.await.unwrap();
+```
+"""
+
+[[steps.blocks]]
+kind = "callout"
+tone = "note"
+text = "Because `tokio::spawn` creates a new task that might outlive the current one, it requires the `async move { }` block to take ownership of captured variables, just like OS threads!"
+
+[steps.exercise]
+kind = "faded"
+prompt = "Look at `step_3()`. We want to spawn 3 concurrent tasks that each print a message. Use `tokio::spawn` with an `async move { }` block to spawn the tasks."
+file_path = "src/main.rs"
+check_command = "cargo test --bin advanced-02-async test_step_3"
+success_criterion = { kind = "cargo_test_passes" }
+
+# ----------------------------------------------------------------------------------
+# STEP 4: Joining Multiple Futures (Open)
+# ----------------------------------------------------------------------------------
+[[steps]]
+hint = "You can either spawn 3 separate tasks and await their handles, or use the `tokio::join!` macro to await all 3 futures concurrently on the same task."
+
+[[steps.blocks]]
+kind = "prose"
+text = """
+Spawning tasks is great when you need background workers. But sometimes you just want to run a few network requests concurrently and wait for all of them to finish.
+
+For that, you can use the `tokio::join!` macro. It takes multiple futures and runs them concurrently on the *same* task, returning a tuple of their results when they're all done!
+
+```rust
+let (res1, res2) = tokio::join!(
+    fetch_url("google.com"),
+    fetch_url("rust-lang.org")
+);
+```
+"""
+
+[steps.exercise]
+kind = "open"
+prompt = "In `step_4()`, we have an async function `fetch_url`. We need to fetch 3 URLs concurrently. Use either `tokio::spawn` or `tokio::join!` to fetch all 3 URLs at the same time, then return a vector containing the 3 responses."
+check_command = "cargo test --bin advanced-02-async test_step_4"
+success_criterion = { kind = "cargo_test_passes" }
+
+# ----------------------------------------------------------------------------------
+# STEP 5: Outro
+# ----------------------------------------------------------------------------------
+[[steps]]
+
+[[steps.blocks]]
+kind = "prose"
+text = """
+Awesome! You've successfully conquered Async Rust. You know how to `.await` futures, `tokio::spawn` lightweight background tasks, and execute things concurrently.
+
+With the power of Tokio, your Rust applications can easily handle tens of thousands of concurrent connections on a single server, blowing Python, Ruby, and Node out of the water!
+"""
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "Why does an `async fn` do absolutely nothing if you forget to `.await` it?"
+choices = [
+    "Because the compiler strips out un-awaited functions.",
+    "Because Rust futures are lazy; they are just state machines that require polling.",
+    "Because it runs in the background silently.",
+    "Because it causes a runtime panic."
+]
+answer_index = 1
+explanation = "Unlike Javascript Promises which start running immediately, Rust Futures are lazy. They do nothing until they are `.await`ed or explicitly spawned."

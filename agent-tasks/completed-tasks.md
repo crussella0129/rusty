@@ -397,3 +397,8 @@
 - **Description:** Implemented Advanced Lesson 1 (Fearless Concurrency) featuring standard threads, move closures, mpsc channels, and Arc/Mutex for shared state. Added to manifest and verified with grading tests.
 - **Completed:** 2026-06-14T23:00:00Z
 
+
+## T-3001 to T-3006 (sprint 30)
+- **Description:** Implemented Advanced Lesson 2 (Async Rust) teaching async/await, futures, and the Tokio runtime. Tested fading out .await, spawning Tokio tasks, and joining concurrent I/O futures.
+- **Completed:** 2026-06-15T04:30:00Z
+

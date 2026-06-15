@@ -85,3 +85,11 @@
 - [x] T-2905: Add `advanced-01-concurrency` to `content/manifest.toml`.
 - [x] T-2906: Create integration test `lesson_advanced1_grade.rs`.
 
+
+## Sprint 30 (Advanced Lesson 2 - Async Rust)
+- [x] T-3001: Create `advanced-02-async` directory structure (`lesson.toml`, `starter`, `solution`).
+- [x] T-3002: Author `lesson.toml` teaching async/await and Tokio.
+- [x] T-3003: Write the `starter` project with faded/open exercises.
+- [x] T-3004: Write the complete `solution` project.
+- [x] T-3005: Add `advanced-02-async` to `content/manifest.toml`.
+- [x] T-3006: Create integration test `lesson_advanced2_grade.rs`.

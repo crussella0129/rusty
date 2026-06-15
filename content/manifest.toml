@@ -17,5 +17,6 @@ lessons = [
     "intermediate-04-smart-pointers",
     "intermediate-05-parsing",
     "intermediate-06-diffing",
-    "advanced-01-concurrency"
+    "advanced-01-concurrency",
+    "advanced-02-async"
 ]
