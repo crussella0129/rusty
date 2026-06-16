@@ -44,11 +44,7 @@ fn copy_dir(src: &Path, dst: &Path) {
 #[test]
 fn test_intermediate5_starter_fails() {
     let sandbox = sandbox_from("starter", "starter_fail");
-    let verdict = grade(
-        &sandbox,
-        &SuccessCriterion::CargoTestPasses,
-    )
-    .unwrap();
+    let verdict = grade(&sandbox, &SuccessCriterion::CargoTestPasses).unwrap();
     assert!(
         matches!(verdict, Verdict::TestsFailed | Verdict::CompileError { .. }),
         "expected failure for starter, got {:?}",
@@ -60,11 +56,7 @@ fn test_intermediate5_starter_fails() {
 #[test]
 fn test_intermediate5_step2_faded_solution_passes() {
     let sandbox = sandbox_from("solution", "sol_step2");
-    let verdict = grade(
-        &sandbox,
-        &SuccessCriterion::CargoTestPasses,
-    )
-    .unwrap();
+    let verdict = grade(&sandbox, &SuccessCriterion::CargoTestPasses).unwrap();
     assert_eq!(verdict, Verdict::Pass);
     std::fs::remove_dir_all(&sandbox).ok();
 }
@@ -72,11 +64,7 @@ fn test_intermediate5_step2_faded_solution_passes() {
 #[test]
 fn test_intermediate5_step3_open_solution_passes() {
     let sandbox = sandbox_from("solution", "sol_step3");
-    let verdict = grade(
-        &sandbox,
-        &SuccessCriterion::CargoTestPasses,
-    )
-    .unwrap();
+    let verdict = grade(&sandbox, &SuccessCriterion::CargoTestPasses).unwrap();
     assert_eq!(verdict, Verdict::Pass);
     std::fs::remove_dir_all(&sandbox).ok();
 }

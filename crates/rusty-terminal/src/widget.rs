@@ -67,7 +67,12 @@ pub fn terminal_ui(
 
     if response.has_focus() {
         let border_color = ui.visuals().hyperlink_color;
-        painter.rect_stroke(rect.shrink(1.0), 0.0, egui::Stroke::new(1.5, border_color), egui::StrokeKind::Inside);
+        painter.rect_stroke(
+            rect.shrink(1.0),
+            0.0,
+            egui::Stroke::new(1.5, border_color),
+            egui::StrokeKind::Inside,
+        );
     }
 
     for r in 0..grid.rows {

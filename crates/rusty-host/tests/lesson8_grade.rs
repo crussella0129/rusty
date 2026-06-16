@@ -43,7 +43,8 @@ fn copy_dir(src: &Path, dst: &Path) {
 }
 
 const STEP2_EXPECTED: &str = "New items: Purple";
-const STEP3_EXPECTED: &str = "New items: Purple\nCombined uniques: Blue~Green~Orange~Purple~Red~Yellow";
+const STEP3_EXPECTED: &str =
+    "New items: Purple\nCombined uniques: Blue~Green~Orange~Purple~Red~Yellow";
 const STEP4_EXPECTED: &str = "New items: Purple\nCombined uniques: Blue~Green~Orange~Purple~Red~Yellow\nFull diff: +Purple~-Orange";
 const STEP5_EXPECTED: &str = "New items: Purple\nCombined uniques: Blue~Green~Orange~Purple~Red~Yellow\nFull diff: +Purple~-Orange\nPositional diff: +Purple@3~-Orange@1~>Green@3->2~>Yellow@2->1";
 
@@ -69,7 +70,7 @@ fn test_lesson8_step2_faded_solution_passes() {
     let sandbox = sandbox_from("solution", "sol_step2");
     let main_path = sandbox.join("src/main.rs");
     let content = std::fs::read_to_string(&main_path).unwrap();
-    
+
     // Comment out everything from Step 3 onwards
     let pruned = comment_out_from(&content, "// (Open - Step 3)");
     std::fs::write(&main_path, pruned).unwrap();
@@ -90,7 +91,7 @@ fn test_lesson8_step3_open_solution_passes() {
     let sandbox = sandbox_from("solution", "sol_step3");
     let main_path = sandbox.join("src/main.rs");
     let content = std::fs::read_to_string(&main_path).unwrap();
-    
+
     // Comment out everything from Step 4 onwards
     let pruned = comment_out_from(&content, "// (Faded - Step 4)");
     std::fs::write(&main_path, pruned).unwrap();
@@ -111,7 +112,7 @@ fn test_lesson8_step4_faded_solution_passes() {
     let sandbox = sandbox_from("solution", "sol_step4");
     let main_path = sandbox.join("src/main.rs");
     let content = std::fs::read_to_string(&main_path).unwrap();
-    
+
     // Comment out everything from Step 5 onwards
     let pruned = comment_out_from(&content, "// (Open - Step 5)");
     std::fs::write(&main_path, pruned).unwrap();
@@ -144,7 +145,7 @@ fn test_lesson8_step5_open_solution_passes() {
 #[test]
 fn test_lesson8_starter_fails() {
     let sandbox = sandbox_from("starter", "starter_fail");
-    
+
     // Test that the unmodified starter fails Step 2
     let verdict = grade(
         &sandbox,

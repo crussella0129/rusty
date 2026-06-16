@@ -40,7 +40,7 @@ impl Default for ReviewState {
 /// `current_lesson_index` is the number of lessons completed by the learner.
 pub fn grade_review(state: &ReviewState, quality: u8, current_lesson_index: u64) -> ReviewState {
     let quality = quality.clamp(0, 5);
-    
+
     let mut ease = state.ease;
     let mut interval_lessons = state.interval_lessons;
 

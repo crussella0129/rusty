@@ -94,7 +94,14 @@ pub fn render(
                 if let Some(exercise) = &step.exercise {
                     egui::Frame::group(ui.style()).show(ui, |ui| {
                         let focus_this_ex = request_focus && i == visible - 1;
-                        let c = exercise_view::render_exercise(ui, i, exercise, ex_state, checking, focus_this_ex);
+                        let c = exercise_view::render_exercise(
+                            ui,
+                            i,
+                            exercise,
+                            ex_state,
+                            checking,
+                            focus_this_ex,
+                        );
                         if let Some(paired) = pair_check(i, c) {
                             step_action.check = Some(paired);
                         }
@@ -142,12 +149,20 @@ pub fn render(
 }
 
 /// Render the recall prompt as an interactive review.
-pub fn render_recall(ui: &mut egui::Ui, recall: &RecallPrompt, state: &mut crate::AppRecallState, request_focus: bool) -> bool {
+pub fn render_recall(
+    ui: &mut egui::Ui,
+    recall: &RecallPrompt,
+    state: &mut crate::AppRecallState,
+    request_focus: bool,
+) -> bool {
     ui.label(crate::theme::section_label(voice::RECALL_HEADING));
     let mut just_passed = false;
     match recall {
         RecallPrompt::MultipleChoice {
-            question, choices, answer_index, explanation
+            question,
+            choices,
+            answer_index,
+            explanation,
         } => {
             markdown::render_markdown(ui, question);
             for (i, choice) in choices.iter().enumerate() {
@@ -165,35 +180,55 @@ pub fn render_recall(ui: &mut egui::Ui, recall: &RecallPrompt, state: &mut crate
             }
             if state.attempts > 0 {
                 if state.passed {
-                    ui.label(egui::RichText::new("Correct!").color(egui::Color32::from_rgb(0x4c, 0xaf, 0x50)));
+                    ui.label(
+                        egui::RichText::new("Correct!")
+                            .color(egui::Color32::from_rgb(0x4c, 0xaf, 0x50)),
+                    );
                     markdown::render_markdown(ui, explanation);
                 } else {
-                    ui.label(egui::RichText::new("Not quite right, try again.").color(egui::Color32::from_rgb(0xf4, 0x43, 0x36)));
+                    ui.label(
+                        egui::RichText::new("Not quite right, try again.")
+                            .color(egui::Color32::from_rgb(0xf4, 0x43, 0x36)),
+                    );
                 }
             }
         }
-        RecallPrompt::ShortAnswer { question, expected, explanation } => {
+        RecallPrompt::ShortAnswer {
+            question,
+            expected,
+            explanation,
+        } => {
             markdown::render_markdown(ui, question);
             let response = ui.add(
                 egui::TextEdit::singleline(&mut state.typed_answer)
-                    .id_source("recall_short_answer")
+                    .id_source("recall_short_answer"),
             );
             if request_focus {
                 response.request_focus();
             }
             if !state.passed && ui.button("Submit").clicked() {
                 state.attempts += 1;
-                if state.typed_answer.trim().eq_ignore_ascii_case(expected.trim()) {
+                if state
+                    .typed_answer
+                    .trim()
+                    .eq_ignore_ascii_case(expected.trim())
+                {
                     state.passed = true;
                     just_passed = true;
                 }
             }
             if state.attempts > 0 {
                 if state.passed {
-                    ui.label(egui::RichText::new("Correct!").color(egui::Color32::from_rgb(0x4c, 0xaf, 0x50)));
+                    ui.label(
+                        egui::RichText::new("Correct!")
+                            .color(egui::Color32::from_rgb(0x4c, 0xaf, 0x50)),
+                    );
                     markdown::render_markdown(ui, explanation);
                 } else {
-                    ui.label(egui::RichText::new("Not quite right, try again.").color(egui::Color32::from_rgb(0xf4, 0x43, 0x36)));
+                    ui.label(
+                        egui::RichText::new("Not quite right, try again.")
+                            .color(egui::Color32::from_rgb(0xf4, 0x43, 0x36)),
+                    );
                 }
             }
         }
@@ -360,11 +395,27 @@ mod tests {
         }
         headless(|ui| {
             let mut recall_state = crate::AppRecallState::default();
-            let _ = render(ui, &lesson, &fresh, &mut ex_state, &mut recall_state, false, false);
+            let _ = render(
+                ui,
+                &lesson,
+                &fresh,
+                &mut ex_state,
+                &mut recall_state,
+                false,
+                false,
+            );
         });
         headless(|ui| {
             let mut recall_state = crate::AppRecallState::default();
-            let _ = render(ui, &lesson, &complete, &mut ex_state, &mut recall_state, false, false);
+            let _ = render(
+                ui,
+                &lesson,
+                &complete,
+                &mut ex_state,
+                &mut recall_state,
+                false,
+                false,
+            );
         });
     }
 
@@ -416,7 +467,15 @@ mod tests {
         );
         headless(|ui| {
             let mut recall_state = crate::AppRecallState::default();
-            let _ = render(ui, &lesson, &fresh, &mut ex_state, &mut recall_state, false, false);
+            let _ = render(
+                ui,
+                &lesson,
+                &fresh,
+                &mut ex_state,
+                &mut recall_state,
+                false,
+                false,
+            );
         });
     }
 
@@ -440,7 +499,15 @@ mod tests {
         for _ in 0..2 {
             let _ = ctx.run_ui(input.clone(), |ui| {
                 let mut recall_state = crate::AppRecallState::default();
-                let _ = render(ui, &lesson, &progress, &mut ex_state, &mut recall_state, false, false);
+                let _ = render(
+                    ui,
+                    &lesson,
+                    &progress,
+                    &mut ex_state,
+                    &mut recall_state,
+                    false,
+                    false,
+                );
             });
         }
         // The same id/target the render uses → the opacity factor it applied is in [0,1].
@@ -525,7 +592,15 @@ mod tests {
         let progress = LessonProgress::new(lesson.steps.len());
         headless(|ui| {
             let mut recall_state = crate::AppRecallState::default();
-            let _ = render(ui, &lesson, &progress, &mut ex_state, &mut recall_state, false, false);
+            let _ = render(
+                ui,
+                &lesson,
+                &progress,
+                &mut ex_state,
+                &mut recall_state,
+                false,
+                false,
+            );
         });
     }
 
@@ -600,12 +675,28 @@ mod tests {
         let mut progress = LessonProgress::new(lesson.steps.len());
         headless(|ui| {
             let mut recall_state = crate::AppRecallState::default();
-            let _ = render(ui, &lesson, &progress, &mut ex_state, &mut recall_state, false, false); // attempts 0: hidden
+            let _ = render(
+                ui,
+                &lesson,
+                &progress,
+                &mut ex_state,
+                &mut recall_state,
+                false,
+                false,
+            ); // attempts 0: hidden
         });
         progress.apply(0, &rusty_grader::Verdict::TestsFailed); // attempts[0] = 1
         headless(|ui| {
             let mut recall_state = crate::AppRecallState::default();
-            let _ = render(ui, &lesson, &progress, &mut ex_state, &mut recall_state, false, false); // tip now shown
+            let _ = render(
+                ui,
+                &lesson,
+                &progress,
+                &mut ex_state,
+                &mut recall_state,
+                false,
+                false,
+            ); // tip now shown
         });
     }
 }

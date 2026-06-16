@@ -61,11 +61,7 @@ fn comment_out_from(content: &str, tag: &str) -> String {
 #[test]
 fn test_intermediate6_starter_fails() {
     let sandbox = sandbox_from("starter", "starter_fail");
-    let verdict = grade(
-        &sandbox,
-        &SuccessCriterion::CargoTestPasses,
-    )
-    .unwrap();
+    let verdict = grade(&sandbox, &SuccessCriterion::CargoTestPasses).unwrap();
     assert!(
         matches!(verdict, Verdict::TestsFailed | Verdict::CompileError { .. }),
         "expected failure for starter, got {:?}",
@@ -77,18 +73,14 @@ fn test_intermediate6_starter_fails() {
 #[test]
 fn test_intermediate6_step2_faded_solution_passes() {
     let sandbox = sandbox_from("solution", "sol_step2");
-    
+
     // We comment out the Step 3 test to ensure we only grade Step 2.
     let main_path = sandbox.join("src/main.rs");
     let content = std::fs::read_to_string(&main_path).unwrap();
     let pruned = comment_out_from(&content, "    #[test]\n    fn test_compute_diff()");
     std::fs::write(&main_path, pruned).unwrap();
 
-    let verdict = grade(
-        &sandbox,
-        &SuccessCriterion::CargoTestPasses,
-    )
-    .unwrap();
+    let verdict = grade(&sandbox, &SuccessCriterion::CargoTestPasses).unwrap();
     assert_eq!(verdict, Verdict::Pass);
     std::fs::remove_dir_all(&sandbox).ok();
 }
@@ -96,11 +88,7 @@ fn test_intermediate6_step2_faded_solution_passes() {
 #[test]
 fn test_intermediate6_step3_open_solution_passes() {
     let sandbox = sandbox_from("solution", "sol_step3");
-    let verdict = grade(
-        &sandbox,
-        &SuccessCriterion::CargoTestPasses,
-    )
-    .unwrap();
+    let verdict = grade(&sandbox, &SuccessCriterion::CargoTestPasses).unwrap();
     assert_eq!(verdict, Verdict::Pass);
     std::fs::remove_dir_all(&sandbox).ok();
 }

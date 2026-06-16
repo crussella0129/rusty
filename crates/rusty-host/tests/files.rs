@@ -37,11 +37,7 @@ fn test_list_files_skips_target() {
 
     let files = list_sandbox_files(&sandbox).unwrap();
 
-    assert_eq!(
-        files.len(),
-        3,
-        "exactly the three source files: {files:?}"
-    );
+    assert_eq!(files.len(), 3, "exactly the three source files: {files:?}");
     assert!(files.iter().any(|p| p.ends_with("main.rs")));
     assert!(files.iter().any(|p| p.ends_with("t.rs")));
     assert!(files.iter().any(|p| p.ends_with("Cargo.toml")));

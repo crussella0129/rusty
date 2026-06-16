@@ -66,16 +66,12 @@ fn test_intermediate3_step2_faded_solution_passes() {
     let sandbox = sandbox_from("solution", "sol_step2");
     let main_path = sandbox.join("src/main.rs");
     let content = std::fs::read_to_string(&main_path).unwrap();
-    
+
     // Comment out everything from Step 3 onwards
     let pruned = comment_out_from(&content, "// Step 3 validation");
     std::fs::write(&main_path, pruned).unwrap();
 
-    let verdict = grade(
-        &sandbox,
-        &SuccessCriterion::CargoTestPasses,
-    )
-    .unwrap();
+    let verdict = grade(&sandbox, &SuccessCriterion::CargoTestPasses).unwrap();
     assert_eq!(verdict, Verdict::Pass);
     std::fs::remove_dir_all(&sandbox).ok();
 }
@@ -97,13 +93,9 @@ fn test_intermediate3_step3_open_solution_passes() {
 #[test]
 fn test_intermediate3_starter_fails() {
     let sandbox = sandbox_from("starter", "starter_fail");
-    
+
     // Test that the unmodified starter fails Step 2
-    let verdict = grade(
-        &sandbox,
-        &SuccessCriterion::CargoTestPasses,
-    )
-    .unwrap();
+    let verdict = grade(&sandbox, &SuccessCriterion::CargoTestPasses).unwrap();
     assert!(
         matches!(verdict, Verdict::TestsFailed | Verdict::CompileError { .. }),
         "expected TestsFailed or CompileError for starter, got {:?}",

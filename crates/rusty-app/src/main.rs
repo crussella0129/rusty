@@ -25,7 +25,7 @@ use rusty_curriculum::{Lesson, SuccessCriterion};
 use rusty_grader::{annotate, Annotation, Verdict};
 use rusty_host::{
     default_shell, is_sandbox_healthy, load_lesson, prepare_sandbox, resolve_cd, CdOutcome,
-    PtySession, LspSession,
+    LspSession, PtySession,
 };
 use rusty_terminal::{terminal_ui, Terminal};
 
@@ -163,8 +163,6 @@ fn fallback_sandbox() -> PathBuf {
     root
 }
 
-
-
 #[derive(PartialEq, Eq)]
 enum AppMode {
     DueReviews,
@@ -230,17 +228,23 @@ struct RustyApp {
 impl RustyApp {
     fn new(cc: &eframe::CreationContext<'_>) -> Self {
         egui_extras::install_image_loaders(&cc.egui_ctx);
-        let persistent_state = state::PersistentState::load(&state::PersistentState::default_path());
+        let persistent_state =
+            state::PersistentState::load(&state::PersistentState::default_path());
 
         let cwd0 = std::env::current_dir().unwrap_or_default();
         let content_root = cwd0.join("content");
-        
-        let manifest = rusty_host::load_manifest(&content_root)
-            .expect("Failed to load content/manifest.toml");
 
-        let active_lesson_id = manifest.lessons
+        let manifest =
+            rusty_host::load_manifest(&content_root).expect("Failed to load content/manifest.toml");
+
+        let active_lesson_id = manifest
+            .lessons
             .iter()
-            .find(|id| !persistent_state.completed_lessons.contains(&rusty_curriculum::LessonId(id.to_string())))
+            .find(|id| {
+                !persistent_state
+                    .completed_lessons
+                    .contains(&rusty_curriculum::LessonId(id.to_string()))
+            })
             .unwrap_or(manifest.lessons.last().unwrap());
 
         let active_lesson_rel = format!("content/lessons/{}", active_lesson_id);
@@ -293,8 +297,15 @@ impl RustyApp {
         let progress = LessonProgress::new(lesson.as_ref().map(|l| l.steps.len()).unwrap_or(0));
 
         let current_lesson_index = persistent_state.current_lesson_index;
-        let has_due_reviews = persistent_state.concept_reviews.values().any(|r| r.due_at_lesson <= current_lesson_index);
-        let app_mode = if has_due_reviews { AppMode::DueReviews } else { AppMode::Lesson };
+        let has_due_reviews = persistent_state
+            .concept_reviews
+            .values()
+            .any(|r| r.due_at_lesson <= current_lesson_index);
+        let app_mode = if has_due_reviews {
+            AppMode::DueReviews
+        } else {
+            AppMode::Lesson
+        };
 
         Self {
             term: Terminal::new(INIT_ROWS, INIT_COLS),
@@ -422,9 +433,13 @@ impl eframe::App for RustyApp {
         ui.input_mut(|i| {
             if i.consume_key(egui::Modifiers::ALT, egui::Key::L) || i.key_pressed(egui::Key::F1) {
                 self.focus_request = Some(FocusTarget::Lesson);
-            } else if i.consume_key(egui::Modifiers::ALT, egui::Key::E) || i.key_pressed(egui::Key::F2) {
+            } else if i.consume_key(egui::Modifiers::ALT, egui::Key::E)
+                || i.key_pressed(egui::Key::F2)
+            {
                 self.focus_request = Some(FocusTarget::Editor);
-            } else if i.consume_key(egui::Modifiers::ALT, egui::Key::T) || i.key_pressed(egui::Key::F3) {
+            } else if i.consume_key(egui::Modifiers::ALT, egui::Key::T)
+                || i.key_pressed(egui::Key::F3)
+            {
                 self.focus_request = Some(FocusTarget::Terminal);
             }
         });
@@ -477,7 +492,12 @@ impl eframe::App for RustyApp {
                                 ui.label("You have concepts due for review before continuing.");
                                 ui.add_space(8.0);
                                 if let Some(lesson) = &self.lesson {
-                                    if lesson_view::render_recall(ui, &lesson.recall_prompt, &mut self.recall_state, req_focus) {
+                                    if lesson_view::render_recall(
+                                        ui,
+                                        &lesson.recall_prompt,
+                                        &mut self.recall_state,
+                                        req_focus,
+                                    ) {
                                         action.recall_passed = true;
                                     }
                                 }
@@ -495,7 +515,10 @@ impl eframe::App for RustyApp {
                                 } else {
                                     ui.heading(voice::LESSON_PANE_TITLE);
                                     ui.separator();
-                                    ui.colored_label(egui::Color32::LIGHT_RED, voice::LESSON_LOAD_ERROR);
+                                    ui.colored_label(
+                                        egui::Color32::LIGHT_RED,
+                                        voice::LESSON_LOAD_ERROR,
+                                    );
                                     if let Some(err) = &self.load_error {
                                         ui.label(egui::RichText::new(err).small().weak());
                                     }
@@ -536,17 +559,30 @@ impl eframe::App for RustyApp {
             self.mascot.handle_recall_passed();
             if let Some(lesson) = &self.lesson {
                 let current_lesson_index = self.persistent_state.current_lesson_index;
-                let quality = if self.recall_state.attempts <= 1 { 5 } else if self.recall_state.attempts == 2 { 3 } else { 1 };
+                let quality = if self.recall_state.attempts <= 1 {
+                    5
+                } else if self.recall_state.attempts == 2 {
+                    3
+                } else {
+                    1
+                };
                 for concept in &lesson.concepts {
-                    self.persistent_state.update_review(concept.id.clone(), quality, current_lesson_index);
+                    self.persistent_state.update_review(
+                        concept.id.clone(),
+                        quality,
+                        current_lesson_index,
+                    );
                 }
-                
+
                 if !self.persistent_state.completed_lessons.contains(&lesson.id) {
-                    self.persistent_state.completed_lessons.insert(lesson.id.clone());
+                    self.persistent_state
+                        .completed_lessons
+                        .insert(lesson.id.clone());
                     self.persistent_state.current_lesson_index += 1;
                 }
-                
-                self.persistent_state.save(&state::PersistentState::default_path());
+
+                self.persistent_state
+                    .save(&state::PersistentState::default_path());
             }
             if self.app_mode == AppMode::DueReviews {
                 self.app_mode = AppMode::Lesson;

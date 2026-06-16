@@ -15,12 +15,11 @@ pub mod lsp;
 pub mod pty;
 pub mod sandbox;
 
-
-pub use content::{is_sandbox_healthy, load_manifest, load_lesson, prepare_sandbox};
+pub use content::{is_sandbox_healthy, load_lesson, load_manifest, prepare_sandbox};
 pub use files::{list_sandbox_files, read_sandbox_file, write_sandbox_file};
 pub use grade::{grade, run_cargo_run, run_cargo_test};
-pub use pty::PtySession;
 pub use lsp::LspSession;
+pub use pty::PtySession;
 // Re-exported so callers (and integration tests) can name the verdict type.
 
 pub use rusty_grader::Verdict;

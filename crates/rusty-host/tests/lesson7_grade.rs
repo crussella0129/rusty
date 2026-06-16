@@ -50,7 +50,7 @@ fn test_lesson7_faded_solution_passes() {
     let sandbox = sandbox_from("solution", "sol_faded");
     let main_path = sandbox.join("src/main.rs");
     let content = std::fs::read_to_string(&main_path).unwrap();
-    
+
     // Comment out the Open challenge part in the solution to isolate Faded output
     if let Some(pos) = content.rfind("// (Open)") {
         let mut new_content = content[..pos].to_string();

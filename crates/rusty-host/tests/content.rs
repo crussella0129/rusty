@@ -335,4 +335,3 @@ fn test_load_manifest() {
     assert_eq!(manifest.tracks, vec!["Test"]);
     assert_eq!(manifest.lessons, vec!["test-01"]);
 }
-

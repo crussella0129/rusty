@@ -101,4 +101,3 @@ pub fn load_manifest(content_dir: &Path) -> Result<rusty_curriculum::Manifest> {
         .with_context(|| format!("parsing {}", toml_path.display()))?;
     Ok(manifest)
 }
-

@@ -2,21 +2,26 @@
 //!
 //! Spawns rust-analyzer and manages async input/output JSON-RPC message serialization.
 
+use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::path::Path;
 use std::process::{Child, ChildStdin, Command, Stdio};
+use std::str::FromStr;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex};
-use std::str::FromStr;
-use serde_json::{json, Value};
 
 /// Write a JSON-RPC message with Content-Length header to a writer.
 pub fn write_message<W: Write>(writer: &mut W, message: &Value) -> io::Result<()> {
     let payload = serde_json::to_string(message)?;
     println!("[lsp-send] {:?}", message);
-    write!(writer, "Content-Length: {}\r\n\r\n{}", payload.len(), payload)?;
+    write!(
+        writer,
+        "Content-Length: {}\r\n\r\n{}",
+        payload.len(),
+        payload
+    )?;
     writer.flush()?;
     Ok(())
 }
@@ -75,8 +80,7 @@ pub fn path_to_uri(path: &Path) -> Result<lsp_types::Uri, String> {
         format!("file:///{}", path_str)
     };
 
-    lsp_types::Uri::from_str(&uri_str)
-        .map_err(|e| format!("Failed to parse Uri '{uri_str}': {e}"))
+    lsp_types::Uri::from_str(&uri_str).map_err(|e| format!("Failed to parse Uri '{uri_str}': {e}"))
 }
 
 /// An active LSP session managing a `rust-analyzer` child process.
@@ -100,7 +104,9 @@ impl LspSession {
             .spawn()
             .map_err(|e| format!("Failed to spawn rust-analyzer: {e}"))?;
 
-        let stdin = Arc::new(Mutex::new(child.stdin.take().ok_or("Failed to open stdin")?));
+        let stdin = Arc::new(Mutex::new(
+            child.stdin.take().ok_or("Failed to open stdin")?,
+        ));
         let stdout = child.stdout.take().ok_or("Failed to open stdout")?;
         let stderr = child.stderr.take().ok_or("Failed to open stderr")?;
 
@@ -111,7 +117,6 @@ impl LspSession {
                 eprintln!("[lsp-stderr] {}", l);
             }
         });
-
 
         // Perform initialization handshake synchronously
         let root_uri = path_to_uri(root_path)?;
@@ -132,7 +137,10 @@ impl LspSession {
         });
 
         text_document.hover = Some(lsp_types::HoverClientCapabilities {
-            content_format: Some(vec![lsp_types::MarkupKind::Markdown, lsp_types::MarkupKind::PlainText]),
+            content_format: Some(vec![
+                lsp_types::MarkupKind::Markdown,
+                lsp_types::MarkupKind::PlainText,
+            ]),
             ..Default::default()
         });
 
@@ -184,7 +192,8 @@ impl LspSession {
         write_message(&mut *stdin.lock().unwrap(), &init_notification)
             .map_err(|e| format!("Failed to write initialized notification: {e}"))?;
 
-        let pending_requests: Arc<Mutex<HashMap<u64, Sender<Value>>>> = Arc::new(Mutex::new(HashMap::new()));
+        let pending_requests: Arc<Mutex<HashMap<u64, Sender<Value>>>> =
+            Arc::new(Mutex::new(HashMap::new()));
         let (diag_tx, diag_rx) = channel();
 
         // Spawn background reader thread
@@ -200,7 +209,8 @@ impl LspSession {
                                 // Request from the server! Respond.
                                 let response = match method {
                                     "workspace/configuration" => {
-                                        let items_len = msg.get("params")
+                                        let items_len = msg
+                                            .get("params")
                                             .and_then(|p| p.get("items"))
                                             .and_then(|i| i.as_array())
                                             .map(|a| a.len())
@@ -235,7 +245,11 @@ impl LspSession {
                             if let Some(method) = msg.get("method").and_then(|v| v.as_str()) {
                                 if method == "textDocument/publishDiagnostics" {
                                     if let Some(params) = msg.get("params") {
-                                        if let Ok(diag_params) = serde_json::from_value::<lsp_types::PublishDiagnosticsParams>(params.clone()) {
+                                        if let Ok(diag_params) = serde_json::from_value::<
+                                            lsp_types::PublishDiagnosticsParams,
+                                        >(
+                                            params.clone()
+                                        ) {
                                             let _ = diag_tx.send(diag_params);
                                         }
                                     }
@@ -300,7 +314,12 @@ impl LspSession {
     }
 
     /// Query hover info at a position in the document.
-    pub fn hover(&self, path: &Path, line: u32, character: u32) -> Result<Receiver<Result<Option<lsp_types::Hover>, String>>, String> {
+    pub fn hover(
+        &self,
+        path: &Path,
+        line: u32,
+        character: u32,
+    ) -> Result<Receiver<Result<Option<lsp_types::Hover>, String>>, String> {
         let uri = path_to_uri(path)?;
         let id = self.next_id.fetch_add(1, Ordering::SeqCst);
         let (tx, rx) = channel();
@@ -329,30 +348,28 @@ impl LspSession {
             .map_err(|e| format!("Failed to send hover request: {e}"))?;
 
         let (out_tx, out_rx) = channel();
-        std::thread::spawn(move || {
-            match rx.recv() {
-                Ok(resp) => {
-                    if let Some(err) = resp.get("error") {
-                        let _ = out_tx.send(Err(format!("LSP Hover Error: {err:?}")));
+        std::thread::spawn(move || match rx.recv() {
+            Ok(resp) => {
+                if let Some(err) = resp.get("error") {
+                    let _ = out_tx.send(Err(format!("LSP Hover Error: {err:?}")));
+                } else {
+                    let result = resp.get("result").cloned().unwrap_or(Value::Null);
+                    if result.is_null() {
+                        let _ = out_tx.send(Ok(None));
                     } else {
-                        let result = resp.get("result").cloned().unwrap_or(Value::Null);
-                        if result.is_null() {
-                            let _ = out_tx.send(Ok(None));
-                        } else {
-                            match serde_json::from_value::<lsp_types::Hover>(result) {
-                                Ok(hover) => {
-                                    let _ = out_tx.send(Ok(Some(hover)));
-                                }
-                                Err(e) => {
-                                    let _ = out_tx.send(Err(format!("Failed to parse hover: {e}")));
-                                }
+                        match serde_json::from_value::<lsp_types::Hover>(result) {
+                            Ok(hover) => {
+                                let _ = out_tx.send(Ok(Some(hover)));
+                            }
+                            Err(e) => {
+                                let _ = out_tx.send(Err(format!("Failed to parse hover: {e}")));
                             }
                         }
                     }
                 }
-                Err(_) => {
-                    let _ = out_tx.send(Err("LSP session disconnected".to_string()));
-                }
+            }
+            Err(_) => {
+                let _ = out_tx.send(Err("LSP session disconnected".to_string()));
             }
         });
 
@@ -360,7 +377,12 @@ impl LspSession {
     }
 
     /// Query autocomplete completions at a position.
-    pub fn completion(&self, path: &Path, line: u32, character: u32) -> Result<Receiver<Result<Vec<lsp_types::CompletionItem>, String>>, String> {
+    pub fn completion(
+        &self,
+        path: &Path,
+        line: u32,
+        character: u32,
+    ) -> Result<Receiver<Result<Vec<lsp_types::CompletionItem>, String>>, String> {
         let uri = path_to_uri(path)?;
         let id = self.next_id.fetch_add(1, Ordering::SeqCst);
         let (tx, rx) = channel();
@@ -393,31 +415,34 @@ impl LspSession {
             .map_err(|e| format!("Failed to send completion request: {e}"))?;
 
         let (out_tx, out_rx) = channel();
-        std::thread::spawn(move || {
-            match rx.recv() {
-                Ok(resp) => {
-                    if let Some(err) = resp.get("error") {
-                        let _ = out_tx.send(Err(format!("LSP Completion Error: {err:?}")));
+        std::thread::spawn(move || match rx.recv() {
+            Ok(resp) => {
+                if let Some(err) = resp.get("error") {
+                    let _ = out_tx.send(Err(format!("LSP Completion Error: {err:?}")));
+                } else {
+                    let result = resp.get("result").cloned().unwrap_or(Value::Null);
+                    if result.is_null() {
+                        let _ = out_tx.send(Ok(Vec::new()));
                     } else {
-                        let result = resp.get("result").cloned().unwrap_or(Value::Null);
-                        if result.is_null() {
-                            let _ = out_tx.send(Ok(Vec::new()));
-                        } else {
-                            let items = if let Ok(list) = serde_json::from_value::<lsp_types::CompletionResponse>(result.clone()) {
-                                match list {
-                                    lsp_types::CompletionResponse::Array(items) => items,
-                                    lsp_types::CompletionResponse::List(completion_list) => completion_list.items,
+                        let items = if let Ok(list) =
+                            serde_json::from_value::<lsp_types::CompletionResponse>(result.clone())
+                        {
+                            match list {
+                                lsp_types::CompletionResponse::Array(items) => items,
+                                lsp_types::CompletionResponse::List(completion_list) => {
+                                    completion_list.items
                                 }
-                            } else {
-                                serde_json::from_value::<Vec<lsp_types::CompletionItem>>(result).unwrap_or_default()
-                            };
-                            let _ = out_tx.send(Ok(items));
-                        }
+                            }
+                        } else {
+                            serde_json::from_value::<Vec<lsp_types::CompletionItem>>(result)
+                                .unwrap_or_default()
+                        };
+                        let _ = out_tx.send(Ok(items));
                     }
                 }
-                Err(_) => {
-                    let _ = out_tx.send(Err("LSP session disconnected".to_string()));
-                }
+            }
+            Err(_) => {
+                let _ = out_tx.send(Err("LSP session disconnected".to_string()));
             }
         });
 
@@ -486,7 +511,10 @@ mod tests {
         let mut buffer = Vec::new();
         write_message(&mut buffer, &original_msg).unwrap();
 
-        let expected_prefix = format!("Content-Length: {}\r\n\r\n", serde_json::to_string(&original_msg).unwrap().len());
+        let expected_prefix = format!(
+            "Content-Length: {}\r\n\r\n",
+            serde_json::to_string(&original_msg).unwrap().len()
+        );
         assert!(buffer.starts_with(expected_prefix.as_bytes()));
 
         let mut reader = BufReader::new(Cursor::new(buffer));

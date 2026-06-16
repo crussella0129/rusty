@@ -326,4 +326,3 @@ pub struct Manifest {
     pub tracks: Vec<String>,
     pub lessons: Vec<String>,
 }
-

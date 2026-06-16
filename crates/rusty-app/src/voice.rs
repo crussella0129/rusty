@@ -160,12 +160,14 @@ impl Mascot {
             rusty_grader::Verdict::Pass => {
                 self.state = MascotState::Happy;
                 // Celebrate for 4 seconds, then return to idle
-                self.state_expires_at = Some(std::time::Instant::now() + std::time::Duration::from_secs(4));
+                self.state_expires_at =
+                    Some(std::time::Instant::now() + std::time::Duration::from_secs(4));
             }
             _ => {
                 // Tilt head on error for 4 seconds, then return to idle
                 self.state = MascotState::Thinking;
-                self.state_expires_at = Some(std::time::Instant::now() + std::time::Duration::from_secs(4));
+                self.state_expires_at =
+                    Some(std::time::Instant::now() + std::time::Duration::from_secs(4));
             }
         }
     }
