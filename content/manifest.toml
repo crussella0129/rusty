@@ -18,5 +18,6 @@ lessons = [
     "intermediate-05-parsing",
     "intermediate-06-diffing",
     "advanced-01-concurrency",
-    "advanced-02-async"
+    "advanced-02-async",
+    "advanced-03-traits"
 ]

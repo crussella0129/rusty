@@ -93,3 +93,11 @@
 - [x] T-3004: Write the complete `solution` project.
 - [x] T-3005: Add `advanced-02-async` to `content/manifest.toml`.
 - [x] T-3006: Create integration test `lesson_advanced2_grade.rs`.
+
+## Sprint 31 (Advanced Lesson 3 - Advanced Traits)
+- [x] T-3101: Create `advanced-03-traits` directory structure (`lesson.toml`, `starter`, `solution`).
+- [x] T-3102: Author `lesson.toml` teaching Associated Types, Generic Trait Bounds, and Drop.
+- [x] T-3103: Write the `starter` project with faded/open exercises.
+- [x] T-3104: Write the complete `solution` project.
+- [x] T-3105: Add `advanced-03-traits` to `content/manifest.toml`.
+- [x] T-3106: Create integration test `lesson_advanced3_grade.rs`.

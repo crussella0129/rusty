@@ -402,3 +402,8 @@
 - **Description:** Implemented Advanced Lesson 2 (Async Rust) teaching async/await, futures, and the Tokio runtime. Tested fading out .await, spawning Tokio tasks, and joining concurrent I/O futures.
 - **Completed:** 2026-06-15T04:30:00Z
 
+
+## T-3101 to T-3106 (sprint 31)
+- **Description:** Implemented Advanced Lesson 3 (Advanced Traits) teaching Associated Types, Generic Trait Bounds, and the Drop trait. Tested by guiding students through fixing an associated type implementation, making a custom drop struct, and using a multi-trait bound.
+- **Completed:** 2026-06-15T19:00:00Z
+

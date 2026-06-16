@@ -1,0 +1,167 @@
+id = "advanced-03-traits"
+title = "Advanced Traits & Generics"
+track = "Advanced"
+estimated_minutes = 25
+prereqs = ["advanced-02-async"]
+starter_project = "starter"
+solution_project = "solution"
+
+[[concepts]]
+id = "associated_types"
+claim = "Traits can define 'Associated Types' that implementations must specify."
+why_it_matters = "Instead of `Iterator<T>`, Rust uses `Iterator<Item = T>`. This guarantees there is only ONE way to iterate over a type, preventing conflicting trait implementations."
+common_misconception = "You don't need associated types if you can just use generics; but generics allow *multiple* implementations for the same trait, which is often not what you want."
+
+[[concepts]]
+id = "trait_bounds"
+claim = "You can restrict generic types using `where` clauses."
+why_it_matters = "A function `fn do_work<T>(item: T)` knows nothing about `T`. By adding `where T: Display`, the compiler lets you use `Display` methods on `item`."
+
+[[concepts]]
+id = "drop"
+claim = "The `Drop` trait lets you customize what happens when a value goes out of scope."
+why_it_matters = "Rust doesn't have a garbage collector. It automatically calls `drop` on variables when they go out of scope, making resource cleanup (like closing files or network sockets) completely deterministic."
+
+# ----------------------------------------------------------------------------------
+# STEP 1: Generic Trait Bounds (Worked)
+# ----------------------------------------------------------------------------------
+[[steps]]
+
+[[steps.blocks]]
+kind = "prose"
+text = """
+Welcome to the deep end of Rust's type system! 
+
+You've seen basic traits before, but let's formalize how they interact with generics. When you write a generic function, the compiler treats the generic type `T` as a completely unknown black box. You can't even print it!
+
+To use methods on `T`, you must constrain it with **Trait Bounds**. 
+"""
+
+[steps.exercise]
+kind = "worked"
+prompt = "Look at how we use `where` to bound `T`."
+code = """
+use std::fmt::Display;
+
+// We restrict T so that it MUST implement Display
+pub fn print_it<T>(item: T) where T: Display {
+    println!("Printing a generic item: {}", item);
+}
+
+pub fn step_1() {
+    print_it(42);         // i32 implements Display
+    print_it("Hello!");   // &str implements Display
+}
+"""
+annotation = "The `where T: Display` clause unlocks the ability to format `{}`."
+
+# ----------------------------------------------------------------------------------
+# STEP 2: Associated Types (Faded)
+# ----------------------------------------------------------------------------------
+[[steps]]
+hint = "Inside the `impl Graph for MyGraph` block, add `type Node = i32;`."
+
+[[steps.blocks]]
+kind = "prose"
+text = """
+Sometimes, a trait needs to reference a type that is closely related to the implementer. 
+
+For example, an `Iterator` produces items. We *could* define it as `trait Iterator<T>`. But then you could implement both `Iterator<i32>` and `Iterator<String>` on the exact same struct! When you call `.next()`, the compiler wouldn't know which one you meant.
+
+Instead, Rust uses **Associated Types**:
+```rust
+trait Iterator {
+    type Item; // Associated Type
+    fn next(&mut self) -> Option<Self::Item>;
+}
+```
+Now, a struct can only implement `Iterator` *once*, specifying exactly what its `Item` is.
+"""
+
+[steps.exercise]
+kind = "faded"
+prompt = "Look at `step_2()` in `src/main.rs`. We have a `Graph` trait with an associated type `Node`. Implement the `Graph` trait for `MyGraph`, and specify that its `Node` type is `i32`."
+file_path = "src/main.rs"
+check_command = "cargo test --bin advanced-03-traits test_step_2"
+success_criterion = { kind = "cargo_test_passes" }
+
+# ----------------------------------------------------------------------------------
+# STEP 3: The Drop Trait (Faded)
+# ----------------------------------------------------------------------------------
+[[steps]]
+hint = "Implement the `Drop` trait for `CustomPointer` and implement the `drop` method to print the string."
+
+[[steps.blocks]]
+kind = "prose"
+text = """
+Rust doesn't have a garbage collector. When a variable goes out of scope, Rust automatically cleans up its memory. 
+
+But what if your struct holds a network socket or an open file? You need to close it! You can hook into this cleanup process by implementing the **`Drop`** trait.
+
+```rust
+struct CustomResource;
+
+impl Drop for CustomResource {
+    fn drop(&mut self) {
+        println!("Cleaning up resource!");
+    }
+}
+```
+The compiler automatically calls the `drop` method right before the struct is destroyed. You never call `.drop()` yourself.
+"""
+
+[steps.exercise]
+kind = "faded"
+prompt = "In `step_3()`, we have a `CustomPointer` struct. Implement the `Drop` trait for it, and make its `drop` method print `\"Dropping CustomPointer!\"` to the console."
+file_path = "src/main.rs"
+check_command = "cargo test --bin advanced-03-traits test_step_3"
+success_criterion = { kind = "cargo_test_passes" }
+
+# ----------------------------------------------------------------------------------
+# STEP 4: Multiple Trait Bounds (Open)
+# ----------------------------------------------------------------------------------
+[[steps]]
+hint = "Use a where clause like `where T: Default + std::fmt::Display`. Then you can use `T::default()` and `println!(\"{}\", val)`."
+
+[[steps.blocks]]
+kind = "prose"
+text = """
+You can require a generic type to implement *multiple* traits by chaining them with a `+`.
+
+```rust
+fn do_something<T>(val: T) where T: Clone + Default {
+    // We can now clone it AND create a default value!
+}
+```
+"""
+
+[steps.exercise]
+kind = "open"
+prompt = "Look at `step_4()`. Create a generic function `print_default<T>()`. Use a `where` clause to require that `T` implements both `Default` and `std::fmt::Display`. Inside the function, instantiate the default value using `T::default()` and print it using `{}`."
+check_command = "cargo test --bin advanced-03-traits test_step_4"
+success_criterion = { kind = "cargo_test_passes" }
+
+# ----------------------------------------------------------------------------------
+# STEP 5: Outro
+# ----------------------------------------------------------------------------------
+[[steps]]
+
+[[steps.blocks]]
+kind = "prose"
+text = """
+You're mastering Rust's type system! 
+
+You now understand how `where` clauses constrain generics, why iterators use associated types, and how Rust achieves deterministic resource cleanup through the `Drop` trait.
+"""
+
+[recall_prompt]
+kind = "multiple_choice"
+question = "Why does Rust's `Iterator` trait use an associated type (`type Item`) instead of a generic parameter (`trait Iterator<T>`)?"
+choices = [
+    "Because generics are slower at runtime.",
+    "Because associated types prevent a struct from implementing the trait multiple times for different types.",
+    "Because associated types are required for the `Drop` trait.",
+    "Because it saves memory."
+]
+answer_index = 1
+explanation = "Associated types guarantee there is exactly one implementation of the trait per struct, avoiding ambiguity when calling `.next()`."
